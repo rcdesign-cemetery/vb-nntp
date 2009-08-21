@@ -1,0 +1,68 @@
+[appserver]
+Listen            = [ 0.0.0.0:119 ]
+SockTimeOut       = 30
+IdleCheckTime     = 5
+PreforkKids       = 5
+MaxKids           = 5
+MaxSpareKids      = 5
+MinSpareKids      = 5
+ClientTimeOut     = 30
+PrcCheckTime      = 30
+ChrootDir         = /
+ProcTitle         = NNTP-Server
+MaxReqLen         = 1
+Pid               = /var/run/nntp.pid
+KidsPid           = /var/run/nntp/
+
+[log]
+# Log Levels are:
+#   debug (highest), info, notice, warn[ing], err[or],
+#   crit[ical], alert, emerg[ency] (lowest)
+FileName          = /var/log/nntp.log
+Mode              = append
+MinLevel          = emerg
+MaxLevel          = error
+NewLine           = yes
+DebugTrace        = no
+DebugMode         = no # may be 'yes'/1 or greater
+AutoFlush         = no
+
+[handler]
+Controller        = Wildev::AppServer::Protocol::NNTP
+
+[nntp]
+PluginBaseName    = RCD::NNTP::Plugins
+Plugins           = [ article, authinfo, group, list, mode, newgroups, newnews, xhdr, xover ]
+AllowPosting      = no
+DemoFactor        = 2
+
+[AUTH]
+passtries         = 5
+cleantime         = 30
+
+[BACKEND]
+URL               = http://example.com/nntp/backend.php
+AuthKey           = ***                 # set the same in vBulletin's admincp!
+ConnTimeout       = 10
+UserAgent         = NNTP.Frontend
+#TestUserId        = 
+#TestPassword      = 
+Commands          = [ checkauth ]
+TablePrefix       =
+FromAddress       = no_reply@example.com
+GeteID            = nntpgate
+Charset           = UTF-8
+ContentType       = text/html
+
+[cache]
+Enable            = yes
+
+dbDriver          = mysql
+dbDataSource      = ***                 # db name
+dbUsername        = ***                 # user name
+dbPassword        = ***                 # password
+dbUseSocket       = no                  # use or not socket to connect to mysql server
+dbHost            = localhost           # mysql server address
+dbPort            = 3306                # mysql server port
+dbSocket          =                     # mysql socket
+dbCharset         = utf8                # utf-8

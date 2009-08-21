@@ -1,0 +1,54 @@
+#!/bin/sh                                  
+#                                          
+# Linux startup script for vBulletin NNTP Gate
+#                                             
+# chkconfig: 2345 85 15                       
+# description: vBulletin NNTP Gate.           
+# processname: app.pl                         
+#                                             
+
+# Source function library.
+if [ -f /etc/init.d/functions ]; then
+  . /etc/init.d/functions            
+elif [ -f /etc/rc.d/init.d/functions ]; then
+  . /etc/rc.d/init.d/functions              
+else                                        
+  echo "Could not find functions library"   
+  exit 1                                    
+fi                                          
+
+ULIMIT=10240
+
+RETVAL=0
+prog="app.pl"
+
+HOME="/var/www/forum.rcdesign.ru/nntp"
+EXE="$HOME/$prog"
+
+case "$1" in
+  start)
+        echo -n "Starting nntp: "
+        ulimit -HSn $ULIMIT
+        $EXE start
+        echo
+        ;;
+  stop)
+        echo -n "Shutting down nntp: "
+        $EXE stop
+        RETVAL=$?
+        echo
+        ;;
+  restart)
+        echo -n "Restarting nntp: "
+        $EXE restart
+        echo
+        ;;
+  status)
+        status $EXE
+        RETVAL=$?
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        RETVAL=1
+esac
+exit $RETVAL

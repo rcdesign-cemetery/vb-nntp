@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="nntp_gate" active="1">
+	<title>NNTP Gate</title>
+	<description />
+	<version>1.3</version>
+	<url />
+	<versioncheckurl />
+	<apm_releasedate>1249506000</apm_releasedate>
+	<apm_author />
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
+	<dependencies>
+	</dependencies>
+	<codes>
+		<code version="1.0">
+			<installcode><![CDATA[$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_actions` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `request` text NOT NULL,
+  `status` enum('new','complete','failed') NOT NULL default 'new',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM;" );
+
+$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_cache_messages` (
+  `groupid` int(10) unsigned NOT NULL,
+  `messageid` int(10) unsigned NOT NULL,
+  `updatetime` datetime NOT NULL,
+  `value` text character set ascii NOT NULL COMMENT 'Cached value',
+  PRIMARY KEY  (`groupid`,`messageid`),
+  KEY `Last update time` (`updatetime`)
+) ENGINE=MyISAM COMMENT='NNTP messages cache';" );
+
+$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `plugin_id` char(20) NOT NULL,
+  `group_name` char(50) NOT NULL,
+  `is_active` enum('yes','no') NOT NULL default 'no',
+  `settings` text NOT NULL,
+  `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
+  `create_date` datetime NOT NULL,
+  PRIMARY KEY  (`id`),
+  KEY `map_id` (`map_id`),
+  KEY `group_name` (`group_name`)
+) ENGINE=MyISAM;" );
+
+$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_index` (
+  `groupid` int(10) unsigned NOT NULL,
+  `messageid` int(10) unsigned NOT NULL auto_increment,
+  `refid` int(10) unsigned NOT NULL,
+  `title` char(255) NOT NULL,
+  `datetime` datetime NOT NULL,
+  `userid` int(10) unsigned NOT NULL,
+  `parameters` char(255) NOT NULL,
+  `accesskey` char(32) NOT NULL COMMENT 'Key used to find the record when th source message changed',
+  PRIMARY KEY  (`groupid`,`messageid`),
+  KEY `accesskey` (`accesskey`)
+) ENGINE=MyISAM;" );
+
+$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_stats` (
+  `userid` int(10) unsigned NOT NULL,
+  `date` date NOT NULL,
+  PRIMARY KEY  (`userid`,`date`),
+  KEY `date` (`date`)
+) ENGINE=MyISAM;" );
+
+$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_user` (
+  `userid` int(10) unsigned NOT NULL,
+  `nntp_password` char(32) NOT NULL,
+  `use_nntp_password` enum('yes','no') NOT NULL default 'yes',
+  PRIMARY KEY  (`userid`)
+) ENGINE=MyISAM;" );]]></installcode>
+			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_actions`;" );
+
+$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_cache_messages`;" );
+
+$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups`;" );
+
+$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_index`;" );
+
+$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_stats`;" );
+
+$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user`;" );]]></uninstallcode>
+		</code>
+	</codes>
+	<templates>
+		<template name="nntp_anounce" templatetype="template" date="1218590342" username="Wildev" version=""><![CDATA[$stylevar[htmldoctype]
+<html xmlns="http://www.w3.org/1999/xhtml" dir="$stylevar[textdirection]" lang="$stylevar[languagecode]">
+<head>
+$headinclude
+<title>$vboptions[bbtitle] - $vbphrase[nntp_gate_menu_title]</title>
+</head>
+<body>
+$header
+
+$navbar
+
+<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
+<thead>
+<tr>
+	<td class="thead">
+		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_anounce')"><img id="collapseimg_nntp_anounce" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_anounce].gif" alt="" border="0" /></a>
+		$vbphrase[nntp_gate_menu_title]
+	</td>
+</tr>
+</thead>
+<tbody id="collapseobj_nntp_anounce" style="$vbcollapse[collapseobj_nntp_anounce]">
+
+<tr>
+	<td class="panelsurround" align="center">
+	<div class="panel">
+		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
+      $anouncemessage
+		</div>
+	</td>
+</tr>
+</tbody>
+</table>
+
+<br />
+
+$footer
+</body>
+</html>]]></template>
+		<template name="nntp_message_css" templatetype="template" date="1225398408" username="Wildev" version=""><![CDATA[<style type="text/css" id="vbulletin_css">
+<!--
+body
+{
+	background: #FFFFFF;
+	color: #000000;
+	font: 10pt verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
+	margin: 5px 10px 10px 10px;
+	padding: 0px;
+}
+a:link
+{
+	color: #22229C;
+}
+a:visited
+{
+	color: #22229C;
+}
+a:hover, a:active
+{
+	color: #FF4400;
+}
+.page
+{
+	background: #FFFFFF;
+	color: #000000;
+}
+td, th, p, li
+{
+	font: 10pt verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
+}
+
+.alt1, .alt1Active
+{
+	background: #F5F5FF;
+	color: #000000;
+}
+.alt2, .alt2Active
+{
+	background: #E4E4E4;
+	color: #000000;
+}
+.inlinemod
+{
+	background: #FFFFCC;
+	color: #000000;
+}
+
+.smallfont
+{
+	font: 11px verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
+}
+
+.highlight
+{
+	color: #FF0000;
+	font-weight: bold;
+}
+
+
+.normal {
+	font-weight: normal;
+}
+
+.inlineimg {
+	vertical-align: middle;
+}
+
+.underline {
+	text-decoration: underline;
+}
+
+
+-->
+</style>]]></template>
+		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
+<a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">$vbphrase[original_post]</a>
+&nbsp;&nbsp;
+<a href="/newreply.php?do=newreply&noquote=1&p=<% POST ID %>">$vbphrase[submit_reply]</a>
+&nbsp;&nbsp;
+<a href="/newreply.php?do=newreply&p=<% POST ID %>">$vbphrase[quote]</a>
+&nbsp;]]></template>
+		<template name="nntp_message_template" templatetype="template" date="1249904316" username="Dimit" version=""><![CDATA[<html><head>
+<% CSS %>
+<base href="$vboptions[bburl]">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<div><% USER MENU %></div>
+<br />
+<div><% MESSAGE BODY %></div>
+</body>
+</html>]]></template>
+		<template name="nntp_navbar_link" templatetype="template" date="1218581343" username="Wildev" version=""><![CDATA[<td class="vbmenu_control"><a href="nntp_gate.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>]]></template>
+		<template name="nntp_usercp" templatetype="template" date="1218589165" username="Wildev" version=""><![CDATA[<script type="text/javascript" src="clientscript/vbulletin_md5.js?v=$vboptions[simpleversion]"></script>
+<script type="text/javascript">
+function hash_passwords(currentpassword, currentpassword_md5, newpassword, newpassword_md5, newpasswordconfirm, newpasswordconfirm_md5)
+{
+	var junk_output;
+	md5hash(currentpassword, currentpassword_md5, junk_output, $show[nopasswordempty]);
+	// do various checks
+	if (newpassword.value != '')
+	{
+		md5hash(newpassword, newpassword_md5, junk_output, $show[nopasswordempty]);
+	}
+	if (newpasswordconfirm.value != '')
+	{
+		md5hash(newpasswordconfirm, newpasswordconfirm_md5, junk_output, $show[nopasswordempty]);
+	}
+}
+</script>
+
+<script type="text/javascript">
+<!--
+function toggle_disabled(status, objid)
+{
+	obj = fetch_object(objid);
+	if (obj)
+	{
+		obj.disabled = (status ? false : true);
+	}
+}
+//-->
+</script>
+
+<form action="nntp_usercp.php?do=updatepassword" method="post" onsubmit="hash_passwords(currentpassword, currentpassword_md5, newpassword, newpassword_md5, newpasswordconfirm, newpasswordconfirm_md5)">
+<input type="hidden" name="s" value="$session[sessionhash]" />
+<input type="hidden" name="securitytoken" value="$bbuserinfo[securitytoken]" />
+<input type="hidden" name="do" value="updatepassword" />
+<input type="hidden" name="currentpassword_md5" />
+<input type="hidden" name="newpassword_md5" />
+<input type="hidden" name="newpasswordconfirm_md5" />
+
+<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
+<thead>
+<tr>
+	<td class="tcat">$vbphrase[nntp_user_options]</td>
+</tr>
+<tr>
+	<td class="thead">
+		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_user_options')"><img id="collapseimg_nntp_user_options" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_user_options].gif" alt="" border="0" /></a>
+		$vbphrase[password]
+	</td>
+</tr>
+</thead>
+<tbody id="collapseobj_nntp_user_options" style="$vbcollapse[collapseobj_nntp_user_options]">
+
+<tr>
+	<td class="panelsurround" align="center">
+	<div class="panel">
+		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
+
+			<div class="fieldset">
+				<div>$vbphrase[enter_password_to_continue]:</div>
+				<div><input type="password" class="bginput" name="currentpassword" size="50" maxlength="50" /></div>
+			</div>
+
+			<fieldset class="fieldset">
+				<legend>$vbphrase[nntp_password_legend]</legend>
+				<table cellpadding="0" cellspacing="$stylevar[formspacer]" border="0">
+				<tr>
+          <td><label for="nntp_use_cpass"><input type="checkbox" name="nntp_use_cpass" value="1" id="nntp_use_cpass" $nntp_use_cpass />$vbphrase[nntp_use_custom_password_flag]</label></td>
+				</tr>
+				<tr>
+					<td>
+						<div>$vbphrase[new_password]:</div>
+						<div><input type="password" class="bginput" name="newpassword" size="50" maxlength="50" /></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div>$vbphrase[confirm_new_password]:</div>
+						<div><input type="password" class="bginput" name="newpasswordconfirm" size="50" maxlength="50" /></div>
+					</td>
+				</tr>
+				</table>
+			</fieldset>
+
+			</div>
+		</div>
+
+		<div style="margin-top:$stylevar[cellpadding]px">
+			<input type="submit" class="button" value="$vbphrase[save_changes]" accesskey="s" />
+			<input type="reset" class="button" value="$vbphrase[reset_fields]" accesskey="r" />
+		</div>
+	</td>
+</tr>
+</tbody>
+</table>
+
+</form>
+
+<br />
+
+<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
+<thead>
+<tr>
+	<td class="thead">
+		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_anounce')"><img id="collapseimg_nntp_anounce" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_anounce].gif" alt="" border="0" /></a>
+		$vbphrase[nntp_gate_menu_title]
+	</td>
+</tr>
+</thead>
+<tbody id="collapseobj_nntp_anounce" style="$vbcollapse[collapseobj_nntp_anounce]">
+
+<tr>
+	<td class="panelsurround" align="center">
+	<div class="panel">
+		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
+      $anouncemessage
+		</div>
+	</td>
+</tr>
+</tbody>
+</table>]]></template>
+		<template name="nntp_usercp_navbar" templatetype="template" date="1218581771" username="Wildev" version=""><![CDATA[<tr>
+  <td class="thead"><a href="nntp_usercp.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>
+</tr>]]></template>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>Startup: Merge NNTP Templates into $globaltemplates</title>
+			<hookname>cache_templates</hookname>
+			<phpcode><![CDATA[// Check that the viewer can access the NNTP gate in full mode
+
+$nntp_full_access  = false;
+$fullaccessgroups = unserialize( $vbulletin->options['nntp_groups'] );
+
+foreach($fullaccessgroups as $groupid)
+{
+  if (is_member_of($vbulletin->userinfo, $groupid))
+  {
+    $nntp_full_access = true;
+    break;
+  }
+}
+
+if ($nntp_full_access)
+{
+  if (is_array($globaltemplates))
+  {
+    if (in_array('usercp_nav_folderbit', $globaltemplates))
+    {
+      $globaltemplates[] = 'nntp_usercp';
+    }
+  }
+
+  define('NNTP_FULL_CACHED_TEMPLATES', true);
+}
+
+
+// Check that the viewer can access the NNTP gate in demo mode
+
+$nntp_demo_access  = false;
+
+if (!$nntp_full_access)
+{
+  $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
+
+  foreach($demoaccessgroups as $groupid)
+  {
+    if (is_member_of($vbulletin->userinfo, $groupid))
+    {
+      $nntp_demo_access = true;
+      break;
+    }
+  }
+}
+
+if ($nntp_demo_access)
+{
+  if (is_array($globaltemplates))
+  {
+    if (in_array('usercp_nav_folderbit', $globaltemplates))
+    {
+      $globaltemplates[] = 'nntp_usercp';
+    }
+
+    $globaltemplates[] = 'nntp_navbar_link';
+  }
+
+  define('NNTP_DEMO_CACHED_TEMPLATES', true);
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Navbar: Eval NNTP Link Template</title>
+			<hookname>global_setup_complete</hookname>
+			<phpcode><![CDATA[if (defined('NNTP_DEMO_CACHED_TEMPLATES'))
+{
+  eval('$template_hook[\'navbar_buttons_left\'] .= "' . fetch_template('nntp_navbar_link') . '";');
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Admin: Add Template Group for NNTP Gate</title>
+			<hookname>template_groups</hookname>
+			<phpcode><![CDATA[$only['nntp'] = $vbphrase['group_nntp_gate'];]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>User CP: Insert NNTP Navbar Entry</title>
+			<hookname>usercp_nav_complete</hookname>
+			<phpcode><![CDATA[if (defined('NNTP_FULL_CACHED_TEMPLATES') or defined('NNTP_DEMO_CACHED_TEMPLATES'))
+{
+  eval('$template_hook[\'usercp_navbar_bottom\'] .= "' . fetch_template('nntp_usercp_navbar') . '";');
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="Control Panel Global" fieldname="cpglobal">
+			<phrase name="nntp_add_group" date="1216934697" username="Wildev" version=""><![CDATA[Add new group]]></phrase>
+			<phrase name="nntp_are_you_sure_you_want_to_delete_this_group" date="1217537539" username="Wildev" version=""><![CDATA[Are you sure you want to delete this NNTP Group?]]></phrase>
+			<phrase name="nntp_group_is_active" date="1217533777" username="Wildev" version=""><![CDATA[Is group enabled?]]></phrase>
+			<phrase name="nntp_group_name" date="1217340623" username="Wildev" version=""><![CDATA[Group Name]]></phrase>
+			<phrase name="nntp_groups" date="1216933876" username="Wildev" version=""><![CDATA[Groups Setup]]></phrase>
+			<phrase name="nntp_groups_list" date="1217534551" username="Wildev" version=""><![CDATA[Existing Groups List]]></phrase>
+			<phrase name="nntp_plugin" date="1216934725" username="Wildev" version=""><![CDATA[Plugin to use]]></phrase>
+			<phrase name="nntp_set_group" date="1217340579" username="Wildev" version=""><![CDATA[Group Settings]]></phrase>
+			<phrase name="nntp_settings" date="1216934203" username="Wildev" version=""><![CDATA[Main Settings]]></phrase>
+			<phrase name="nntp_stats_login_number" date="1218458302" username="Wildev" version=""><![CDATA[Login Number]]></phrase>
+			<phrase name="reindex" date="1225399130" username="Wildev" version=""><![CDATA[Reindex]]></phrase>
+		</phrasetype>
+		<phrasetype name="Scheduled Tasks" fieldname="cron">
+			<phrase name="task_nntp_cleanup_desc" date="1249565225" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_log" date="1249565225" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_sessions_desc" date="1249565321" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_sessions_log" date="1249565321" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_sessions_title" date="1249565321" username="Dimit" version="1.3"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
+			<phrase name="task_nntp_cleanup_title" date="1249565225" username="Dimit" version="1.3"><![CDATA[NNTP: Clean index and cache]]></phrase>
+		</phrasetype>
+		<phrasetype name="Error Messages" fieldname="error">
+			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
+			<phrase name="nntp_cannot_remove_mapped_group" date="1218111169" username="Wildev" version=""><![CDATA[Can't remove group with mapped groups]]></phrase>
+			<phrase name="nntp_group_deleted_successfully" date="1217537461" username="Wildev" version=""><![CDATA[Selected group successfully deleted]]></phrase>
+			<phrase name="nntp_group_reindexed_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
+			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
+		</phrasetype>
+		<phrasetype name="GLOBAL" fieldname="global">
+			<phrase name="nntp_gate" date="1216126747" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
+			<phrase name="nntp_gate_menu_title" date="1218115053" username="Wildev" version=""><![CDATA[NNTP]]></phrase>
+		</phrasetype>
+		<phrasetype name="Style Tools" fieldname="style">
+			<phrase name="group_nntp_gate" date="1229022407" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
+		</phrasetype>
+		<phrasetype name="User Tools (global)" fieldname="user">
+			<phrase name="nntp_gate_description" date="1216126894" username="Wildev" version=""><![CDATA[Some description of NNTP Gate]]></phrase>
+			<phrase name="nntp_password_legend" date="1218585186" username="Wildev" version=""><![CDATA[You can use main password or set up custom one to access only NNTP gate]]></phrase>
+			<phrase name="nntp_use_custom_password_flag" date="1218585148" username="Wildev" version=""><![CDATA[Use custom password]]></phrase>
+			<phrase name="nntp_user_options" date="1218589125" username="Wildev" version=""><![CDATA[NNTP gate access settings]]></phrase>
+		</phrasetype>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
+			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
+			<phrase name="setting_nntp_config_path_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_config_path_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Path to config file]]></phrase>
+			<phrase name="setting_nntp_demo_groups_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_demo_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in demo mode]]></phrase>
+			<phrase name="setting_nntp_demo_text_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_demo_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Text of demo mode message]]></phrase>
+			<phrase name="setting_nntp_forum_charset_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_forum_charset_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Forum's charset]]></phrase>
+			<phrase name="setting_nntp_from_address_desc" date="1249563421" username="Dimit" version="1.3" />
+			<phrase name="setting_nntp_from_address_title" date="1249563421" username="Dimit" version="1.3"><![CDATA[From email address]]></phrase>
+			<phrase name="setting_nntp_gate_auth_key_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_gate_auth_key_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Frontend Auth Key]]></phrase>
+			<phrase name="setting_nntp_groups_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in full mode]]></phrase>
+			<phrase name="setting_nntp_max_messages_in_group_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_max_messages_in_group_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum messages number in group]]></phrase>
+			<phrase name="setting_nntp_message_id_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_message_id_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message ID suffix after '@']]></phrase>
+			<phrase name="setting_nntp_message_in_list_timeout_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_message_in_list_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum days number to store a message in list]]></phrase>
+			<phrase name="setting_nntp_messages_tree_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_messages_tree_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message list tree show?]]></phrase>
+			<phrase name="setting_nntp_pid_path_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_pid_path_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Path to PID file]]></phrase>
+			<phrase name="setting_nntp_port_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Port to listen on for incoming connections.]]></phrase>
+			<phrase name="setting_nntp_port_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server's Port]]></phrase>
+			<phrase name="setting_nntp_server_addr_desc" date="1229020203" username="Wildev" version="1.0" />
+			<phrase name="setting_nntp_server_addr_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP server domain/ip]]></phrase>
+			<phrase name="setting_nntp_server_conn_timeout_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Connection timeout, sec]]></phrase>
+			<phrase name="setting_nntp_server_conn_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Connection timeout, sec]]></phrase>
+			<phrase name="setting_nntp_server_max_children_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum clients number]]></phrase>
+			<phrase name="setting_nntp_server_max_children_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum clients number]]></phrase>
+			<phrase name="setting_nntp_stats_rows_per_page_desc" date="1249562915" username="Dimit" version="1.3" />
+			<phrase name="setting_nntp_stats_rows_per_page_title" date="1249562915" username="Dimit" version="1.3"><![CDATA[Rows per page in statistics]]></phrase>
+			<phrase name="setting_nntp_stats_show_last_days_desc" date="1249563005" username="Dimit" version="1.3" />
+			<phrase name="setting_nntp_stats_show_last_days_title" date="1249563005" username="Dimit" version="1.3"><![CDATA[Show statistics for last N days]]></phrase>
+			<phrase name="settinggroup_" date="1218455807" username="Wildev" version="1.0"><![CDATA[NNTP Server Statistics Settings]]></phrase>
+			<phrase name="settinggroup_nntp_server" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server Settings]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="nntp_server" displayorder="65535">
+			<setting varname="nntp_config_path" displayorder="10">
+				<datatype>free</datatype>
+				<defaultvalue>/etc/rcdnntpd.cnf</defaultvalue>
+			</setting>
+			<setting varname="nntp_pid_path" displayorder="11">
+				<datatype>free</datatype>
+				<defaultvalue>/var/run/nntp.pid</defaultvalue>
+			</setting>
+			<setting varname="nntp_port" displayorder="20">
+				<datatype>number</datatype>
+				<defaultvalue>119</defaultvalue>
+			</setting>
+			<setting varname="nntp_server_addr" displayorder="30">
+				<datatype>free</datatype>
+				<defaultvalue>0.0.0.0</defaultvalue>
+			</setting>
+			<setting varname="nntp_server_conn_timeout" displayorder="40">
+				<datatype>number</datatype>
+				<defaultvalue>120</defaultvalue>
+			</setting>
+			<setting varname="nntp_server_max_children" displayorder="50">
+				<datatype>number</datatype>
+				<defaultvalue>10</defaultvalue>
+			</setting>
+			<setting varname="nntp_adv_text" displayorder="70">
+				<datatype>free</datatype>
+				<optioncode>textarea</optioncode>
+			</setting>
+			<setting varname="nntp_demo_text" displayorder="80">
+				<datatype>free</datatype>
+				<optioncode>textarea</optioncode>
+			</setting>
+			<setting varname="nntp_messages_tree" displayorder="80">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="nntp_groups" displayorder="80">
+				<datatype>free</datatype>
+				<optioncode>usergroup:5</optioncode>
+			</setting>
+			<setting varname="nntp_demo_groups" displayorder="90">
+				<datatype>free</datatype>
+				<optioncode>usergroup:5</optioncode>
+			</setting>
+			<setting varname="nntp_gate_auth_key" displayorder="100">
+				<datatype>free</datatype>
+			</setting>
+			<setting varname="nntp_message_in_list_timeout" displayorder="150">
+				<datatype>number</datatype>
+				<defaultvalue>30</defaultvalue>
+			</setting>
+			<setting varname="nntp_max_messages_in_group" displayorder="160">
+				<datatype>number</datatype>
+				<defaultvalue>1000</defaultvalue>
+			</setting>
+			<setting varname="nntp_stats_rows_per_page" displayorder="170">
+				<datatype>number</datatype>
+				<defaultvalue>30</defaultvalue>
+			</setting>
+			<setting varname="nntp_message_id" displayorder="200">
+				<datatype>free</datatype>
+				<defaultvalue>rcd.nntpgate</defaultvalue>
+			</setting>
+			<setting varname="nntp_stats_show_last_days" displayorder="210">
+				<datatype>number</datatype>
+				<defaultvalue>30</defaultvalue>
+			</setting>
+			<setting varname="nntp_forum_charset" displayorder="220">
+				<datatype>free</datatype>
+				<defaultvalue>UTF-8</defaultvalue>
+			</setting>
+			<setting varname="nntp_from_address" displayorder="230">
+				<datatype>free</datatype>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+		<cron varname="nntp_cleanup" active="1" loglevel="1">
+			<filename>./includes/cron/nntp_cleanup.php</filename>
+			<scheduling weekday="-1" day="-1" hour="4" minute="15" />
+		</cron>
+		<cron varname="nntp_cleanup_sessions" active="1" loglevel="1">
+			<filename>./includes/cron/nntp_cleanup_sessions.php</filename>
+			<scheduling weekday="-1" day="-1" hour="-1" minute="5,15,25,35,45,55" />
+		</cron>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+	<templateedits>
+	</templateedits>
+</product>

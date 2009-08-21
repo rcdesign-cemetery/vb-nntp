@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<navgroups product="vbulletin">
+
+  <navgroup phrase="nntp_gate" permissions="canadminusers" hr="true" displayorder="120">
+
+    <navoption displayorder="10">
+      <phrase>nntp_settings</phrase>
+      <link>options.php?dogroup=nntp_server</link>
+    </navoption>
+
+    <navoption displayorder="20">
+      <phrase>nntp_groups</phrase>
+      <link>nntp_groups.php?do=list</link>
+    </navoption>
+
+    <navoption displayorder="30">
+      <phrase>statistics</phrase>
+      <link>nntp_stats.php?do=list</link>
+    </navoption>
+
+  </navgroup>
+
+</navgroups>
