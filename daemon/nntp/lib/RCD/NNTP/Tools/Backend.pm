@@ -20,7 +20,7 @@
     use Wildev::AppServer::Toolkit;
     use RCD::NNTP::Base::Plugin qw(cache dbi check_dbi uuid client cnf);
 
-    our $VERSION = "0.04"; # $Date: 2009/08/12 14:38:48 $
+    our $VERSION = "0.05"; # $Date: 2009/10/22 21:20:00 $
 
 
     sub new
@@ -236,27 +236,16 @@
       my $tableprefix  = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
       my $i = 0;
 
+
       #
-      #   Get list of all groups
+      #   Get groups info list
       #
 
       my $sth = $self->dbi->prepare( q{
           SELECT
-            G.*,
-            IFNULL( I.`min` , 0 ) AS 'min',
-            IFNULL( I.`max` , 0 ) AS 'max'
+            G.*
           FROM
             `} . $tableprefix . q{nntp_groups` AS G
-            LEFT JOIN (
-              SELECT
-                I.`groupid`,
-                MIN( I.`messageid` ) + 0 AS 'min',
-                MAX( I.`messageid` ) + 0 AS 'max'
-              FROM
-                `} . $tableprefix . q{nntp_index` AS I
-              GROUP BY
-                I.`groupid`
-            ) AS I ON( G.`id` = I.`groupid` )
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active` = 'yes'
@@ -269,17 +258,11 @@
 
       while( my $group = $sth->fetchrow_hashref() )
       {
-        if( $group->{min} == $group->{max} )
-        {
-          $group->{min} = $group->{min} > 0 ? -- $group->{min} : 0;
-          $group->{max} = $group->{min};
-        }
-
         my $groupinfo = {
             'id'    => $group->{id}         ,
             'name'  => $group->{group_name} ,
-            'first' => $group->{min}        ,
-            'last'  => $group->{max}        ,
+            'first' => 0                    ,
+            'last'  => 0                    ,
             'post'  => 'n'                  ,
             'i'     => $i++                 ,
           };
@@ -292,42 +275,69 @@
 
 
       #
-      #   Get list of groups with not deleted messages
+      #   Get list of min/max message ids
       #
 
-      $sth = $self->dbi->prepare( q{
+      my $sth = $self->dbi->prepare( q{
           SELECT
-            G.*,
-            IFNULL( I.`min` , 0 ) AS 'min',
-            IFNULL( I.`max` , 0 ) AS 'max'
+            I.`groupid`              AS 'id' ,
+            MIN( I.`messageid` ) + 0 AS 'min',
+            MAX( I.`messageid` ) + 0 AS 'max'
           FROM
-            `} . $tableprefix . q{nntp_groups` AS G
-            LEFT JOIN (
-              SELECT
-                I.`groupid`,
-                MIN( I.`messageid` ) + 0 AS 'min',
-                MAX( I.`messageid` ) + 0 AS 'max'
-              FROM
-                `} . $tableprefix . q{nntp_index` AS I
-              WHERE
-                I.`deleted` = 'no'
-              GROUP BY
-                I.`groupid`
-            ) AS I ON( G.`id` = I.`groupid` )
+            `} . $tableprefix . q{nntp_index` AS I
           WHERE
-                G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
-            AND G.`is_active` = 'yes'
-            AND G.`map_id`    = 0
-          ORDER BY
-            G.`group_name`
+            I.`groupid` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
+          GROUP BY
+            I.`groupid`
         } );
 
       $sth->execute();
 
       while( my $group = $sth->fetchrow_hashref() )
       {
-        $groupstmp->{ $group->{id} }->{first} = $group->{min};
-        $groupstmp->{ $group->{id} }->{last}  = $group->{max};
+        if( exists( $groupstmp->{ $group->{id} } ) )
+        {
+          if( $group->{min} == $group->{max} )
+          {
+            $group->{min} = $group->{min} > 0 ? -- $group->{min} : 0;
+            $group->{max} = $group->{min};
+          }
+
+          $groupstmp->{ $group->{id} }->{first} = $group->{min};
+          $groupstmp->{ $group->{id} }->{last}  = $group->{max};
+        }
+      }
+
+      $sth->finish();
+
+
+      #
+      #   Get list of min/max message ids with not deleted messages
+      #
+
+      $sth = $self->dbi->prepare( q{
+          SELECT
+            I.`groupid`              AS 'id' ,
+            MIN( I.`messageid` ) + 0 AS 'min',
+            MAX( I.`messageid` ) + 0 AS 'max'
+          FROM
+            `} . $tableprefix . q{nntp_index` AS I
+          WHERE
+                I.`groupid` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
+            AND I.`deleted` = 'no'
+          GROUP BY
+            I.`groupid`
+        } );
+
+      $sth->execute();
+
+      while( my $group = $sth->fetchrow_hashref() )
+      {
+        if( exists( $groupstmp->{ $group->{id} } ) )
+        {
+          $groupstmp->{ $group->{id} }->{first} = $group->{min};
+          $groupstmp->{ $group->{id} }->{last}  = $group->{max};
+        }
       }
 
       $sth->finish();
