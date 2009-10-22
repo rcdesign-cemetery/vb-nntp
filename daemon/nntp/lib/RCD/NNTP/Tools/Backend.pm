@@ -243,17 +243,24 @@
       my $sth = $self->dbi->prepare( q{
           SELECT
             G.*,
-            MIN( I.`messageid` ) + 0 AS 'min',
-            MAX( I.`messageid` ) + 0 AS 'max'
+            IFNULL( I.`min` , 0 ) AS 'min',
+            IFNULL( I.`max` , 0 ) AS 'max'
           FROM
-                      `} . $tableprefix . q{nntp_groups` AS G
-            LEFT JOIN `} . $tableprefix . q{nntp_index`  AS I ON( G.`id` = I.`groupid` )
+            `} . $tableprefix . q{nntp_groups` AS G
+            LEFT JOIN (
+              SELECT
+                I.`groupid`,
+                MIN( I.`messageid` ) + 0 AS 'min',
+                MAX( I.`messageid` ) + 0 AS 'max'
+              FROM
+                `} . $tableprefix . q{nntp_index` AS I
+              GROUP BY
+                I.`groupid`
+            ) AS I ON( G.`id` = I.`groupid` )
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active` = 'yes'
             AND G.`map_id`    = 0
-          GROUP BY
-            I.`groupid`
           ORDER BY
             G.`group_name`
         } );
@@ -291,18 +298,26 @@
       $sth = $self->dbi->prepare( q{
           SELECT
             G.*,
-            MIN( I.`messageid` ) + 0 AS 'min',
-            MAX( I.`messageid` ) + 0 AS 'max'
+            IFNULL( I.`min` , 0 ) AS 'min',
+            IFNULL( I.`max` , 0 ) AS 'max'
           FROM
-                      `} . $tableprefix . q{nntp_groups` AS G
-            LEFT JOIN `} . $tableprefix . q{nntp_index`  AS I ON( G.`id` = I.`groupid` )
+            `} . $tableprefix . q{nntp_groups` AS G
+            LEFT JOIN (
+              SELECT
+                I.`groupid`,
+                MIN( I.`messageid` ) + 0 AS 'min',
+                MAX( I.`messageid` ) + 0 AS 'max'
+              FROM
+                `} . $tableprefix . q{nntp_index` AS I
+              WHERE
+                I.`deleted` = 'no'
+              GROUP BY
+                I.`groupid`
+            ) AS I ON( G.`id` = I.`groupid` )
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active` = 'yes'
             AND G.`map_id`    = 0
-            AND I.`deleted`   = 'no'
-          GROUP BY
-            I.`groupid`
           ORDER BY
             G.`group_name`
         } );
