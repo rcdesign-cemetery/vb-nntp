@@ -144,31 +144,60 @@ if( $_REQUEST['do'] == 'checkauth' )
       }
     }
 
-    // get available to user nntp-groups list
-    $groupslist = get_available_groups_list( $vbulletin->userinfo['userid'] );
+    // check for demo access if no full access granted
+    $demo_access = false;
 
-    // message template
-    $tmpl = get_msgtemplate();
+    if( ! $full_access )
+    {
+      $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
 
-    // css
-    $css  = get_css();
+      foreach( $demoaccessgroups as $groupid )
+      {
+        if( is_member_of( $vbulletin->userinfo, $groupid ) )
+        {
+          $demo_access = true;
+          break;
+        }
+      }
+    }
 
-    // menu
-    $menu = get_menu();
+    if( $full_access || $demo_access )
+    {
+      // get available to user nntp-groups list
+      $groupslist = get_available_groups_list( $vbulletin->userinfo['userid'] );
 
-    // demo message if user have demo access only
-    $demo = $full_access == true ? '' : get_demo();
+      // message template
+      $tmpl = get_msgtemplate();
 
-    print_simple_serialized( array(
-      'auth'       => 'success',
-      'access'     => $full_access ? 'full' : 'demo',
-      'userid'     => $vbulletin->userinfo['userid'],
-      'groupslist' => $groupslist,
-      'msgtmpl'    => $tmpl,
-      'css'        => $css,
-      'menu'       => $menu,
-      'demotext'   => $demo,
-    ) );
+      // css
+      $css  = get_css();
+
+      // menu
+      $menu = get_menu();
+
+      // demo message if user have demo access only
+      $demo = $full_access == true ? '' : get_demo();
+
+      print_simple_serialized( array(
+        'auth'       => 'success',
+        'access'     => $full_access ? 'full' : 'demo',
+        'userid'     => $vbulletin->userinfo['userid'],
+        'groupslist' => $groupslist,
+        'msgtmpl'    => $tmpl,
+        'css'        => $css,
+        'menu'       => $menu,
+        'demotext'   => $demo,
+      ) );
+    }
+    else
+    {
+      print_simple_serialized( array(
+        'auth'       => 'failed',
+        'access'     => 'none',
+        'userid'     => 0,
+        'groupslist' => '',
+      ) );
+    }
   }
 }
 
@@ -352,9 +381,8 @@ function get_demo ()
 
   $bbcode_parser = new vB_BbCodeParser( $vbulletin, fetch_tag_list() );
 
-  $demomessage = nntp_get_base64_eval(
-      $bbcode_parser->parse( $vbulletin->options['nntp_demo_text'] )
-    );
+  $demomessage = $bbcode_parser->parse( $vbulletin->options['nntp_demo_text'] );
+  $demomessage = base64_encode( $demomessage );
 
   return $demomessage;
 }

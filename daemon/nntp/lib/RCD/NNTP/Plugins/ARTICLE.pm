@@ -282,7 +282,7 @@
                       ( 0 + $messageid ) % $self->cnf->Get( 'nntp.DemoFactor' )
                    ) )
             {
-              $body = decode_base64( $self->demo( $uuid ) );
+              $body = $self->demo( $uuid );
               $menu = '';
 
               $self->{Toolkit}->Logger->debug(

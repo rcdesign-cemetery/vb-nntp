@@ -17,7 +17,7 @@
     use RCD::NNTP::Plugins::LIST qw(GetGroupsList);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.03"; # $Date: 2009/07/02 12:07:35 $
+    our $VERSION = "0.04"; # $Date: 2009/10/30 12:06:32 $
 
 
     sub init
@@ -120,7 +120,9 @@
         #   And check username and password
         #
 
-        if( $self->authuser( $uuid ) )
+        my $auth_user_status = $self->authuser( $uuid );
+
+        if( 1 == $auth_user_status )
         {
           #
           #   Save state
@@ -141,7 +143,7 @@
               '281 Authentication accepted'
             );
         }
-        else
+        elsif( 0 == $auth_user_status )
         {
           $self->{Toolkit}->Logger->debug(
               'User auth FAILED'
@@ -153,6 +155,12 @@
             );
 
           #$self->checkauth( $uuid );
+        }
+        else
+        {
+          $self->{Toolkit}->Logger->debug(
+              'User auth program fault: no data from backend'
+            );
         }
       }
       else
@@ -182,10 +190,7 @@
       return 0
         if $self->antihack( $uuid );
 
-      return 1
-        if $self->verifyfrontend( $uuid );
-
-      return 0;
+      return $self->verifyfrontend( $uuid );
     }
 
 
@@ -527,7 +532,7 @@
           );
       }
 
-      return undef;
+      return -1;
     }
 
 
