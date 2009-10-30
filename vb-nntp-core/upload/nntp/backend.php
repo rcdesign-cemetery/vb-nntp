@@ -135,14 +135,7 @@ if( $_REQUEST['do'] == 'checkauth' )
     // check group permissions
     $fullaccessgroups = unserialize( $vbulletin->options['nntp_groups'] );
 
-    foreach( $fullaccessgroups as $groupid )
-    {
-      if( is_member_of( $vbulletin->userinfo, $groupid ) )
-      {
-        $full_access = true;
-        break;
-      }
-    }
+    $full_access = is_member_of( $vbulletin->userinfo, $fullaccessgroups );
 
     // check for demo access if no full access granted
     $demo_access = false;
@@ -151,14 +144,7 @@ if( $_REQUEST['do'] == 'checkauth' )
     {
       $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
 
-      foreach( $demoaccessgroups as $groupid )
-      {
-        if( is_member_of( $vbulletin->userinfo, $groupid ) )
-        {
-          $demo_access = true;
-          break;
-        }
-      }
+      $demo_access = is_member_of( $vbulletin->userinfo, $demoaccessgroups );
     }
 
     if( $full_access || $demo_access )
