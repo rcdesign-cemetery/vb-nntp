@@ -15,72 +15,99 @@
 	</dependencies>
 	<codes>
 		<code version="1.0">
-			<installcode><![CDATA[$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_actions` (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `request` text NOT NULL,
-  `status` enum('new','complete','failed') NOT NULL default 'new',
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM;" );
+			<installcode><![CDATA[$db->hide_errors();
 
-$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_cache_messages` (
-  `groupid` int(10) unsigned NOT NULL,
-  `messageid` int(10) unsigned NOT NULL,
-  `updatetime` datetime NOT NULL,
-  `value` text character set ascii NOT NULL COMMENT 'Cached value',
-  PRIMARY KEY  (`groupid`,`messageid`),
-  KEY `Last update time` (`updatetime`)
-) ENGINE=MyISAM COMMENT='NNTP messages cache';" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_auth_cache` (
+    `username` varchar(100) NOT NULL,
+    `authkey` char(32) NOT NULL,
+    `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+    `groupslist` text NOT NULL,
+    `css` text NOT NULL,
+    `menu` text NOT NULL,
+    `demotext` text NOT NULL,
+    `userid` int(10) unsigned NOT NULL,
+    `access` enum('full','demo','none') NOT NULL,
+    PRIMARY KEY  (`username`,`authkey`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+");
 
-$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups` (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `plugin_id` char(20) NOT NULL,
-  `group_name` char(50) NOT NULL,
-  `is_active` enum('yes','no') NOT NULL default 'no',
-  `settings` text NOT NULL,
-  `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
-  `create_date` datetime NOT NULL,
-  PRIMARY KEY  (`id`),
-  KEY `map_id` (`map_id`),
-  KEY `group_name` (`group_name`)
-) ENGINE=MyISAM;" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_cache_messages` (
+    `groupid` int(10) unsigned NOT NULL,
+    `messageid` int(10) unsigned NOT NULL,
+    `body` text NOT NULL,
+    PRIMARY KEY  (`groupid`,`messageid`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='NNTP messages cache';
+");
 
-$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_index` (
-  `groupid` int(10) unsigned NOT NULL,
-  `messageid` int(10) unsigned NOT NULL auto_increment,
-  `refid` int(10) unsigned NOT NULL,
-  `title` char(255) NOT NULL,
-  `datetime` datetime NOT NULL,
-  `userid` int(10) unsigned NOT NULL,
-  `parameters` char(255) NOT NULL,
-  `accesskey` char(32) NOT NULL COMMENT 'Key used to find the record when th source message changed',
-  PRIMARY KEY  (`groupid`,`messageid`),
-  KEY `accesskey` (`accesskey`)
-) ENGINE=MyISAM;" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups` (
+    `id` int(10) unsigned NOT NULL auto_increment,
+    `plugin_id` char(20) NOT NULL,
+    `group_name` char(50) NOT NULL,
+    `is_active` enum('yes','no') NOT NULL default 'no',
+    `settings` text NOT NULL,
+    `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
+    `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+    PRIMARY KEY  (`id`),
+    KEY `map_id` (`map_id`),
+    KEY `group_name` (`group_name`),
+    KEY `date_create` (`date_create`)
+  ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=90 ;
+");
 
-$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_stats` (
-  `userid` int(10) unsigned NOT NULL,
-  `date` date NOT NULL,
-  PRIMARY KEY  (`userid`,`date`),
-  KEY `date` (`date`)
-) ENGINE=MyISAM;" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_index` (
+    `groupid` int(10) unsigned NOT NULL,
+    `messageid` int(10) unsigned NOT NULL auto_increment,
+    `refid` int(10) unsigned NOT NULL,
+    `title` char(255) NOT NULL,
+    `datetime` datetime NOT NULL,
+    `userid` int(10) unsigned NOT NULL,
+    `deleted` enum('no','yes') NOT NULL,
+    `messagetype` enum('forum','blog') NOT NULL,
+    `postid` int(10) unsigned NOT NULL,
+    PRIMARY KEY  (`groupid`,`messageid`),
+    UNIQUE KEY `GroupListHelper` (`groupid`,`deleted`,`messageid`),
+    KEY `Post` (`messagetype`,`postid`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+");
 
-$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_user` (
-  `userid` int(10) unsigned NOT NULL,
-  `nntp_password` char(32) NOT NULL,
-  `use_nntp_password` enum('yes','no') NOT NULL default 'yes',
-  PRIMARY KEY  (`userid`)
-) ENGINE=MyISAM;" );]]></installcode>
-			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_actions`;" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_stats` (
+    `userid` int(10) unsigned NOT NULL,
+    `date` date NOT NULL,
+    PRIMARY KEY  (`userid`,`date`),
+    KEY `date` (`date`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+");
 
-$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_cache_messages`;" );
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_user_settings` (
+    `userid` int(10) unsigned NOT NULL,
+    `nntp_password` char(32) NOT NULL,
+    `use_nntp_password` enum('yes','no') NOT NULL default 'yes',
+    PRIMARY KEY  (`userid`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+");
 
-$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups`;" );
+$db->show_errors();]]></installcode>
+			<uninstallcode><![CDATA[$db->hide_errors();
 
-$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_index`;" );
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_auth_cache`");
 
-$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_stats`;" );
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_cache_messages`");
 
-$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user`;" );]]></uninstallcode>
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups`");
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_index`");
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_stats`");
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
+
+$db->show_errors();]]></uninstallcode>
 		</code>
 	</codes>
 	<templates>
@@ -443,12 +470,12 @@ if ($nntp_demo_access)
 			<phrase name="reindex" date="1225399130" username="Wildev" version=""><![CDATA[Reindex]]></phrase>
 		</phrasetype>
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
-			<phrase name="task_nntp_cleanup_desc" date="1249565225" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_cleanup_log" date="1249565225" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />
+			<phrase name="task_nntp_cleanup_log" date="1256211045" username="Dimit" version="" />
 			<phrase name="task_nntp_cleanup_sessions_desc" date="1249565321" username="Dimit" version="1.3" />
 			<phrase name="task_nntp_cleanup_sessions_log" date="1249565321" username="Dimit" version="1.3" />
 			<phrase name="task_nntp_cleanup_sessions_title" date="1249565321" username="Dimit" version="1.3"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
-			<phrase name="task_nntp_cleanup_title" date="1249565225" username="Dimit" version="1.3"><![CDATA[NNTP: Clean index and cache]]></phrase>
+			<phrase name="task_nntp_cleanup_title" date="1256211039" username="Dimit" version=""><![CDATA[NNTP: Clean index and cache]]></phrase>
 		</phrasetype>
 		<phrasetype name="Error Messages" fieldname="error">
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
