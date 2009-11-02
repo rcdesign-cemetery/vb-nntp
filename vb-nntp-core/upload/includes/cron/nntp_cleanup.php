@@ -114,9 +114,20 @@ $db->query_write("
         AND CacheT.`messageid` = IndexT.`messageid`
       )
   WHERE
-       IndexT.`messageid` IS NULL
-    OR IndexT.`deleted` = 'yes'
+    IndexT.`messageid` IS NULL
 ");
+
+
+/*
+ *  Optimize tables
+ */
+
+$db->query_write("
+  OPTIMIZE TABLE
+    `" . TABLE_PREFIX . "nntp_cache_messages`,
+    `" . TABLE_PREFIX . "nntp_index`  
+");
+
 
 //log_cron_action('Messages cache cleaned', $nextitem, 1);
 
