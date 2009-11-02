@@ -17,7 +17,7 @@
     use MIME::Base64 qw(encode_base64 decode_base64);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.02"; # $Date: 2009/07/01 22:15:25 $
+    our $VERSION = "0.03"; # $Date: 2009/11/02 17:05:15 $
 
     our @EXPORT    = qw();
     our @EXPORT_OK = qw(parse_message_id);
@@ -192,13 +192,13 @@
               . '>';
 
           my $message_id =
-            $messageid . ' ' . $message->{headers}->{'Message-ID'}
-            . ' article retrieved -';
+            ( $res->{matched} eq 'messageid' ? 0 : $messageid )
+            . ' ' . $message->{headers}->{'Message-ID'};
 
           my $status_response =
-            $subj eq 'all'  ? "220 $message_id head and body follow"    :
-            $subj eq 'head' ? "221 $message_id head follows"            :
-            $subj eq 'body' ? "222 $message_id body follows"            : "";
+            $subj eq 'all'  ? "220 $message_id" :
+            $subj eq 'head' ? "221 $message_id" :
+            $subj eq 'body' ? "222 $message_id" : "";
 
           $self->WriteClient(
               $uuid,

@@ -14,7 +14,7 @@
     use strict;
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.01"; # $Date: 2008/07/21 16:01:40 $
+    our $VERSION = "0.02"; # $Date: 2009/11/02 15:45:10 $
 
 
     sub init
@@ -36,14 +36,12 @@
 
     #   ========================================================================
     #
-    #     RFC 977
-    #     http://www.faqs.org/rfcs/rfc977.html
+    #     RFC 3977
+    #     http://www.faqs.org/rfcs/rfc3977.html
     #
     #   ------------------------------------------------------------------------
     #
-    #   3.2.  The GROUP command
-    #
-    #   3.2.1.  GROUP
+    #   6.1.1.  GROUP
     #
     #     Input parameters:
     #
@@ -51,7 +49,7 @@
     #
     #     Responses:
     #
-    #       211 n f l s group selected
+    #       211 n f l s
     #               n = estimated number of articles in group,
     #               f = first article number in the group,
     #               l = last article number in the group,
@@ -122,7 +120,6 @@
                   $group->{first} ,
                   $group->{last}  ,
                   $group->{name}  ,
-                  'group selected',
                 )
             );
 
