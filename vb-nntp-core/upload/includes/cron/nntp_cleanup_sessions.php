@@ -14,7 +14,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 
 if (!is_object($vbulletin->db))
 {
-	exit;
+  exit;
 }
 
 // ########################################################################

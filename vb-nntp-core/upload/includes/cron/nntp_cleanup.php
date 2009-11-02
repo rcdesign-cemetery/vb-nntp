@@ -14,7 +14,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 
 if (!is_object($vbulletin->db))
 {
-	exit;
+  exit;
 }
 
 // ########################################################################
@@ -47,53 +47,53 @@ $groups = $db->query_read("
 
 while( $group = $db->fetch_array( $groups ) )
 {
-	// check messages count limit in group
-	$countlimit = $db->query_first( "
-		SELECT
-			`messageid`
-		FROM
-			`" . TABLE_PREFIX . "nntp_index`
-		WHERE
-			`groupid` = " . $group['id'] . "
-		ORDER BY
-			`messageid` DESC
-		LIMIT
-			" . intval( $maxrowsnum ) . ", 1
-	");
+  // check messages count limit in group
+  $countlimit = $db->query_first( "
+    SELECT
+      `messageid`
+    FROM
+      `" . TABLE_PREFIX . "nntp_index`
+    WHERE
+      `groupid` = " . $group['id'] . "
+    ORDER BY
+      `messageid` DESC
+    LIMIT
+      " . intval( $maxrowsnum ) . ", 1
+  ");
 
-	$countlimit = intval( $countlimit['messageid'] );
+  $countlimit = $minmessageid = intval( $countlimit['messageid'] );
 
-	// check date limit in group
-	$datelimit = $db->query_first( "
-		SELECT
-			`messageid`
-		FROM
-			`" . TABLE_PREFIX . "nntp_index`
-		WHERE
-					`groupid`    = " . $group['id']  . "
-			AND `messageid` >= " . $minmessageid . "
-			AND `datetime`  <  DATE_SUB( NOW(), INTERVAL " . intval( $dayslimit ) . " DAY )
-	");
+  // check date limit in group
+  $datelimit = $db->query_first( "
+    SELECT
+      `messageid`
+    FROM
+      `" . TABLE_PREFIX . "nntp_index`
+    WHERE
+          `groupid`    = " . $group['id']  . "
+      AND `messageid` >= " . $minmessageid . "
+      AND `datetime`  <  DATE_SUB( NOW(), INTERVAL " . intval( $dayslimit ) . " DAY )
+  ");
 
-	$datelimit = intval( $datelimit['messageid'] );
+  $datelimit = intval( $datelimit['messageid'] );
 
-	// get maximum limit
-	$minmessageid = $datelimit > $countlimit
-		? $datelimit
-		: $countlimit;
+  // get maximum limit
+  $minmessageid = $datelimit > $countlimit
+    ? $datelimit
+    : $countlimit;
 
-	// check this limit less than maximum message id in group
-	$minmessageid = $minmessageid < $group['maxmessageid']
-		? $minmessageid
-		: $group['maxmessageid'];
+  // check this limit less than maximum message id in group
+  $minmessageid = $minmessageid < $group['maxmessageid']
+    ? $minmessageid
+    : $group['maxmessageid'];
 
-	$db->query_write("
-		DELETE FROM
-			`" . TABLE_PREFIX . "nntp_index`
-		WHERE
-					`groupid`   = " . intval($group['id'] ) . "
-			AND `messageid` < " . intval($minmessageid) . "
-	");
+  $db->query_write("
+    DELETE FROM
+      `" . TABLE_PREFIX . "nntp_index`
+    WHERE
+          `groupid`   = " . intval($group['id'] ) . "
+      AND `messageid` < " . intval($minmessageid) . "
+  ");
 }
 
 $db->free_result($groups);
