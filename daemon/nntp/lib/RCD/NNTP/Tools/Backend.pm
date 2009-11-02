@@ -440,7 +440,7 @@
 
         $groupinfo = {
             id    => $data->{groupid}   ,
-            name  => $data->{group_name},
+            name  => $data->{groupname} ,
             first => $min               ,
             last  => $max               ,
             count => $count             ,
