@@ -18,7 +18,7 @@
     use Cache::FastMmap;
     use Wildev::AppServer::Toolkit;
 
-    our $VERSION = "0.03"; # $Date: 2009/08/11 01:30:48 $
+    our $VERSION = "0.04"; # $Date: 2009/11/03 16:50:23 $
 
     our @EXPORT    = qw();
     our @EXPORT_OK = qw(WriteClient cache dbi check_dbi uuid client cnf);
@@ -414,23 +414,39 @@
 
       my $info = {};
 
-      if( $date =~ /^(\d\d)(\d\d)(\d\d)$/ )
+      if( $date =~ /^(\d{2}|\d{4})(\d{2})(\d{2})$/ )
       {
         #
-        #   The date is sent as 6 digits in the format YYMMDD, where YY is the
-        #   last two digits of the year, MM is the two digits of the month
-        #   (with leading zero, if appropriate), and DD is the day of the month
-        #   (with leading zero, if appropriate).
+        #   RFC 3977 (7.3.2)
         #
-        #   The closest century is assumed as part of the year
-        #   (i.e., 86 specifies 1986, 30 specifies 2030, 99 is 1999, 00 is
-        #   2000).
+        #   The date is specified as 6 or 8 digits in the format [xx]yymmdd,
+        #   where xx is the first two digits of the year (19-99), yy is the last
+        #   two digits of the year (00-99), mm is the month (01-12), and dd is
+        #   the day of the month (01-31). Clients SHOULD specify all four digits
+        #   of the year.  If the first two digits of the year are not specified
+        #   (this is supported only for backward compatibility), the year is to
+        #   be taken from the current century if yy is smaller than or equal to
+        #   the current year, and the previous century otherwise.
         #
 
-        $info->{year}  = $1 <= 50 ? ( 2000 + $1 ) : ( 1900 + $1 );
-
+        $info->{year}  = $1;
         $info->{month} = $2 + 0;
         $info->{day}   = $3 + 0;
+
+        if( length( $info->{year} ) )
+        {
+          $info->{year} += 0;
+
+          my @current_time     = $gmt eq 'GMT' ? gmtime : localtime;
+             $current_time[5] += 1900;
+          my $current_year     = $current_time[5] % 100;
+          my $current_century  = $current_time[5] - $current_year;
+
+          $info->{year} +=
+            $info->{year} <= $current_year
+              ?   $current_century
+              : ( $current_century - 100 );
+        }
       }
       else
       {
@@ -439,25 +455,50 @@
         $info->{day}   = 1;
       }
 
-      if( $time =~ /^(\d\d)(\d\d)(\d\d)$/ )
+      if( $time =~ /^(\d{2})(\d{2})(\d{2})$/ )
       {
         #
-        #   Time must also be specified.  It must be as 6 digits HHMMSS with HH
-        #   being hours on the 24-hour clock, MM minutes 00-59, and SS seconds
-        #   00-59.  The time is assumed to be in the server's timezone unless
-        #   the token "GMT" appears, in which case both time and date are
-        #   evaluated at the 0 meridian.
+        #   RFC 3977 (7.3.2)
+        #
+        #   The time is specified as 6 digits in the format hhmmss, where hh is
+        #   the hours in the 24-hour clock (00-23), mm is the minutes (00-59),
+        #   and ss is the seconds (00-60, to allow for leap seconds).  The token
+        #   "GMT" specifies that the date and time are given in Coordinated
+        #   Universal Time [TF.686-1]; if it is omitted, then the date and time
+        #   are specified in the server's local timezone.  Note that there is no
+        #   way of using the protocol specified in this document to establish
+        #   the server's local timezone.
         #
 
         $info->{hours}   = $1 + 0;
         $info->{minutes} = $2 + 0;
         $info->{seconds} = $3 + 0;
+
+        $info->{hours}   = $info->{hours}   <= 23 ? $info->{hours}   : 0;
+        $info->{minutes} = $info->{minutes} <= 59 ? $info->{minutes} : 0;
+        $info->{seconds} = $info->{seconds} <= 59 ? $info->{seconds} : 0;
       }
       else
       {
         $info->{hours}   = 0;
         $info->{minutes} = 0;
-        $info->{seconds} = 1;
+        $info->{seconds} = 0;
+      }
+
+      foreach( keys %{ $info } )
+      {
+        #
+        #   Format each value to have 2 digits, except 'year' - 4 digits
+        #
+
+        if( $_ ne 'year' )
+        {
+          $info->{$_} = sprintf( "%02d", $info->{$_} );
+        }
+        else
+        {
+          $info->{$_} = sprintf( "%04d", $info->{$_} );
+        }
       }
 
       $info->{gmt} = $gmt eq 'GMT' ? 'GMT' : '';
