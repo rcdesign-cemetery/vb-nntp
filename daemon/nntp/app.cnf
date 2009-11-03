@@ -32,7 +32,7 @@ Controller        = Wildev::AppServer::Protocol::NNTP
 
 [nntp]
 PluginBaseName    = RCD::NNTP::Plugins
-Plugins           = [ article, authinfo, group, list, mode, newgroups, newnews, xhdr, xover ]
+Plugins           = [ article, authinfo, group, list, mode, newgroups, newnews, xhdr, xover, date ]
 AllowPosting      = no
 DemoFactor        = 2
 
