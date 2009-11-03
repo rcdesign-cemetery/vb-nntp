@@ -20,7 +20,7 @@
     use Wildev::AppServer::Toolkit;
     use RCD::NNTP::Base::Plugin qw(cache dbi check_dbi uuid client cnf);
 
-    our $VERSION = "0.05"; # $Date: 2009/10/22 21:20:00 $
+    our $VERSION = "0.06"; # $Date: 2009/11/03 15:57:30 $
 
 
     sub new
@@ -659,6 +659,85 @@
       }
 
       $message;
+    }
+
+
+    #
+    #   New groups list
+    #
+
+    sub cmd_newgroups
+    {
+      my $self = shift;
+      my $data = shift;
+
+      my $groups = [];
+
+      unless( exists( $data->{sdata}->{date} )
+              && ref( $data->{sdata}->{date} ) eq 'HASH' )
+      {
+        #
+        #   Return error 'command syntax error' to save request parameters
+        #   to investigate them.
+        #
+
+        $self->{Toolkit}->Logger->error(
+            'Newgroups: Command syntax error'
+          );
+
+        return 'command syntax error';
+      }
+
+      my $tableprefix  = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
+
+      #
+      #   Get groups info list
+      #
+
+      my $date = $data->{sdata}->{date};
+
+      $self->{Toolkit}->Logger->debug(
+          'Newgroups date limit: '
+          . join( '.', $date->{year} , $date->{month}  , $date->{day}     )
+          . ' '
+          . join( ':', $date->{hours}, $date->{minutes}, $date->{seconds} )
+        );
+
+      my $sth = $self->dbi->prepare( q{
+          SELECT
+            G.`id`
+          FROM
+            `} . $tableprefix . q{nntp_groups` AS G
+          WHERE
+                G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
+            AND G.`is_active`    = 'yes'
+            AND G.`map_id`       = 0
+            AND G.`date_create` >= STR_TO_DATE(
+              '}
+              . join( '.', $date->{year} , $date->{month}  , $date->{day}     )
+              . ' '
+              . join( ':', $date->{hours}, $date->{minutes}, $date->{seconds} )
+              . q{',
+              '%Y.%m.%d %H:%i:%s'
+            )
+          ORDER BY
+            G.`group_name`
+        } );
+
+      $sth->execute();
+
+      while( my $group = $sth->fetchrow_hashref() )
+      {
+        push @{ $groups }, $group->{id};
+      }
+
+      $sth->finish();
+
+      $self->{Toolkit}->Logger->debug(
+          'Newgroups groups found: ' . join( ',', @{ $groups } )
+        );
+
+      $groups;
     }
 
 

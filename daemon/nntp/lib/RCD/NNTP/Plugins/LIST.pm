@@ -146,7 +146,8 @@
     #     $self->client( $uuid )->{groupslist}
     #
     #   Input parameters:
-    #     uuid - Connection ID
+    #     uuid     - Connection ID
+    #     no_clean - boolean, do not clean existing groups data
     #
     #   Returns nothing.
     #
@@ -154,13 +155,26 @@
     #   initialize groups info.
     #
 
-    sub GetGroupsList ($)
+    sub GetGroupsList ($;$)
     {
       my $self = shift;
       my $uuid = shift;
 
-      $self->client( $uuid )->{groups}   = {};
-      $self->client( $uuid )->{groupids} = {};
+      my $no_clean = shift || 0;
+
+      if( $no_clean )
+      {
+        $self->client( $uuid )->{groups}   = {}
+          unless defined( $self->client( $uuid )->{groups} );
+
+        $self->client( $uuid )->{groupids} = {}
+          unless defined( $self->client( $uuid )->{groupids} );
+      }
+      else
+      {
+        $self->client( $uuid )->{groups}   = {};
+        $self->client( $uuid )->{groupids} = {};
+      }
 
       if( $self->checkauth( $uuid ) )
       {

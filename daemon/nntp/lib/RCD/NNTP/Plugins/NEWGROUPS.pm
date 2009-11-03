@@ -12,9 +12,10 @@
     #
 
     use strict;
+    use RCD::NNTP::Plugins::LIST qw(GetGroupsList);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.01"; # $Date: 2008/07/20 12:10:56 $
+    our $VERSION = "0.02"; # $Date: 2009/11/03 16:59:05 $
 
 
     sub init
@@ -36,30 +37,28 @@
 
     #   ========================================================================
     #
-    #     RFC 977
-    #     http://www.faqs.org/rfcs/rfc977.html
+    #     RFC 3977
+    #     http://www.faqs.org/rfcs/rfc3977.html
     #
     #   ------------------------------------------------------------------------
     #
-    #   3.7.  The NEWGROUPS command
+    #   7.3.  The NEWGROUPS command
     #
-    #   3.7.1.  NEWGROUPS
+    #   7.3.1.  NEWGROUPS
     #
     #     Input parameters:
     #
-    #       <date> <time> [GMT] [<distributions>]
+    #       <date> <time> [GMT]
     #
     #       A list of newsgroups created since <date and time> will be listed
     #       in the same format as the LIST command.
     #
-    #       <date> is sent as 6 digits in the format YYMMDD
-    #       <time> is sent as 6 digits HHMMSS
+    #       <date> is sent as 6/8 digits in the format yymmdd/yyyymmdd
+    #       <time> is sent as 6 digits hhmmss
     #
     #       The time is assumed to be in the server's timezone unless the
     #       token "GMT" appears, in which case both time and date are evaluated
     #       at the 0 meridian.
-    #
-    #       <distributions> (optional) is a list of distribution groups
     #
     #     Responses
     #
@@ -71,18 +70,94 @@
     {
       my $self = shift;
 
-      my ( $uuid, $date, $time, $gmt, $dists ) = @_;
+      my ( $uuid, $date, $time, $gmt ) = @_;
 
       if( $self->checkauth( $uuid ) )
       {
+        my $date = $self->parse_date_time( $date, $time, $gmt );
+
         $self->WriteClient(
             $uuid,
             '231 list of newsgroups follows'
           );
 
         #
-        #   Do not even check for new available groups
+        #   Find new groups list within user accessible groups
         #
+
+        if( scalar( $self->client( $uuid )->{groupslist} ) )
+        {
+          my $groups = $self->forum( $uuid )->do( {
+              do            => 'newgroups',
+              auth_ok       => 'yes',
+              nntp_username => $self->client( $uuid )->{username},
+              nntp_userid   => $self->client( $uuid )->{userid}  ,
+              access        => $self->client( $uuid )->{access}  ,
+              sdata         => { date => $date }
+            } );
+  
+          if( $groups
+              && ref( $groups ) eq 'ARRAY'
+              && scalar( @{ $groups } ) > 0 )
+          {
+            #
+            #   Save full list of accessible groups
+            #
+
+            my @fullgroupslist = @{ $self->client( $uuid )->{groupslist} };
+
+            #
+            #   Replace full groups list to new groups list
+            #
+
+            @{ $self->client( $uuid )->{groupslist} } = @{ $groups };
+
+            #
+            #   Get groups statistics
+            #   Set 'no_clean' flag to '1' to skip cleaning existing groups data
+            #
+
+            $self->GetGroupsList( $uuid, 1 );
+
+            #
+            #   Restore full list of accessible groups
+            #
+
+            @{ $self->client( $uuid )->{groupslist} } = @fullgroupslist;
+
+            #
+            #   Sort groups list
+            #
+
+            my $isorted = {};
+  
+            foreach my $groupid ( @{ $groups } )
+            {
+              my $group = $self->client( $uuid )->{groupids}->{ $groupid };
+              $isorted->{ $group->{i} } = $groupid;
+            }
+  
+            foreach my $i ( sort { $a <=> $b } keys %{ $isorted } )
+            {
+              my $groupid = $isorted->{ $i };
+              my $group   = $self->client( $uuid )->{groupids}->{ $groupid };
+  
+              #
+              #   Print group anounce
+              #
+  
+              $self->WriteClient(
+                  $uuid,
+                  join( ' ',
+                      $group->{name}  ,
+                      $group->{last}  ,
+                      $group->{first} ,
+                      $group->{post}  ,
+                    )
+                );
+            }
+          }
+        }
 
         $self->WriteClient(
             $uuid,
