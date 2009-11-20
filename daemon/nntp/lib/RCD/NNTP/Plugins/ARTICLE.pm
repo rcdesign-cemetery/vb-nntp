@@ -446,26 +446,10 @@
 
     sub msgtemplate ($)
     {
-      my $self    = shift;
-      my $uuid    = shift;
-      my $groupid = shift;
+      my $self = shift;
+      my $uuid = shift;
 
-      unless( $self->client( $uuid )->{msgtemplate}->{$groupid} )
-      {
-        my $tmpl = $self->forum( $uuid )->do( {
-            do            => 'msgtemplate',
-            auth_ok       => 'yes',
-            nntp_username => $self->client( $uuid )->{username},
-            nntp_userid   => $self->client( $uuid )->{userid}  ,
-            access        => $self->client( $uuid )->{access}  ,
-            groupid       => $groupid,
-          } );
-
-        $self->client( $uuid )->{msgtemplate}->{$groupid} =
-          decode_base64( $tmpl || '' );
-      }
-
-      $self->client( $uuid )->{msgtemplate}->{$groupid};
+      $self->client( $uuid )->{tmpl};
     }
 
 

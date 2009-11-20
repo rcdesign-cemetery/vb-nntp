@@ -1,7 +1,7 @@
 <?php
 /*======================================================================*\
 || #################################################################### ||
-|| # NNTP Gate: Plugin Topics 1.3                                     # ||
+|| # NNTP Gate: Plugin Topics 1.5                                     # ||
 || # ---------------------------------------------------------------- # ||
 || # Copyright © 2009 Dmitry Titov, Vitaly Puzrin.                    # ||
 || # All Rights Reserved.                                             # ||
@@ -31,7 +31,7 @@ require_once(DIR . '/includes/functions_nntp.php');
  * 
  */
 
-function nntp_gate_Topics_check_groups_list( &$activegroups, &$userinfo )
+function nntp_gate_Topics_check_groups_list( &$activegroups, &$membergroupids )
 {
   global $vbulletin;
 
@@ -41,14 +41,28 @@ function nntp_gate_Topics_check_groups_list( &$activegroups, &$userinfo )
   }
 
   require_once( DIR . '/includes/functions.php' );
-  cache_permissions( $userinfo );
   cache_ordered_forums();
 
+  $forumpermissions = array();
+
+  foreach( array_keys( $vbulletin->forumcache ) AS $forumid )
+  {
+    if( ! isset( $forumpermissions["$forumid"] ) )
+    {
+      $forumpermissions["$forumid"] = 0;
+    }
+
+    foreach( $membergroupids AS $usergroupid )
+    {
+      $forumpermissions["$forumid"]
+        |= $vbulletin->forumcache["$forumid"]['permissions']["$usergroupid"];
+    }
+  }
+
   $forumids = array();
-  $userid   = $userinfo['userid'];
 
   // Get forums that allow canview access
-  foreach( $userinfo['forumpermissions'] AS $forumid => $perm )
+  foreach( $forumpermissions AS $forumid => $perm )
   {
     if(     ( $perm & $vbulletin->bf_ugp_forumpermissions['canview'] )
         AND ( $perm & $vbulletin->bf_ugp_forumpermissions['canviewthreads'] )

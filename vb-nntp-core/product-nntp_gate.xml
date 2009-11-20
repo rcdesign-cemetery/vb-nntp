@@ -3,10 +3,10 @@
 <product productid="nntp_gate" active="1">
 	<title>NNTP Gate</title>
 	<description />
-	<version>1.3</version>
+	<version>1.4</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>1249506000</apm_releasedate>
+	<apm_releasedate>1258581600</apm_releasedate>
 	<apm_author />
 	<apm_relatedurl />
 	<apm_extrainfo />
@@ -106,6 +106,50 @@ $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_index`");
 $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_stats`");
 
 $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
+
+$db->show_errors();]]></uninstallcode>
+		</code>
+		<code version="1.4">
+			<installcode><![CDATA[$db->hide_errors();
+
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groupaccess_cache` (
+    `usergroupslist` char(100) NOT NULL,
+    `nntpgroupslist` varchar(7000) NOT NULL,
+    `access_level` enum('full','demo','none') NOT NULL,
+    `template` varchar(2000) NOT NULL,
+    `css` varchar(5000) NOT NULL,
+    `menu` varchar(2000) NOT NULL,
+    `demotext` varchar(5000) NOT NULL,
+    PRIMARY KEY  (`usergroupslist`)
+  ) ENGINE=MEMORY DEFAULT CHARSET=utf8;
+");
+
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_userauth_cache` (
+    `username` varchar(100) NOT NULL,
+    `authhash` char(32) NOT NULL,
+    `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+    `usergroupslist` varchar(100) NOT NULL,
+    `userid` int(10) unsigned NOT NULL,
+    `access_granted` enum('yes','no') NOT NULL default 'no' COMMENT 'Have user any access to nntp-gate?',
+    `sessionkey` int(10) unsigned NOT NULL,
+    PRIMARY KEY  (`username`,`authhash`),
+    UNIQUE KEY `sessionkey` (`sessionkey`),
+    KEY `usergroupslist` (`usergroupslist`)
+  ) ENGINE=MEMORY DEFAULT CHARSET=utf8;
+");
+
+$db->query("
+  DROP TABLE `" . TABLE_PREFIX . "nntp_auth_cache`;
+");
+
+$db->show_errors();]]></installcode>
+			<uninstallcode><![CDATA[$db->hide_errors();
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groupaccess_cache`");
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_userauth_cache`");
 
 $db->show_errors();]]></uninstallcode>
 		</code>
@@ -442,6 +486,14 @@ if ($nntp_demo_access)
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
+			<title>Turn on forum for backend.php</title>
+			<hookname>global_start</hookname>
+			<phpcode><![CDATA[if( ! $vbulletin->options['bbactive'] AND defined( 'NNTP_BACKEND' ) )
+{
+  $vbulletin->options['bbactive'] = true;
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
 			<title>Admin: Add Template Group for NNTP Gate</title>
 			<hookname>template_groups</hookname>
 			<phpcode><![CDATA[$only['nntp'] = $vbphrase['group_nntp_gate'];]]></phpcode>
@@ -472,10 +524,13 @@ if ($nntp_demo_access)
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
 			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />
 			<phrase name="task_nntp_cleanup_log" date="1256211045" username="Dimit" version="" />
-			<phrase name="task_nntp_cleanup_sessions_desc" date="1249565321" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_cleanup_sessions_log" date="1249565321" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_cleanup_sessions_title" date="1249565321" username="Dimit" version="1.3"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
+			<phrase name="task_nntp_cleanup_sessions_desc" date="1258622691" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_sessions_log" date="1258622691" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_cleanup_sessions_title" date="1258622691" username="Dimit" version="1.3"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
 			<phrase name="task_nntp_cleanup_title" date="1256211039" username="Dimit" version=""><![CDATA[NNTP: Clean index and cache]]></phrase>
+			<phrase name="task_nntp_update_groupaccess_cache_desc" date="1258622776" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_update_groupaccess_cache_log" date="1258622776" username="Dimit" version="1.3" />
+			<phrase name="task_nntp_update_groupaccess_cache_title" date="1258622776" username="Dimit" version="1.3"><![CDATA[NNTP: update groupaccess cache]]></phrase>
 		</phrasetype>
 		<phrasetype name="Error Messages" fieldname="error">
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
@@ -629,6 +684,10 @@ if ($nntp_demo_access)
 		<cron varname="nntp_cleanup_sessions" active="1" loglevel="1">
 			<filename>./includes/cron/nntp_cleanup_sessions.php</filename>
 			<scheduling weekday="-1" day="-1" hour="-1" minute="5,15,25,35,45,55" />
+		</cron>
+		<cron varname="nntp_update_groupaccess_cache" active="1" loglevel="1">
+			<filename>./includes/cron/nntp_update_groupaccess_cache.php</filename>
+			<scheduling weekday="-1" day="-1" hour="-1" minute="2,12,22,32,42,52" />
 		</cron>
 	</cronentries>
 	<faqentries>

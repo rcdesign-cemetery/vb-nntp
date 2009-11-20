@@ -1,7 +1,7 @@
 <?php
 /*======================================================================*\
 || #################################################################### ||
-|| # NNTP Gate: Functions 1.3                                         # ||
+|| # NNTP Gate: Functions 1.4                                         # ||
 || # ---------------------------------------------------------------- # ||
 || # Copyright © 2009 Dmitry Titov, Vitaly Puzrin.                    # ||
 || # All Rights Reserved.                                             # ||
@@ -14,6 +14,11 @@ if (!isset($GLOBALS['vbulletin']->db))
 {
   exit;
 }
+
+
+// ######################### REQUIRE BACK-END ############################
+require_once( DIR . '/includes/functions.php' );
+require_once( DIR . '/includes/class_bbcode.php' );
 
 
 function nntp_get_base64_eval ( $text = '' )
@@ -493,4 +498,176 @@ function nntp_move_thread ( $srcgroupid, $dstgroupid, $refid, $copy = false, $po
 			");
 		}
   }
+}
+
+
+
+/*
+ *  Insert/update groupaccess_cache item based on user's groups list
+ *
+ *  Input parameters:
+ *    usergroupslist - (text) user's groups list, first element - main group
+ *
+ */
+
+function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
+{
+  global $vbulletin;
+
+  $membergroupids = explode( ',', $usergroupslist );
+  $usergroupid    = array_shift( $membergroupids );
+
+  $user = array(
+    'usergroupid'    => $usergroupid,
+    'membergroupids' => implode( ',', $membergroupids )
+  );
+
+  $membergroupids = fetch_membergroupids_array( $user );
+
+  if( sizeof( $membergroupids ) == 1
+      OR !( $vbulletin->usergroupcache["$usergroupid"]['genericoptions']
+            & $vbulletin->bf_ugp_genericoptions['allowmembergroups']     ) )
+  {
+    // if primary usergroup doesn't allow member groups then get rid of them!
+    $membergroupids = array( $usergroupid );
+  }
+
+  $nntpgroupslist = nntp_get_available_groups_list( $membergroupids );
+  $access_level   = nntp_get_access_level( $usergroupid, $membergroupids );
+  $template       = nntp_get_eval( fetch_template( 'nntp_message_template' ) );
+  $css            = nntp_get_eval( fetch_template( 'nntp_message_css'      ) );
+  $menu           = nntp_get_eval( fetch_template( 'nntp_message_menu'     ) );
+  $demotext       = nntp_get_demo();
+
+
+  // update/insert data into db cache
+  $vbulletin->db->query_write("
+    REPLACE INTO
+      `" . TABLE_PREFIX . "nntp_groupaccess_cache`
+    SET
+      `usergroupslist` = '" . $vbulletin->db->escape_string( $usergroupslist ) . "',
+      `nntpgroupslist` = '" . $vbulletin->db->escape_string( $nntpgroupslist ) . "',
+      `access_level`   = '" . $vbulletin->db->escape_string( $access_level   ) . "',
+      `template`       = '" . $vbulletin->db->escape_string( $template       ) . "',
+      `css`            = '" . $vbulletin->db->escape_string( $css            ) . "',
+      `menu`           = '" . $vbulletin->db->escape_string( $menu           ) . "',
+      `demotext`       = '" . $vbulletin->db->escape_string( $demotext       ) . "'
+  ");
+}
+
+
+/*
+ *  Returns evaled text
+ */
+
+function nntp_get_eval ( $text = '' )
+{
+  global $vbulletin, $db, $globaltemplates, $vbphrase;
+
+  $str = '';
+
+  eval('$str = "' . $text . '";');
+
+  return $str;
+}
+
+
+/*
+ *  Returns available to user groups list
+ */
+
+function nntp_get_available_groups_list ( $membergroupids )
+{
+  global $vbulletin;
+
+  $activegroups    = array();
+  $availablegroups = array();
+
+  $activegroupslist = $vbulletin->db->query_read("
+    SELECT
+      *
+    FROM
+      `" . TABLE_PREFIX . "nntp_groups`
+    WHERE
+      `is_active` = 'yes' AND
+      `map_id`    = 0
+    ORDER BY
+      `group_name`
+  ");
+
+  $i = 0;
+
+  while( $group = $vbulletin->db->fetch_array( $activegroupslist ) )
+  {
+    $group['settings'] = unserialize( $group['settings'] );
+
+    // by default the group is not available
+    // plugins should check and turn on groups available to user
+    $group['available'] = false;
+
+    $activegroups[$i] = $group;
+
+    $i++;
+  }
+
+  ($hook = vBulletinHook::fetch_hook('nntp_gate_backend_check_groups_list')) ? eval($hook) : false;
+
+  foreach( $activegroups as $nntpid => &$group )
+  {
+    if( $group['available'] == true )
+    {
+      $availablegroups[] = $group['id'];
+    }
+  }
+
+  $availablegroupslist = implode( ',', $availablegroups );
+
+  return $availablegroupslist;
+}
+
+
+/*
+ *  Demo message
+ */
+
+function nntp_get_demo ()
+{
+  global $vbulletin;
+
+  $bbcode_parser = new vB_BbCodeParser( $vbulletin, fetch_tag_list() );
+
+  $demomessage = $bbcode_parser->parse( $vbulletin->options['nntp_demo_text'] );
+
+  return $demomessage;
+}
+
+
+/*
+ *  Get access level (full/demo/none) for user's groupslist
+ */
+
+function nntp_get_access_level ( $usergroupid, $membergroupids = array() )
+{
+  global $vbulletin;
+
+  $userinfo = array(
+    'userid'         => 0,
+    'usergroupid'    => $usergroupid,
+    'membergroupids' => $membergroupids,
+  );
+
+  // default value
+  $access_level = 'none';
+
+  // check group permissions
+  $fullaccessgroups = unserialize( $vbulletin->options['nntp_groups']      );
+  $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
+
+  $full_access = is_member_of( $userinfo, $fullaccessgroups, false );
+  $demo_access = is_member_of( $userinfo, $demoaccessgroups, false );
+
+  $access_level = $demo_access === true ? 'demo' : $access_level;
+  $access_level = $full_access === true ? 'full' : $access_level;
+
+  return $access_level;
 }

@@ -12,12 +12,9 @@
     #
 
     use strict;
-    use Digest::MD5 qw(md5_hex);
-    use MIME::Base64 qw(encode_base64 decode_base64);
-    use RCD::NNTP::Plugins::LIST qw(GetGroupsList);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.04"; # $Date: 2009/10/30 12:06:32 $
+    our $VERSION = "0.06"; # $Date: 2009/11/17 17:03:49 $
 
 
     sub init
@@ -184,219 +181,10 @@
         unless defined( $self->client( $uuid )->{username} ) &&
                defined( $self->client( $uuid )->{password} )    ;
 
-      return 1
-        if $self->cachedauth( $uuid );
-
-      return 0
-        if $self->antihack( $uuid );
+      #return 0
+      #  if $self->antihack( $uuid );
 
       return $self->verifyfrontend( $uuid );
-    }
-
-
-    #
-    #   Check for allready cached auth info
-    #
-    #   Input parameters:
-    #     uuid - Connection ID
-    #
-    #   Returns scalar value:
-    #     0    - access denied
-    #     1    - access granted (demo/full)
-    #
-
-    sub cachedauth
-    {
-      my $self = shift;
-      my $uuid = shift;
-
-      #
-      #   check if there is allready marked success auth with given username
-      #   and password in the cache
-      #
-
-      my $cache = $self->cache( $uuid );
-      $cache->{auth} ||= {};
-
-      my $auth    = $cache->{auth};
-      my $authkey = $self->authkey( $uuid );
-      my $res     = {};
-      my $retcode = 0;
-
-      if( $auth->{data} && defined( $auth->{data}->{ $authkey } ) )
-      {
-        $res = $auth->{data}->{ $authkey };
-      }
-      else
-      {
-        #
-        #   Try to get data from external cache: database
-        #
-
-        my $tableprefix = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
-
-        $res = $self->dbi->selectrow_hashref( q{
-            SELECT
-              *
-            FROM
-              `} . $tableprefix . q{nntp_auth_cache`
-            WHERE
-                  `username` = ?
-              AND `authkey`  = ?
-          },
-          undef,
-          $self->client( $uuid )->{username},
-          $authkey
-        );
-      }
-
-      if( $res && ref( $res ) eq 'HASH' )
-      {
-        $self->client( $uuid )->{access}     = $res->{access};
-        $self->client( $uuid )->{userid}     = $res->{userid} + 0;
-        $self->client( $uuid )->{css}        = $res->{css};
-        $self->client( $uuid )->{menu}       = $res->{menu};
-        $self->client( $uuid )->{demotext}   = $res->{demotext};
-        $self->client( $uuid )->{groupslist} =
-          [ split( ',', $res->{groupslist} ) ];
-
-        if( $res->{access} eq 'full' || $res->{access} eq 'demo' )
-        {
-          #
-          #   Set 'auth_ok' flag to correctly work GetGroupsList
-          #
-
-          $self->client( $uuid )->{auth_ok} = 1;
-
-          #
-          #   Get info about available groups and initilize required hashes:
-          #     - groupname => groupid
-          #     - groupid   => groupinfo
-          #
-  
-          $self->GetGroupsList( $uuid );
-
-          #
-          #   Return 1 (access granted) if auth success
-          #
-
-          $retcode = 1;
-        }
-      }
-
-      $retcode;
-    }
-
-
-    #
-    #   Cache auth info
-    #
-    #   Input parameters:
-    #     uuid - Connection ID
-    #
-    #   Returns scalar value of 1 everytime
-    #
-
-    sub cacheauth
-    {
-      my $self = shift;
-      my $uuid = shift;
-
-      #
-      #   Data from backend
-      #
-
-      my $res = shift;
-
-      #
-      #   Marked success auth with given username and password in the cache
-      #
-
-      my $cache = $self->cache( $uuid );
-      $cache->{auth} ||= {};
-
-      my $auth = $cache->{auth};
-
-      my $authkey = $self->authkey( $uuid );
-
-      if( ! $auth->{inittime} || $auth->{inittime}
-          <= ( time() - 60 * $self->cnf()->Get( 'AUTH.cleantime' ) ) )
-      {
-        $auth = $cache->{auth} = {};
-        $auth->{inittime} = time();
-      }
-
-      $auth->{data} ||= {};
-
-      $res->{access} = 'none'
-        unless $res->{auth} eq 'success';
-
-      #
-      #   Internal process cache
-      #
-
-      $auth->{data}->{ $authkey } = $res;
-
-      #
-      #   External database cache
-      #
-
-      my $tableprefix = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
-
-      $self->dbi->do( q{
-          INSERT INTO
-            `} . $tableprefix . q{nntp_auth_cache`
-          SET
-            `username`   = ?,
-            `authkey`    = ?,
-            `groupslist` = ?,
-            `userid`     = ?,
-            `access`     = ?,
-            `css`        = ?,
-            `menu`       = ?,
-            `demotext`   = ?
-          ON DUPLICATE KEY UPDATE
-            `groupslist` = ?,
-            `userid`     = ?,
-            `access`     = ?,
-            `css`        = ?,
-            `menu`       = ?,
-            `demotext`   = ?
-          },
-          undef,
-          $self->client( $uuid )->{username},
-          $authkey,
-
-          $res->{groupslist}, $res->{userid}, $res->{access}  ,
-          $res->{css}       , $res->{menu}  , $res->{demotext},
-
-          $res->{groupslist}, $res->{userid}, $res->{access}  ,
-          $res->{css}       , $res->{menu}  , $res->{demotext},
-        );
-
-      return 1;
-    }
-
-
-    #
-    #   Create key to identify auth record in internal/database cache
-    #
-    #   Input parameters:
-    #     uuid - Connection ID
-    #
-    #   Returns scalar string value (hex. code)
-    #
-
-    sub authkey
-    {
-      my $self = shift;
-      my $uuid = shift;
-
-      my $authkey = md5_hex(            $self->client( $uuid )->{username} );
-         $authkey = md5_hex( $authkey . $self->client( $uuid )->{password} );
-         $authkey = md5_hex( $authkey . $self->client( $uuid )->{PeerHost} );
-
-      return $authkey;
     }
 
 
@@ -463,67 +251,73 @@
       my $self = shift;
       my $uuid = shift;
 
-      my $res = $self->forum( $uuid )->do( {
-        do            => 'checkauth',
-        nntp_username => $self->client( $uuid )->{username},
-        nntp_password => $self->client( $uuid )->{password},
+      my $userinfo = $self->forum( $uuid )->do( {
+        do       => 'checkauth',
+        username => $self->client( $uuid )->{username},
+        password => $self->client( $uuid )->{password},
       } );
 
-      if( !ref( $res ) && length( $res ) > 4 )
+      if( ref( $userinfo ) eq 'HASH' )
       {
-        my $data = {};
-
-        #
-        #   Parse data
-        #
-
-        foreach my $line ( split( /[\015\012]/, $res ) )
+        if( $userinfo->{access_granted} eq 'yes' )
         {
-          my ( $key, $value ) = $line =~ /^(\w+): *(.*)$/i;
+          #
+          #   Set 'auth_ok' flag to correctly work GetGroupsList
+          #
 
-          $data->{ lc( $key ) } = $value;
-        }
+          $self->client( $uuid )->{auth_ok} = 1;
 
-        if( $data->{auth} eq 'success' )
-        {
-          $data->{css}      = decode_base64( $data->{css}      );
-          $data->{menu}     = decode_base64( $data->{menu}     );
-          $data->{demotext} = decode_base64( $data->{demotext} );
+          #
+          #   Initialize NNTP-groups lists (by ID, by Name)
+          #
+
+          $self->client( $uuid )->{groups}   = {};
+          $self->client( $uuid )->{groupids} = {};
+
+          foreach my $group ( @{ $userinfo->{nntpgroupslist} } )
+          {
+            if( $group->{id} && length( $group->{group_name} ) )
+            {
+              $self->client( $uuid )->{groups}->{ $group->{group_name} }
+                = $group->{id};
+
+              $self->client( $uuid )->{groupids}->{ $group->{id} }
+                = { name => $group->{group_name} };
+            }
+          }
+
+          $userinfo->{groupslist} =
+            [ keys( %{ $self->client( $uuid )->{groupids} } ) ];
+
+          #
+          #   Set important client's parameters
+          #
+
+          $self->client( $uuid )->{access}     = $userinfo->{access}     || 'none';
+          $self->client( $uuid )->{userid}     = $userinfo->{userid}     || 0;
+          $self->client( $uuid )->{css}        = $userinfo->{css}        || '';
+          $self->client( $uuid )->{menu}       = $userinfo->{menu}       || '';
+          $self->client( $uuid )->{demotext}   = $userinfo->{demotext}   || '';
+          $self->client( $uuid )->{tmpl}       = $userinfo->{tmpl}       || '';
+          $self->client( $uuid )->{groupslist} = $userinfo->{groupslist} || [];
+
+          return 1;
         }
         else
         {
-          $data->{access}   = 'none';
-          $data->{css}      = '';
-          $data->{menu}     = '';
-          $data->{demotext} = '';
+          #
+          #   Auth failed, return 0
+          #
+
+          $self->client( $uuid )->{auth_ok} = 0;
+
+          return 0;
         }
-
-        #
-        #   Cache auth anyway, even if it failed
-        #
-
-        $self->cacheauth( $uuid, $data );
-
-        #
-        #   Auth failed, just return
-        #
-
-        return 0
-          unless $data->{auth} eq 'success';
-
-        #
-        #   There are also "access" and "userid" elements in $data
-        #   Nothing to do with them
-        #
-
-        $self->cachedauth( $uuid );
-
-        return 1;
       }
       else
       {
         #
-        #   server error, inform client
+        #   Server error, inform client
         #
 
         $self->WriteClient(

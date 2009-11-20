@@ -3,25 +3,30 @@
 <product productid="nntp_plugin_topics" active="1">
 	<title>NNTP Gate Plugin: Forum Topics</title>
 	<description />
-	<version>1.4</version>
+	<version>1.5</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>1250024400</apm_releasedate>
+	<apm_releasedate>1257976800</apm_releasedate>
 	<apm_author />
 	<apm_relatedurl />
 	<apm_extrainfo />
 	<apm_extraedit />
 	<dependencies>
-		<dependency dependencytype="product" parentproductid="nntp_gate" minversion="1.3" maxversion="" />
 	</dependencies>
 	<codes>
 		<code version="1.0">
-			<installcode><![CDATA[$db->query( "CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups_forums` (
-  `forumid` smallint(5) unsigned NOT NULL,
-  `groupid` int(10) unsigned NOT NULL,
-  PRIMARY KEY  (`forumid`),
-  KEY `groupid` (`groupid`)
-) ENGINE=MyISAM;" );]]></installcode>
+			<installcode><![CDATA[$db->hide_errors();
+
+$db->query("
+  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups_forums` (
+    `forumid` smallint(5) unsigned NOT NULL,
+    `groupid` int(10) unsigned NOT NULL,
+    PRIMARY KEY  (`forumid`),
+    KEY `groupid` (`groupid`)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+");
+
+$db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
 		</code>
 	</codes>
@@ -50,7 +55,7 @@
 			<title>Check available groups list</title>
 			<hookname>nntp_gate_backend_check_groups_list</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-nntp_gate_Topics_check_groups_list($activegroups, $vbulletin->userinfo);]]></phpcode>
+nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title><![CDATA[Create message's user menu]]></title>
@@ -141,7 +146,7 @@ nntp_gate_Topics_possible_groups_list($groups_list);]]></phpcode>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_delete_messages( $postid );]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="1" executionorder="100">
 			<title>Add/update post, update thread</title>
 			<hookname>postdata_postsave</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
@@ -153,13 +158,13 @@ nntp_gate_Topics_postdata_postsave($this, $thread);]]></phpcode>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_threaddata_delete($this, $threadid);]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="1" executionorder="100">
 			<title>Add thread</title>
 			<hookname>threadfpdata_postsave</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_threadfpdata_postsave($this);]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="1" executionorder="100">
 			<title>Move thread</title>
 			<hookname>threadmanage_move_complete</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');

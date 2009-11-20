@@ -3,7 +3,7 @@
 || #################################################################### ||
 || # NNTP Gate 1.4                                                    # ||
 || # ---------------------------------------------------------------- # ||
-|| # Copyright © 2008 Dmitry Titov, Vitaly Puzrin.                    # ||
+|| # Copyright Â© 2008 Dmitry Titov, Vitaly Puzrin.                    # ||
 || # All Rights Reserved.                                             # ||
 || # This file may not be redistributed in whole or significant part. # ||
 || #################################################################### ||
@@ -17,26 +17,26 @@ if (!is_object($vbulletin->db))
   exit;
 }
 
+require_once( DIR . '/includes/functions_nntp.php' );
+
 // ########################################################################
 // ######################### START MAIN SCRIPT ############################
 // ########################################################################
 
 
-// Expire time, minutes
-$expiretime = 5;
-
-
-/*
- *  Delete expired records from auth cache
- */
-
-$vbulletin->db->query_write("
-  DELETE FROM
-    `" . TABLE_PREFIX . "nntp_userauth_cache`
-  WHERE
-    `lastactivity` < DATE_SUB( NOW(), INTERVAL " . intval( $expiretime ) . " MINUTE)
+$cache = $vbulletin->db->query_read("
+  SELECT
+    *
+  FROM
+    `" . TABLE_PREFIX . "nntp_groupaccess_cache`
 ");
 
-log_cron_action('', $nextitem, 1);
+while( $item = $vbulletin->db->fetch_array( $cache ) )
+{
+  nntp_update_groupaccess_cache_item( $item['usergroupslist'] );
+}
+
+log_cron_action( '', $nextitem, 1 );
+
 
 ?>

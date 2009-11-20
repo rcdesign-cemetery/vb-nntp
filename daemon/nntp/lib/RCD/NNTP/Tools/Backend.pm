@@ -12,15 +12,16 @@
     #
 
     use strict;
-    use PHP::Serialization qw(serialize unserialize);
     use LWP::UserAgent;
+    use Digest::MD5 qw(md5_hex);
+    use Digest::CRC qw(crc32);
     use Time::HiRes qw(gettimeofday tv_interval);
     use HTML::Entities qw(decode_entities);
     use MIME::Base64 qw(encode_base64);
     use Wildev::AppServer::Toolkit;
     use RCD::NNTP::Base::Plugin qw(cache dbi check_dbi uuid client cnf);
 
-    our $VERSION = "0.06"; # $Date: 2009/11/03 15:57:30 $
+    our $VERSION = "0.07"; # $Date: 2009/11/17 17:03:36 $
 
 
     sub new
@@ -41,35 +42,8 @@
 
       $self->{Toolkit} = Wildev::AppServer::Toolkit->instance();
 
-      $self->{ua} = LWP::UserAgent->new(
-          agent   => $self->{UserAgent}   || __PACKAGE__,
-          timeout => $self->{ConnTimeout} || 5,
-        );
-
       #
-      #   For testing purpose of gate only
-      #   while forum mainly closed for customers
-      #
-
-      if( $self->{TestUserId} && $self->{TestPassword} )
-      {
-        $self->{ua}->default_header(
-          'Cookie' => 'bbuserid='   . $self->{TestUserId}   . ';' . ' ' .
-                      'bbpassword=' . $self->{TestPassword} . ';'
-        );
-      }
-
-      #
-      #   Only this commands always will be handled by external program.
-      #   Others will be handled internaly if applicable and externaly
-      #   otherwise.
-      #
-
-      $self->{ExternalCommands} =
-        $self->{Toolkit}->Config->Get( 'backend.Commands' );
-
-      #
-      #   Current connection id
+      #   Reset current connection id
       #
 
       $self->{uuid} = undef;
@@ -81,7 +55,7 @@
     #   result. Result depends on command, this could be scalar, array or hash.
     #
     #   Input parameters:
-    #     hash with command name and its named parameters
+    #     - hash with command name and its named parameters
     #
 
     sub do
@@ -99,38 +73,30 @@
       my $result = undef;
 
       #
-      #   Check for handler type: internal (1) / external (0)
-      #   Default is internal (1)
+      #   Flag: is internal handler exists?
       #
 
-      my $inthandler = 1;
+      my $inthandlerexists = 1;
 
       #
-      #   Is $form->{do} command should be handled by external program?
-      #
-
-      $inthandler = 0
-        if scalar( grep { $_ eq $form->{do} } @{ $self->{ExternalCommands} } );
-
-      #
-      #   Is internal handler exists?
-      #   $intcommand - internal sub program name
+      #   Is internal handler defined?
+      #   $intcommand - internal handler's sub program name
       #
 
       my $intcommand = 'cmd_' . $form->{do};
 
-      $inthandler = 0
-        if $inthandler && !defined &{ __PACKAGE__ . '::' . $intcommand };
+      $inthandlerexists = 0
+        if !defined &{ __PACKAGE__ . '::' . $intcommand };
 
 
       #
       #   Start command processing
       #
 
-      my $reqstarttime = [ gettimeofday() ];
-
-      if( $inthandler )
+      if( $inthandlerexists )
       {
+        my $reqstarttime = [ gettimeofday() ];
+
         #
         #   First of all check for alive DB connection
         #
@@ -144,56 +110,24 @@
         #
 
         $result = $self->$intcommand( $form );
+
+        my $elapsedtime  = tv_interval( $reqstarttime );
+
+        $self->{Toolkit}->Logger->info(
+            'Backend respond elapsed time, seconds: ' . $elapsedtime
+          );
       }
       else
       {
-        if( exists( $form->{sdata} ) )
-        {
-          #
-          #   PHP like data serialization
-          #
+        #
+        #   No internal handler found. Save error message!
+        #
 
-          $form->{sdata} = serialize( $form->{sdata} );
-        }
-
-        {
-          #
-          #   Add required frontend auth key
-          #
-  
-          $form->{nntp_auth_key} = $self->{AuthKey};
-        }
-
-        my $response = $self->{ua}->post( $self->{URL}, Content => $form );
-
-        if( $response->is_success )
-        {
-          my $content = $response->decoded_content;
-  
-          $self->{Toolkit}->Logger->debug(
-              'Backend responce: ' . $content
-            );
-  
-          if( $content =~ s/^\(serialized\)//i )
-          {
-            my $data = undef;
-  
-            eval { $data = unserialize( $content ) };
-  
-            $result = $@ ? undef : $data;
-          }
-          else
-          {
-            $result = $content;
-          }
-        }
+        $self->{Toolkit}->Logger->error(
+            'Backend: No internal handler found to process command: '
+            . $form->{do}
+          );
       }
-
-      my $elapsedtime  = tv_interval( $reqstarttime );
-
-      $self->{Toolkit}->Logger->info(
-          'Backend respond elapsed time, seconds: ' . $elapsedtime
-        );
 
       return $result;
     }
@@ -230,6 +164,16 @@
 
         return 'command syntax error';
       }
+
+
+      #
+      #   Check if user have access to some NNTP-groups
+      #   Just return empty array otherwise
+      #
+
+      return $groups
+        unless scalar( @{ $self->client->{groupslist} } ) > 0;
+
 
       my $groupstmp    = {};
       my $groupssorted = [];
@@ -278,7 +222,7 @@
       #   Get list of min/max message ids
       #
 
-      my $sth = $self->dbi->prepare( q{
+      $sth = $self->dbi->prepare( q{
           SELECT
             I.`groupid`              AS 'id' ,
             MIN( I.`messageid` ) + 0 AS 'min',
@@ -614,7 +558,7 @@
             $self->{Toolkit}->Config->Get( 'backend.ContentType' )
             . '; charset="' . $charset . '"';
 
-          # get group named by its id
+          # get group name by its id
           my $newsgroup =
             $self->client( $uuid )->{groupids}->{ $data->{groupid} }->{name};
 
@@ -688,6 +632,16 @@
         return 'command syntax error';
       }
 
+
+      #
+      #   Check if user have access to some NNTP-groups
+      #   Just return empty array otherwise
+      #
+
+      return $groups
+        unless scalar( @{ $self->client->{groupslist} } ) > 0;
+
+
       my $tableprefix  = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
 
       #
@@ -742,6 +696,295 @@
 
 
     #
+    #   Authenticate user
+    #
+
+    sub cmd_checkauth
+    {
+      my $self = shift;
+      my $data = shift;
+
+      my $userinfo = {};
+
+      unless( exists( $data->{username} ) && exists( $data->{password} ) )
+      {
+        #
+        #   Return error 'command syntax error' to save request parameters
+        #   to investigate them.
+        #
+
+        $self->{Toolkit}->Logger->error(
+            'Newgroups: Command syntax error'
+          );
+
+        return 'command syntax error';
+      }
+
+      my $tableprefix = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
+
+
+      #
+      #   Create authhash to find/set cached authinfo
+      #
+
+      my $authhash = md5_hex( md5_hex( $data->{username} ) . $data->{password} );
+
+      #
+      #   Check for cached authinfo
+      #
+
+      $userinfo = $self->dbi->selectrow_hashref( q{
+          SELECT
+            *
+          FROM
+            `} . $tableprefix . q{nntp_userauth_cache`
+          WHERE
+                `username` = ?
+            AND `authhash` = ?
+        },
+        undef,
+        $data->{username},
+        $authhash
+      );
+
+      unless( $userinfo && ref( $userinfo ) eq 'HASH' && $userinfo->{userid} )
+      {
+        #
+        #   Sessionkey required to communicate with backend
+        #   Create the one and store session data
+        #
+
+        my $sessionkey = crc32( crc32( rand( 4294967295 ) ) . time );
+
+        #
+        #   Try to find user by username
+        #
+
+        my $res = $self->dbi->selectrow_hashref( q{
+            SELECT
+              U.*,
+              S.`nntp_password`,
+              S.`use_nntp_password`
+            FROM
+                        `} . $tableprefix . q{user`               AS U
+              LEFT JOIN `} . $tableprefix . q{nntp_user_settings` AS S
+                ON( U.`userid` = S.`userid` AND S.`use_nntp_password` = 'yes' )
+            WHERE
+              U.`username` = ?
+            LIMIT
+              1
+            },
+            undef,
+            $data->{username}
+          );
+
+        $userinfo = $res
+          if $self->_verify_password( $res, $data->{password} );
+
+        #
+        #   Try to find user by email
+        #
+
+        unless( $userinfo && ref( $userinfo ) eq 'HASH' && $userinfo->{userid} )
+        {
+          my $res = $self->dbi->selectrow_hashref( q{
+              SELECT
+                U.*,
+                S.`nntp_password`,
+                S.`use_nntp_password`
+              FROM
+                        `} . $tableprefix . q{user`               AS U
+              LEFT JOIN `} . $tableprefix . q{nntp_user_settings` AS S
+                ON( U.`userid` = S.`userid` AND S.`use_nntp_password` = 'yes' )
+              WHERE
+                U.`email` = ?
+              LIMIT
+                1
+              },
+              undef,
+              $data->{username}
+            );
+
+          $userinfo = $res
+            if $self->_verify_password( $res, $data->{password} );
+        }
+
+        #
+        #   Build key (user groups list) to set/get groupaccess
+        #   info to/from cache
+        #
+
+        my @membergroupids =
+          sort { $a <=> $b } ( split( ',', $userinfo->{membergroupids} ) );
+  
+        $userinfo->{membergroupids} = join(
+            ',',
+            @membergroupids
+          );
+
+        $userinfo->{usergroupslist} = join(
+            ',',
+            $userinfo->{usergroupid},
+            @membergroupids
+          );
+
+        #
+        #   Save session
+        #
+
+        $self->dbi->do( q{
+            REPLACE INTO
+              `} . $tableprefix . q{nntp_userauth_cache`
+            SET
+              `username`       = ?,
+              `authhash`       = ?,
+              `usergroupslist` = ?,
+              `userid`         = ?,
+              `access_granted` = ?,
+              `sessionkey`     = ?
+            },
+            undef,
+            $data->{username},
+            $authhash,
+            ( $userinfo->{usergroupslist} || '' ),
+            ( $userinfo->{userid}         || 0  ),
+            'no',
+            $sessionkey,
+          );
+
+        $userinfo->{sessionkey} = $sessionkey;
+      }
+
+
+      if( $userinfo && ref( $userinfo ) eq 'HASH' && $userinfo->{userid} )
+      {
+        #
+        #  Get NNTP-groups list and text data (css, menu, template, demo text)
+        #
+
+        my $groupsinfo = {};
+        my $maxtries   = 2;
+
+        while( $maxtries -- && ! exists( $groupsinfo->{access_level} ) )
+        {
+          $groupsinfo = $self->dbi->selectrow_hashref( q{
+              SELECT
+                GC.*
+              FROM
+                `} . $tableprefix . q{nntp_groupaccess_cache` AS GC
+              WHERE
+                GC.`usergroupslist` = ?
+              LIMIT
+                1
+              },
+              undef,
+              $userinfo->{usergroupslist}
+            );
+
+          #
+          #   We should ask backend ( $maxtries - 1 ) times so check if
+          #   $maxtries is greater than 0 here too
+          #
+
+          if( ref( $groupsinfo ) ne 'HASH' && $maxtries )
+          {
+            #
+            #   Ask backend to cache usergroup permissions
+            #
+
+            $self->_ask_backend( {
+                do         => 'cachegroupaccess',
+                sessionkey => $userinfo->{sessionkey},
+              } );
+          }
+        }
+
+
+        if( $groupsinfo && ref( $groupsinfo ) eq 'HASH' )
+        {
+          $userinfo->{auth}           =
+            (    $groupsinfo->{access_level} eq 'full'
+              || $groupsinfo->{access_level} eq 'demo' )
+              ? 'success'
+              : 'failed';
+  
+          $userinfo->{access}         = $groupsinfo->{access_level};
+          $userinfo->{css}            = $groupsinfo->{css};
+          $userinfo->{menu}           = $groupsinfo->{menu};
+          $userinfo->{demotext}       = $groupsinfo->{demotext};
+          $userinfo->{tmpl}           = $groupsinfo->{template};
+          $userinfo->{groupslist}     = '';
+          $userinfo->{nntpgroupslist} = [];
+
+          if( $userinfo->{access} ne 'none' )
+          {
+            #
+            #   Select groups names
+            #
+
+            if( length( $groupsinfo->{nntpgroupslist} ) )
+            {
+              my $sth = $self->dbi->prepare( q{
+                  SELECT
+                    G.`id`,
+                    G.`group_name`
+                  FROM
+                    `} . $tableprefix . q{nntp_groups` AS G
+                  WHERE
+                    G.`id` IN(} . $groupsinfo->{nntpgroupslist} . q{)
+                  ORDER BY
+                    G.`group_name`
+                } );
+
+              $sth->execute();
+
+              while( my $group = $sth->fetchrow_hashref() )
+              {
+                push @{ $userinfo->{nntpgroupslist} }, {
+                    id         => $group->{id},
+                    group_name => $group->{group_name},
+                  };
+              }
+
+              $sth->finish();
+            }
+
+            #
+            #   Update session
+            #
+
+            $userinfo->{access_granted} = 'yes';
+
+            $self->dbi->do( q{
+                UPDATE
+                  `} . $tableprefix . q{nntp_userauth_cache`
+                SET
+                  `access_granted` = ?
+                WHERE
+                  `sessionkey` = ?
+                },
+                undef,
+                $userinfo->{access_granted},
+                $userinfo->{sessionkey},
+              );
+          }
+        }
+      }
+
+      $self->{Toolkit}->Logger->debug(
+          $userinfo->{nntpgroupslist}
+            ? join( "\n",
+                'Checkauth complete. Groups found: ',
+                $userinfo->{nntpgroupslist}
+              )
+            : 'Checkauth complete. No groups found.'
+        );
+
+      $userinfo;
+    }
+
+
+    #
     #   Prepare "From" address: this contains username encoded with Base64
     #   and plain email address
     #
@@ -784,6 +1027,82 @@
         . '?=';
 
       $subject;
+    }
+
+
+    #
+    #   Verify password
+    #
+
+    sub _verify_password
+    {
+      my $self = shift;
+
+      my $userinfo = shift;
+      my $password = shift;
+
+      my $result = 0;
+
+      if( ref( $userinfo ) eq 'HASH' )
+      {
+        if( $userinfo->{use_nntp_password} eq 'yes' )
+        {
+          $result = 1
+            if $userinfo->{nntp_password} eq md5_hex( $password );
+        }
+        else
+        {
+          $result = 1
+            if $userinfo->{password} eq md5_hex( md5_hex( $password ) . $userinfo->{salt} );
+        }
+      }
+
+      $result;
+    }
+
+
+    #
+    #   Ask backend to do some stuff
+    #
+    #   Input parameters:
+    #     - hash with named parameters to pass to backend using POST method
+    #
+    #   Output parameters:
+    #     - answer from backend (plain text)
+    #
+
+    sub _ask_backend ($)
+    {
+      my $self = shift;
+      my $form = shift;
+
+      #
+      #   Initialize UserAgent object unless exists
+      #
+
+      unless( $self->{ua} )
+      {
+        $self->{ua} = LWP::UserAgent->new(
+            agent   => $self->{UserAgent}   || __PACKAGE__,
+            timeout => $self->{ConnTimeout} || 5,
+          );
+      }
+
+      my $result   = '';
+      my $response = $self->{ua}->post( $self->{URL}, Content => $form );
+
+      if( $response->is_success )
+      {
+        my $content = $response->decoded_content;
+
+        $self->{Toolkit}->Logger->debug(
+            'Backend responce: ' . $content
+          );
+
+        $result = $content;
+      }
+
+      return $result;
     }
 
 
