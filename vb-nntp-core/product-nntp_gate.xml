@@ -311,9 +311,6 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		</phrasetype>
 		<phrasetype name="User Tools (global)" fieldname="user">
 			<phrase name="nntp_gate_description" date="1216126894" username="Wildev" version=""><![CDATA[Some description of NNTP Gate]]></phrase>
-			<phrase name="nntp_password_legend" date="1218585186" username="Wildev" version=""><![CDATA[You can use main password or set up custom one to access only NNTP gate]]></phrase>
-			<phrase name="nntp_use_custom_password_flag" date="1218585148" username="Wildev" version=""><![CDATA[Use custom password]]></phrase>
-			<phrase name="nntp_user_options" date="1218589125" username="Wildev" version=""><![CDATA[NNTP gate access settings]]></phrase>
 		</phrasetype>
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
@@ -388,10 +385,6 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
 			</setting>
-			<setting varname="nntp_demo_text" displayorder="80">
-				<datatype>free</datatype>
-				<optioncode>textarea</optioncode>
-			</setting>
 			<setting varname="nntp_messages_tree" displayorder="80">
 				<datatype>boolean</datatype>
 				<optioncode>yesno</optioncode>
@@ -400,6 +393,10 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<setting varname="nntp_groups" displayorder="80">
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
+			</setting>
+			<setting varname="nntp_demo_text" displayorder="80">
+				<datatype>free</datatype>
+				<optioncode>textarea</optioncode>
 			</setting>
 			<setting varname="nntp_demo_groups" displayorder="90">
 				<datatype>free</datatype>
