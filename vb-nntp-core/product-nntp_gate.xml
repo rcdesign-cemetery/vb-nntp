@@ -163,7 +163,7 @@ $db->show_errors();]]></installcode>
 		</code>
 	</codes>
 	<templates>
-		<template name="nntp_anounce" templatetype="template" date="1218590342" username="Wildev" version=""><![CDATA[$stylevar[htmldoctype]
+		<template name="nntp_anounce" templatetype="template" date="1258983509" username="Dimit" version=""><![CDATA[$stylevar[htmldoctype]
 <html xmlns="http://www.w3.org/1999/xhtml" dir="$stylevar[textdirection]" lang="$stylevar[languagecode]">
 <head>
 $headinclude
@@ -186,11 +186,8 @@ $navbar
 <tbody id="collapseobj_nntp_anounce" style="$vbcollapse[collapseobj_nntp_anounce]">
 
 <tr>
-	<td class="panelsurround" align="center">
-	<div class="panel">
-		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
-      $anouncemessage
-		</div>
+	<td class="alt1" align="$stylevar[left]">
+		<span class="smallfont">$anouncemessage</span>
 	</td>
 </tr>
 </tbody>
