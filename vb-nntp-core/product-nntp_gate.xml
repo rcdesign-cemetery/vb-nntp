@@ -255,6 +255,15 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
   $vbulletin->options['bbactive'] = true;
 }]]></phpcode>
 		</plugin>
+		<plugin active="1" executionorder="1">
+			<title>Add phrase group to correctly update groupaccess_cache</title>
+			<hookname>init_startup</hookname>
+			<phpcode><![CDATA[if( THIS_SCRIPT === 'cron' )
+{
+  global $phrasegroups;
+  array_unshift( $phrasegroups, 'posting' );
+}]]></phpcode>
+		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Admin: Add Template Group for NNTP Gate</title>
 			<hookname>template_groups</hookname>
@@ -278,13 +287,13 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
 			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />
 			<phrase name="task_nntp_cleanup_log" date="1256211045" username="Dimit" version="" />
-			<phrase name="task_nntp_cleanup_sessions_desc" date="1258622691" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_cleanup_sessions_log" date="1258622691" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_cleanup_sessions_title" date="1258622691" username="Dimit" version="1.3"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
+			<phrase name="task_nntp_cleanup_sessions_desc" date="1258975668" username="Dimit" version="1.4" />
+			<phrase name="task_nntp_cleanup_sessions_log" date="1258975668" username="Dimit" version="1.4" />
+			<phrase name="task_nntp_cleanup_sessions_title" date="1258975668" username="Dimit" version="1.4"><![CDATA[NNTP: Clean expired auth sessions from cache]]></phrase>
 			<phrase name="task_nntp_cleanup_title" date="1256211039" username="Dimit" version=""><![CDATA[NNTP: Clean index and cache]]></phrase>
-			<phrase name="task_nntp_update_groupaccess_cache_desc" date="1258622776" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_update_groupaccess_cache_log" date="1258622776" username="Dimit" version="1.3" />
-			<phrase name="task_nntp_update_groupaccess_cache_title" date="1258622776" username="Dimit" version="1.3"><![CDATA[NNTP: update groupaccess cache]]></phrase>
+			<phrase name="task_nntp_update_groupaccess_cache_desc" date="1258977377" username="Dimit" version="1.4" />
+			<phrase name="task_nntp_update_groupaccess_cache_log" date="1258977377" username="Dimit" version="1.4" />
+			<phrase name="task_nntp_update_groupaccess_cache_title" date="1258977377" username="Dimit" version="1.4"><![CDATA[NNTP: update groupaccess cache]]></phrase>
 		</phrasetype>
 		<phrasetype name="Error Messages" fieldname="error">
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
@@ -437,9 +446,9 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		</cron>
 		<cron varname="nntp_cleanup_sessions" active="1" loglevel="1">
 			<filename>./includes/cron/nntp_cleanup_sessions.php</filename>
-			<scheduling weekday="-1" day="-1" hour="-1" minute="5,15,25,35,45,55" />
+			<scheduling weekday="-1" day="-1" hour="-1" minute="5,15,25,29,45,55" />
 		</cron>
-		<cron varname="nntp_update_groupaccess_cache" active="0" loglevel="1">
+		<cron varname="nntp_update_groupaccess_cache" active="1" loglevel="1">
 			<filename>./includes/cron/nntp_update_groupaccess_cache.php</filename>
 			<scheduling weekday="-1" day="-1" hour="-1" minute="2,12,22,32,42,52" />
 		</cron>
