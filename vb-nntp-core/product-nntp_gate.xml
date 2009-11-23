@@ -234,204 +234,18 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 <div><% MESSAGE BODY %></div>
 </body>
 </html>]]></template>
-		<template name="nntp_navbar_link" templatetype="template" date="1218581343" username="Wildev" version=""><![CDATA[<td class="vbmenu_control"><a href="nntp_gate.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>]]></template>
-		<template name="nntp_usercp" templatetype="template" date="1218589165" username="Wildev" version=""><![CDATA[<script type="text/javascript" src="clientscript/vbulletin_md5.js?v=$vboptions[simpleversion]"></script>
-<script type="text/javascript">
-function hash_passwords(currentpassword, currentpassword_md5, newpassword, newpassword_md5, newpasswordconfirm, newpasswordconfirm_md5)
-{
-	var junk_output;
-	md5hash(currentpassword, currentpassword_md5, junk_output, $show[nopasswordempty]);
-	// do various checks
-	if (newpassword.value != '')
-	{
-		md5hash(newpassword, newpassword_md5, junk_output, $show[nopasswordempty]);
-	}
-	if (newpasswordconfirm.value != '')
-	{
-		md5hash(newpasswordconfirm, newpasswordconfirm_md5, junk_output, $show[nopasswordempty]);
-	}
-}
-</script>
-
-<script type="text/javascript">
-<!--
-function toggle_disabled(status, objid)
-{
-	obj = fetch_object(objid);
-	if (obj)
-	{
-		obj.disabled = (status ? false : true);
-	}
-}
-//-->
-</script>
-
-<form action="nntp_usercp.php?do=updatepassword" method="post" onsubmit="hash_passwords(currentpassword, currentpassword_md5, newpassword, newpassword_md5, newpasswordconfirm, newpasswordconfirm_md5)">
-<input type="hidden" name="s" value="$session[sessionhash]" />
-<input type="hidden" name="securitytoken" value="$bbuserinfo[securitytoken]" />
-<input type="hidden" name="do" value="updatepassword" />
-<input type="hidden" name="currentpassword_md5" />
-<input type="hidden" name="newpassword_md5" />
-<input type="hidden" name="newpasswordconfirm_md5" />
-
-<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
-<thead>
-<tr>
-	<td class="tcat">$vbphrase[nntp_user_options]</td>
-</tr>
-<tr>
-	<td class="thead">
-		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_user_options')"><img id="collapseimg_nntp_user_options" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_user_options].gif" alt="" border="0" /></a>
-		$vbphrase[password]
-	</td>
-</tr>
-</thead>
-<tbody id="collapseobj_nntp_user_options" style="$vbcollapse[collapseobj_nntp_user_options]">
-
-<tr>
-	<td class="panelsurround" align="center">
-	<div class="panel">
-		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
-
-			<div class="fieldset">
-				<div>$vbphrase[enter_password_to_continue]:</div>
-				<div><input type="password" class="bginput" name="currentpassword" size="50" maxlength="50" /></div>
-			</div>
-
-			<fieldset class="fieldset">
-				<legend>$vbphrase[nntp_password_legend]</legend>
-				<table cellpadding="0" cellspacing="$stylevar[formspacer]" border="0">
-				<tr>
-          <td><label for="nntp_use_cpass"><input type="checkbox" name="nntp_use_cpass" value="1" id="nntp_use_cpass" $nntp_use_cpass />$vbphrase[nntp_use_custom_password_flag]</label></td>
-				</tr>
-				<tr>
-					<td>
-						<div>$vbphrase[new_password]:</div>
-						<div><input type="password" class="bginput" name="newpassword" size="50" maxlength="50" /></div>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<div>$vbphrase[confirm_new_password]:</div>
-						<div><input type="password" class="bginput" name="newpasswordconfirm" size="50" maxlength="50" /></div>
-					</td>
-				</tr>
-				</table>
-			</fieldset>
-
-			</div>
-		</div>
-
-		<div style="margin-top:$stylevar[cellpadding]px">
-			<input type="submit" class="button" value="$vbphrase[save_changes]" accesskey="s" />
-			<input type="reset" class="button" value="$vbphrase[reset_fields]" accesskey="r" />
-		</div>
-	</td>
-</tr>
-</tbody>
-</table>
-
-</form>
-
-<br />
-
-<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
-<thead>
-<tr>
-	<td class="thead">
-		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_anounce')"><img id="collapseimg_nntp_anounce" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_anounce].gif" alt="" border="0" /></a>
-		$vbphrase[nntp_gate_menu_title]
-	</td>
-</tr>
-</thead>
-<tbody id="collapseobj_nntp_anounce" style="$vbcollapse[collapseobj_nntp_anounce]">
-
-<tr>
-	<td class="panelsurround" align="center">
-	<div class="panel">
-		<div style="width:$stylevar[formwidth_usercp]" align="$stylevar[left]">
-      $anouncemessage
-		</div>
-	</td>
-</tr>
-</tbody>
-</table>]]></template>
-		<template name="nntp_usercp_navbar" templatetype="template" date="1218581771" username="Wildev" version=""><![CDATA[<tr>
-  <td class="thead"><a href="nntp_usercp.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>
-</tr>]]></template>
+		<template name="nntp_navbar_link" templatetype="template" date="1258960166" username="Vitaly" version=""><![CDATA[<td class="vbmenu_option"><a href="nntp_gate.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>]]></template>
 	</templates>
 	<plugins>
 		<plugin active="1" executionorder="5">
 			<title>Startup: Merge NNTP Templates into $globaltemplates</title>
 			<hookname>cache_templates</hookname>
-			<phpcode><![CDATA[// Check that the viewer can access the NNTP gate in full mode
-
-$nntp_full_access  = false;
-$fullaccessgroups = unserialize( $vbulletin->options['nntp_groups'] );
-
-foreach($fullaccessgroups as $groupid)
-{
-  if (is_member_of($vbulletin->userinfo, $groupid))
-  {
-    $nntp_full_access = true;
-    break;
-  }
-}
-
-if ($nntp_full_access)
-{
-  if (is_array($globaltemplates))
-  {
-    if (in_array('usercp_nav_folderbit', $globaltemplates))
-    {
-      $globaltemplates[] = 'nntp_usercp';
-    }
-  }
-
-  define('NNTP_FULL_CACHED_TEMPLATES', true);
-}
-
-
-// Check that the viewer can access the NNTP gate in demo mode
-
-$nntp_demo_access  = false;
-
-if (!$nntp_full_access)
-{
-  $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
-
-  foreach($demoaccessgroups as $groupid)
-  {
-    if (is_member_of($vbulletin->userinfo, $groupid))
-    {
-      $nntp_demo_access = true;
-      break;
-    }
-  }
-}
-
-if ($nntp_demo_access)
-{
-  if (is_array($globaltemplates))
-  {
-    if (in_array('usercp_nav_folderbit', $globaltemplates))
-    {
-      $globaltemplates[] = 'nntp_usercp';
-    }
-
-    $globaltemplates[] = 'nntp_navbar_link';
-  }
-
-  define('NNTP_DEMO_CACHED_TEMPLATES', true);
-}]]></phpcode>
+			<phpcode><![CDATA[$globaltemplates[] = 'nntp_navbar_link';]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
-			<title>Navbar: Eval NNTP Link Template</title>
+			<title>NNTP Link in menu</title>
 			<hookname>global_setup_complete</hookname>
-			<phpcode><![CDATA[if (defined('NNTP_DEMO_CACHED_TEMPLATES'))
-{
-  eval('$template_hook[\'navbar_buttons_left\'] .= "' . fetch_template('nntp_navbar_link') . '";');
-}]]></phpcode>
+			<phpcode><![CDATA[eval('$template_hook[navbar_quick_links_menu_pos4] .= "' . fetch_template('nntp_navbar_link') . '";');]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Turn on forum for backend.php</title>
@@ -445,14 +259,6 @@ if ($nntp_demo_access)
 			<title>Admin: Add Template Group for NNTP Gate</title>
 			<hookname>template_groups</hookname>
 			<phpcode><![CDATA[$only['nntp'] = $vbphrase['group_nntp_gate'];]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="5">
-			<title>User CP: Insert NNTP Navbar Entry</title>
-			<hookname>usercp_nav_complete</hookname>
-			<phpcode><![CDATA[if (defined('NNTP_FULL_CACHED_TEMPLATES') or defined('NNTP_DEMO_CACHED_TEMPLATES'))
-{
-  eval('$template_hook[\'usercp_navbar_bottom\'] .= "' . fetch_template('nntp_usercp_navbar') . '";');
-}]]></phpcode>
 		</plugin>
 	</plugins>
 	<phrases>
