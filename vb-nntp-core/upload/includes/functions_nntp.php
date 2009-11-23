@@ -653,7 +653,7 @@ function nntp_get_access_level ( $usergroupid, $membergroupids = array() )
   $userinfo = array(
     'userid'         => 0,
     'usergroupid'    => $usergroupid,
-    'membergroupids' => $membergroupids,
+    'membergroupids' => implode( ',', $membergroupids )
   );
 
   // default value
