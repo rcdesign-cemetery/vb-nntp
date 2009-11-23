@@ -21,7 +21,7 @@
     use Wildev::AppServer::Toolkit;
     use RCD::NNTP::Base::Plugin qw(cache dbi check_dbi uuid client cnf);
 
-    our $VERSION = "0.07"; # $Date: 2009/11/17 17:03:36 $
+    our $VERSION = "0.08"; # $Date: 2009/11/23 16:22:55 $
 
 
     sub new
@@ -762,13 +762,9 @@
 
         my $res = $self->dbi->selectrow_hashref( q{
             SELECT
-              U.*,
-              S.`nntp_password`,
-              S.`use_nntp_password`
+              U.*
             FROM
-                        `} . $tableprefix . q{user`               AS U
-              LEFT JOIN `} . $tableprefix . q{nntp_user_settings` AS S
-                ON( U.`userid` = S.`userid` AND S.`use_nntp_password` = 'yes' )
+                `} . $tableprefix . q{user` AS U
             WHERE
               U.`username` = ?
             LIMIT
@@ -789,13 +785,9 @@
         {
           my $res = $self->dbi->selectrow_hashref( q{
               SELECT
-                U.*,
-                S.`nntp_password`,
-                S.`use_nntp_password`
+                U.*
               FROM
-                        `} . $tableprefix . q{user`               AS U
-              LEFT JOIN `} . $tableprefix . q{nntp_user_settings` AS S
-                ON( U.`userid` = S.`userid` AND S.`use_nntp_password` = 'yes' )
+                `} . $tableprefix . q{user` AS U
               WHERE
                 U.`email` = ?
               LIMIT
@@ -1045,16 +1037,8 @@
 
       if( ref( $userinfo ) eq 'HASH' )
       {
-        if( $userinfo->{use_nntp_password} eq 'yes' )
-        {
-          $result = 1
-            if $userinfo->{nntp_password} eq md5_hex( $password );
-        }
-        else
-        {
-          $result = 1
-            if $userinfo->{password} eq md5_hex( md5_hex( $password ) . $userinfo->{salt} );
-        }
+        $result = 1
+          if $userinfo->{password} eq md5_hex( md5_hex( $password ) . $userinfo->{salt} );
       }
 
       $result;
