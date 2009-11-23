@@ -193,80 +193,28 @@ $navbar
 $footer
 </body>
 </html>]]></template>
-		<template name="nntp_message_css" templatetype="template" date="1225398408" username="Wildev" version=""><![CDATA[<style type="text/css" id="vbulletin_css">
+		<template name="nntp_message_css" templatetype="template" date="1258957473" username="Vitaly" version=""><![CDATA[<style type="text/css">
+
 <!--
-body
-{
-	background: #FFFFFF;
-	color: #000000;
-	font: 10pt verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
-	margin: 5px 10px 10px 10px;
-	padding: 0px;
-}
-a:link
-{
-	color: #22229C;
-}
-a:visited
-{
-	color: #22229C;
-}
-a:hover, a:active
-{
-	color: #FF4400;
-}
-.page
-{
-	background: #FFFFFF;
-	color: #000000;
-}
-td, th, p, li
-{
-	font: 10pt verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
-}
 
-.alt1, .alt1Active
-{
-	background: #F5F5FF;
-	color: #000000;
-}
-.alt2, .alt2Active
-{
-	background: #E4E4E4;
-	color: #000000;
-}
-.inlinemod
-{
-	background: #FFFFCC;
-	color: #000000;
-}
+body { background: #FFFFFF; color: #000000; font: 10pt Tahoma, Verdana, Geneva, sans-serif; margin: 5px 10px 10px 10px; padding: 0px; }
 
-.smallfont
-{
-	font: 11px verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;
-}
+a:link { color: #22229C; }
 
-.highlight
-{
-	color: #FF0000;
-	font-weight: bold;
-}
+a:visited { color: #22229C; }
 
+a:hover, a:active { color: #FF4400; }
 
-.normal {
-	font-weight: normal;
-}
+td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 
-.inlineimg {
-	vertical-align: middle;
-}
+.alt2 { background: #E4E4E4; color: #000000; }
 
-.underline {
-	text-decoration: underline;
-}
+.smallfont { font: 11px Tahoma, Verdana, Geneva, sans-serif; }
 
+.inlineimg { vertical-align: middle; }
 
 -->
+
 </style>]]></template>
 		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
 <a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">$vbphrase[original_post]</a>
@@ -685,7 +633,7 @@ if ($nntp_demo_access)
 			<filename>./includes/cron/nntp_cleanup_sessions.php</filename>
 			<scheduling weekday="-1" day="-1" hour="-1" minute="5,15,25,35,45,55" />
 		</cron>
-		<cron varname="nntp_update_groupaccess_cache" active="1" loglevel="1">
+		<cron varname="nntp_update_groupaccess_cache" active="0" loglevel="1">
 			<filename>./includes/cron/nntp_update_groupaccess_cache.php</filename>
 			<scheduling weekday="-1" day="-1" hour="-1" minute="2,12,22,32,42,52" />
 		</cron>
