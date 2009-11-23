@@ -3,10 +3,10 @@
 <product productid="nntp_gate" active="1">
 	<title>NNTP Gate</title>
 	<description />
-	<version>1.4</version>
+	<version>1.5</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>1258581600</apm_releasedate>
+	<apm_releasedate>1258927200</apm_releasedate>
 	<apm_author />
 	<apm_relatedurl />
 	<apm_extrainfo />
@@ -152,6 +152,14 @@ $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groupaccess_cache`");
 $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_userauth_cache`");
 
 $db->show_errors();]]></uninstallcode>
+		</code>
+		<code version="1.5">
+			<installcode><![CDATA[$db->hide_errors();
+
+$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
+
+$db->show_errors();]]></installcode>
+			<uninstallcode />
 		</code>
 	</codes>
 	<templates>
@@ -309,14 +317,9 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		<phrasetype name="Style Tools" fieldname="style">
 			<phrase name="group_nntp_gate" date="1229022407" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
 		</phrasetype>
-		<phrasetype name="User Tools (global)" fieldname="user">
-			<phrase name="nntp_gate_description" date="1216126894" username="Wildev" version=""><![CDATA[Some description of NNTP Gate]]></phrase>
-		</phrasetype>
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
-			<phrase name="setting_nntp_config_path_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_config_path_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Path to config file]]></phrase>
 			<phrase name="setting_nntp_demo_groups_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_demo_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_text_desc" date="1229020203" username="Wildev" version="1.0" />
@@ -325,8 +328,6 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<phrase name="setting_nntp_forum_charset_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Forum's charset]]></phrase>
 			<phrase name="setting_nntp_from_address_desc" date="1249563421" username="Dimit" version="1.3" />
 			<phrase name="setting_nntp_from_address_title" date="1249563421" username="Dimit" version="1.3"><![CDATA[From email address]]></phrase>
-			<phrase name="setting_nntp_gate_auth_key_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_gate_auth_key_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Frontend Auth Key]]></phrase>
 			<phrase name="setting_nntp_groups_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in full mode]]></phrase>
 			<phrase name="setting_nntp_max_messages_in_group_desc" date="1229020203" username="Wildev" version="1.0" />
@@ -335,36 +336,19 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<phrase name="setting_nntp_message_id_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message ID suffix after '@']]></phrase>
 			<phrase name="setting_nntp_message_in_list_timeout_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_message_in_list_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum days number to store a message in list]]></phrase>
-			<phrase name="setting_nntp_messages_tree_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_messages_tree_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message list tree show?]]></phrase>
-			<phrase name="setting_nntp_pid_path_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_pid_path_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Path to PID file]]></phrase>
 			<phrase name="setting_nntp_port_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Port to listen on for incoming connections.]]></phrase>
 			<phrase name="setting_nntp_port_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server's Port]]></phrase>
 			<phrase name="setting_nntp_server_addr_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_server_addr_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP server domain/ip]]></phrase>
-			<phrase name="setting_nntp_server_conn_timeout_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Connection timeout, sec]]></phrase>
-			<phrase name="setting_nntp_server_conn_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Connection timeout, sec]]></phrase>
-			<phrase name="setting_nntp_server_max_children_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum clients number]]></phrase>
-			<phrase name="setting_nntp_server_max_children_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum clients number]]></phrase>
 			<phrase name="setting_nntp_stats_rows_per_page_desc" date="1249562915" username="Dimit" version="1.3" />
 			<phrase name="setting_nntp_stats_rows_per_page_title" date="1249562915" username="Dimit" version="1.3"><![CDATA[Rows per page in statistics]]></phrase>
 			<phrase name="setting_nntp_stats_show_last_days_desc" date="1249563005" username="Dimit" version="1.3" />
 			<phrase name="setting_nntp_stats_show_last_days_title" date="1249563005" username="Dimit" version="1.3"><![CDATA[Show statistics for last N days]]></phrase>
-			<phrase name="settinggroup_" date="1218455807" username="Wildev" version="1.0"><![CDATA[NNTP Server Statistics Settings]]></phrase>
 			<phrase name="settinggroup_nntp_server" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server Settings]]></phrase>
 		</phrasetype>
 	</phrases>
 	<options>
 		<settinggroup name="nntp_server" displayorder="65535">
-			<setting varname="nntp_config_path" displayorder="10">
-				<datatype>free</datatype>
-				<defaultvalue>/etc/rcdnntpd.cnf</defaultvalue>
-			</setting>
-			<setting varname="nntp_pid_path" displayorder="11">
-				<datatype>free</datatype>
-				<defaultvalue>/var/run/nntp.pid</defaultvalue>
-			</setting>
 			<setting varname="nntp_port" displayorder="20">
 				<datatype>number</datatype>
 				<defaultvalue>119</defaultvalue>
@@ -373,22 +357,9 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 				<datatype>free</datatype>
 				<defaultvalue>0.0.0.0</defaultvalue>
 			</setting>
-			<setting varname="nntp_server_conn_timeout" displayorder="40">
-				<datatype>number</datatype>
-				<defaultvalue>120</defaultvalue>
-			</setting>
-			<setting varname="nntp_server_max_children" displayorder="50">
-				<datatype>number</datatype>
-				<defaultvalue>10</defaultvalue>
-			</setting>
 			<setting varname="nntp_adv_text" displayorder="70">
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
-			</setting>
-			<setting varname="nntp_messages_tree" displayorder="80">
-				<datatype>boolean</datatype>
-				<optioncode>yesno</optioncode>
-				<defaultvalue>0</defaultvalue>
 			</setting>
 			<setting varname="nntp_groups" displayorder="80">
 				<datatype>free</datatype>
@@ -401,9 +372,6 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<setting varname="nntp_demo_groups" displayorder="90">
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
-			</setting>
-			<setting varname="nntp_gate_auth_key" displayorder="100">
-				<datatype>free</datatype>
 			</setting>
 			<setting varname="nntp_message_in_list_timeout" displayorder="150">
 				<datatype>number</datatype>
