@@ -317,6 +317,10 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
+			<phrase name="setting_nntp_debug_users_desc" date="1259148645" username="Dimit" version="1.5"><![CDATA[Users IDs separated with comma]]></phrase>
+			<phrase name="setting_nntp_debug_users_title" date="1259148645" username="Dimit" version="1.5"><![CDATA[Turn on debug log level for this users]]></phrase>
+			<phrase name="setting_nntp_demo_delay_desc" date="1259057057" username="Dimit" version="1.5"><![CDATA[For how many hours delay messages in demo mode]]></phrase>
+			<phrase name="setting_nntp_demo_delay_title" date="1259057057" username="Dimit" version="1.5"><![CDATA[Messages delay in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_groups_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_demo_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_text_desc" date="1229020203" username="Wildev" version="1.0" />
@@ -370,6 +374,10 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
 			</setting>
+			<setting varname="nntp_demo_delay" displayorder="100">
+				<datatype>number</datatype>
+				<defaultvalue>6</defaultvalue>
+			</setting>
 			<setting varname="nntp_message_in_list_timeout" displayorder="150">
 				<datatype>number</datatype>
 				<defaultvalue>30</defaultvalue>
@@ -395,6 +403,9 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 				<defaultvalue>UTF-8</defaultvalue>
 			</setting>
 			<setting varname="nntp_from_address" displayorder="230">
+				<datatype>free</datatype>
+			</setting>
+			<setting varname="nntp_debug_users" displayorder="240">
 				<datatype>free</datatype>
 			</setting>
 		</settinggroup>
