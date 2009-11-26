@@ -634,9 +634,7 @@ function nntp_get_demo ()
 {
   global $vbulletin;
 
-  $bbcode_parser = new vB_BbCodeParser( $vbulletin, fetch_tag_list() );
-
-  $demomessage = $bbcode_parser->parse( $vbulletin->options['nntp_demo_text'] );
+  $demomessage = $vbulletin->options['nntp_demo_text'];
 
   return $demomessage;
 }
