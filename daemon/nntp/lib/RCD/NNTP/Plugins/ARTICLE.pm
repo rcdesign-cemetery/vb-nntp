@@ -277,16 +277,12 @@
                 . $messageid . '[' . $message->{messageid} . ']'
               );
 
-            if( $self->client( $uuid )->{access} eq 'demo'
-                && 0 == (
-                      ( 0 + $messageid ) % $self->cnf->Get( 'nntp.DemoFactor' )
-                   ) )
+            if( $self->client( $uuid )->{access} eq 'demo' )
             {
-              $body = $self->demo( $uuid );
-              $menu = '';
+              $body = $self->demo( $uuid ) . $body;
 
               $self->{Toolkit}->Logger->debug(
-                  'Message (id ' . $messageid . ') text replaced with demo text'
+                  'Message (id ' . $messageid . ') text prepended with demo text'
                 );
             }
 
