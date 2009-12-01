@@ -24,7 +24,7 @@ abstract class NNTPGate_Index_Base
      *
      * @var int
      */
-    protected $_ref_id = null;
+    protected $_parent_id = null;
 
     /**
      *
@@ -162,7 +162,7 @@ abstract class NNTPGate_Index_Base
                 SET
                     `groupid`    	=  " . $this->_group_id . ",
                     `messageid`  	=  " . $this->_message_id . ",
-                    `refid`      	=  " . $this->_ref_id . ",
+                    `parentid`      	=  " . $this->_parent_id . ",
                     `userid`      =  " . $this->_user_id . ",
                     `postid`      =  " . $this->_post_id . ",
                     `messagetype` = '" . $message_type . "',
@@ -170,7 +170,7 @@ abstract class NNTPGate_Index_Base
                     `datetime`    = FROM_UNIXTIME( " . $this->_data_time . " ),
                     `deleted`     = 'no'
                 ON DUPLICATE KEY UPDATE
-                    `refid`       =  " . $this->_ref_id . ",
+                    `parentid`       =  " . $this->_parent_id . ",
                     `userid`      =  " .  $this->_user_id . ",
                     `postid`      =  " . $this->_post_id . ",
                     `messagetype` = '" . $message_type . "',
@@ -267,9 +267,9 @@ abstract class NNTPGate_Index_Base
      *
      * @param int $value
      */
-    public function set_ref_id($value)
+    public function set_parent_id($value)
     {
-        $this->_ref_id = (int)$value;
+        $this->_parent_id = (int)$value;
     }
 
 
@@ -308,16 +308,16 @@ abstract class NNTPGate_Index_Base
 
     /**
      *
-     * @param int $ref_id
+     * @param int $parent_id
      * @return bool
      */
-    public function delete_message_by_ref_id($ref_id = 0 )
+    public function delete_message_by_parent_id($parent_id = 0 )
     {
-        if (!$ref_id)
+        if (!$parent_id)
         {
-            $ref_id = $this->_ref_id;
+            $parent_id = $this->_parent_id;
         }
-        if( (! $this->_group_id) || (! $ref_id ))
+        if( (! $this->_group_id) || (! $parent_id ))
         {
             return false;
         }
@@ -329,7 +329,7 @@ abstract class NNTPGate_Index_Base
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
                     `groupid`   = " . $this->_group_id . " AND
-                    `refid`   = " . intval( $ref_id );
+                    `parentid`   = " . intval( $parent_id );
         $this->_db->query_write($sql);
         return true;
     }
@@ -347,7 +347,7 @@ abstract class NNTPGate_Index_Base
         }
 
         $post_id_list = array_map('intval', $post_id_list);
-        // mark messages in index as deletedelete_message_by_ref_idd
+        // mark messages in index as deletedelete_message_by_parent_idd
         $sql = "UPDATE
                     `" . TABLE_PREFIX . "nntp_index`
                 SET
@@ -384,7 +384,7 @@ abstract class NNTPGate_Index_Base
         $sql = "SELECT
                     `groupid`,
                     `messageid`,
-					`refid`,
+					`parentid`,
 					`title`,
 					`datetime`,
 					`userid`,
@@ -394,7 +394,7 @@ abstract class NNTPGate_Index_Base
                 FROM
                     `" . TABLE_PREFIX . "nntp_index`
 				WHERE
-                    `refid`   = " . $parent_id . " AND
+                    `parentid`   = " . $parent_id . " AND
                     `messagetype` = '" . $this->_get_message_type() ."' AND
 					`groupid`   = " . $this->_group_id;
         $res = $this->_db->query_read_slave($sql);
@@ -419,7 +419,7 @@ abstract class NNTPGate_Index_Base
         $sql = "SELECT
                     `groupid`,
                     `messageid`,
-					`refid`,
+					`parentid`,
 					`title`,
 					`datetime`,
 					`userid`,
@@ -450,7 +450,7 @@ abstract class NNTPGate_Index_Base
 					`" . TABLE_PREFIX . "nntp_index`
 				SET
                     `groupid` = " . $target_group_id .",
-					`refid` = " . $index_info['refid'] .",
+					`parentid` = " . $index_info['parentid'] .",
 					`title` = '" . $index_info['title'] ."',
 					`datetime` = FROM_UNIXTIME( '" . $index_info['datetime'] ."'),
 					`userid` = " . $index_info['userid'] .",

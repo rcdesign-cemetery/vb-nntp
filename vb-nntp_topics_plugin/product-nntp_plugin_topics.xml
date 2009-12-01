@@ -3,7 +3,7 @@
 <product productid="nntp_plugin_topics" active="1">
 	<title>NNTP Gate Plugin: Forum Topics</title>
 	<description />
-	<version>1.5</version>
+	<version>1.6</version>
 	<url />
 	<versioncheckurl />
 	<dependencies>
@@ -24,6 +24,22 @@ $db->query("
 $db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
 		</code>
+        <code version="1.6">
+			<installcode><![CDATA[$db->hide_errors();
+$db->query("
+  ALTER TABLE `" . TABLE_PREFIX . "nntp_index` CHANGE `refid` `parentid` INT( 10 ) UNSIGNED NOT NULL 
+");
+$db->query("
+  UPDATE
+            `" . TABLE_PREFIX . "nntp_groups` AS ng, `" . TABLE_PREFIX . "nntp_groups_forums` AS ngf
+        SET
+            ng.map_id = ngf.forumid
+        WHERE
+            ng.id = ngf.groupid
+");
+$db->show_errors();]]></installcode>
+			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
+		</code>
 	</codes>
 	<templates>
 	</templates>
@@ -38,7 +54,7 @@ $nntp_index->set_post($edit);
 $nntp_index->set_post_id( $postinfo['postid']);
 $nntp_index->set_map_id( $foruminfo['forumid']);
 $nntp_index->set_user_id($postinfo['userid']);
-$nntp_index->set_ref_id ($threadinfo['threadid']);
+$nntp_index->set_parent_id ($threadinfo['threadid']);
 $threadtitle = $threadman->fetch_field( 'title' );
 $prefix = $threadman->fetch_field( 'prefixid' );
 
@@ -87,7 +103,7 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
     $nntp_index->set_post_id( $post['postid']);
     $nntp_index->set_map_id( $foruminfo['forumid']);
     $nntp_index->set_user_id($vbulletin->userinfo['userid']);
-    $nntp_index->set_ref_id ($threadinfo['threadid']);
+    $nntp_index->set_parent_id ($threadinfo['threadid']);
     $threadtitle = $threadinfo['title'];
     $prefix = $threadinfo['prefixid'];
 
@@ -220,8 +236,8 @@ $index = new NNTPGate_Forum_Index();
 $forum_id = $this->fetch_field( 'forumid' );
 $index->set_map_id($forum_id);
 $index->get_group_id_by_map_id();
-$index->set_ref_id($threadid);
-$index->delete_message_by_ref_id();]]></phpcode>
+$index->set_parent_id($threadid);
+$index->delete_message_by_parent_id();]]></phpcode>
 		</plugin>
 		<plugin active="0" executionorder="100">
 			<title>Add thread</title>
@@ -240,8 +256,8 @@ if ('copy' != $method)
     $nntp_index->set_map_id( $foruminfo['forumid']);
     $target_map_id = $destforuminfo['forumid'];
     $target_group_id = $nntp_index->get_group_id_by_map_id($target_map_id, true);
-    $target_ref_id = $threadinfo['threadid'];
-    $nntp_index->move_posts_by_parent_id($target_group_id, $target_ref_id);
+    $target_parent_id = $threadinfo['threadid'];
+    $nntp_index->move_posts_by_parent_id($target_group_id, $target_parent_id);
 }
 ]]></phpcode>
 		</plugin>
@@ -268,3 +284,4 @@ nntp_gate_Topics_threadmanage_move_complete();]]></phpcode>
 	<faqentries>
 	</faqentries>
 </product>
+

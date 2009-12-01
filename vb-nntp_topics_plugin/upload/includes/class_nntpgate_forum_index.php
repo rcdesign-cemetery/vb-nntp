@@ -24,7 +24,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
                     FROM
                         `" . TABLE_PREFIX . "thread`
                     WHERE
-                        `threadid` = " . $this->_ref_id;
+                        `threadid` = " . $this->_parent_id;
             $row = $this->_db->query_first($sql);
             if( !empty( $row ) )
             {
