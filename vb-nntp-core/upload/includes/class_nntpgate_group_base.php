@@ -4,6 +4,7 @@ abstract class NNTPGate_Group_Base
 
     protected $_db;
     protected $_group_id;
+    protected $_map_id;
 
     public function  __construct($db = null)
     {
@@ -52,25 +53,49 @@ abstract class NNTPGate_Group_Base
         {
             return false;
         }
-        ($hook = vBulletinHook::fetch_hook('nntp_gate_group_delete_start')) ? eval($hook) : false;
-
-
-        $sql ="DELETE FROM
-                                    `" . TABLE_PREFIX . "nntp_index`
-                                WHERE
-                                    `groupid` = " . (int) $group_id;
+        $sql = "DELETE FROM
+                    `" . TABLE_PREFIX . "nntp_index`
+                WHERE
+                    `groupid` = " . (int) $group_id;
         $this->_db->query_write($sql);
-        echo $sql . '<br>';
-        $sql ="DELETE FROM
-                                    `" . TABLE_PREFIX . "nntp_groups`
-                                WHERE
-                                    `id` = " . (int) $group_id;
-        echo $sql . '<br><hr>';
+        $sql = "DELETE FROM
+                    `" . TABLE_PREFIX . "nntp_groups`
+                WHERE
+                    `id` = " . (int) $group_id;
         $this->_db->query_write($sql);
-        ($hook = vBulletinHook::fetch_hook('nntp_gate_group_delete_complete')) ? eval($hook) : false;
-
         return true;
     }
 
-    abstract public function get_group_id_by_map_id($map_id);
+    public function get_group_id_by_map_id($map_id = null, $external = false)
+    {
+        if (is_null($map_id))
+        {
+            $map_id = $this->_map_id;
+        }
+        if ( !$map_id)
+        {
+            return false;
+        }
+        // Find group id by map id
+        $group_id = 0;
+        $sql = "SELECT `id`
+                FROM
+                    `" . TABLE_PREFIX . "nntp_groups`
+                WHERE
+                    `map_id` =  " . $map_id;
+        $res = $this->_db->query_first($sql);
+        if( !empty( $res ) )
+        {
+            $group_id = intval($res['id']);
+        }
+
+        if ($external)
+        {
+            return $group_id;
+        }
+        else
+        {
+            return $this->_group_id = $group_id;
+        }
+    }
 }

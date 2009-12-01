@@ -58,6 +58,12 @@ abstract class NNTPGate_Index_Base
 
     /**
      *
+     * @var int
+     */
+    protected $_map_id = null;
+
+    /**
+     *
      * @global vB_Registry $vbulletin
      * @param vB_Database $db
      */
@@ -143,15 +149,15 @@ abstract class NNTPGate_Index_Base
         $this->_get_index_by_post(array('_group_id', '_message_id'));
         if (0 == $this->_group_id )
         {
-            $this->get_group_id_from_db();
+            $this->get_group_id_by_map_id();
         }
         // Just return unless NNTP-group found
         if( 0 == $this->_group_id)
         {
             return false;
         }
-        $this->_db->query_write("
-                INSERT INTO
+        $message_type = $this->_get_message_type();
+        $sql = "INSERT INTO
                     `" . TABLE_PREFIX . "nntp_index`
                 SET
                     `groupid`    	=  " . $this->_group_id . ",
@@ -159,19 +165,19 @@ abstract class NNTPGate_Index_Base
                     `refid`      	=  " . $this->_ref_id . ",
                     `userid`      =  " . $this->_user_id . ",
                     `postid`      =  " . $this->_post_id . ",
-                    `messagetype` = '" . $this->_get_message_type() . "',
+                    `messagetype` = '" . $message_type . "',
                     `title`       = '" . $this->_title . "',
-                    `datetime`    = FROM_UNIXTIME( " . intval( $this->_data_time ) . " ),
+                    `datetime`    = FROM_UNIXTIME( " . $this->_data_time . " ),
                     `deleted`     = 'no'
                 ON DUPLICATE KEY UPDATE
                     `refid`       =  " . $this->_ref_id . ",
                     `userid`      =  " .  $this->_user_id . ",
                     `postid`      =  " . $this->_post_id . ",
-                    `messagetype` = '" . $this->_get_message_type() . "',
+                    `messagetype` = '" . $message_type . "',
                     `title`       = '" . $this->_title . "',
-                    `datetime`    = FROM_UNIXTIME( " . intval( $this->_data_time ) . " ),
-                    `deleted`     = 'no'
-                ");
+                    `datetime`    = FROM_UNIXTIME( " . $this->_data_time . " ),
+                    `deleted`     = 'no'";
+        $this->_db->query_write($sql);
         if( !$this->_message_id )
         {
             $this->_message_id = $this->_db->insert_id();
@@ -191,7 +197,7 @@ abstract class NNTPGate_Index_Base
         {
             return false;
         }
-        $body = $this->_get_message_body();
+        $body = $this->_make_message_body();
 
         /*
          *  Save message info to cache
@@ -211,12 +217,51 @@ abstract class NNTPGate_Index_Base
     /**
      *
      */
-    abstract protected function _get_message_body();
+    abstract protected function _make_message_body();
 
     /**
      *
      */
-    abstract public function get_group_id_from_db($map_id = null, $external = false);
+    /**
+     *
+     * @return int
+     */
+    public function get_group_id_by_map_id($map_id = null, $external = false)
+    {
+        if (is_null($map_id))
+        {
+            $map_id = $this->_map_id;
+        }
+        if ( !$map_id)
+        {
+            return false;
+        }
+        // Find group id by map id
+        $group_id = 0;
+        $sql = "SELECT `id`
+                FROM
+                    `" . TABLE_PREFIX . "nntp_groups`
+                WHERE
+                    `map_id` =  " . $map_id;
+
+        $res = $this->_db->query_first($sql);
+        if( !empty( $res ) )
+        {
+            $group_id = intval($res['id']);
+        }
+
+        if ($external)
+        {
+            return $group_id;
+        }
+        else
+        {
+            return $this->_group_id = $group_id;
+        }
+    }
+
+
+    abstract protected function _get_message_type();
 
     /**
      *
@@ -237,6 +282,11 @@ abstract class NNTPGate_Index_Base
         $this->_user_id = (int)$value;
     }
 
+    public function set_title($value)
+    {
+        $this->_title = $this->_db->escape_string($value);
+    }
+
     /**
      *
      * @param int $value
@@ -248,173 +298,181 @@ abstract class NNTPGate_Index_Base
 
     /**
      *
-     * @param int $group_id
+     * @access public
+     * @param int $value
+     */
+    public function set_map_id($value)
+    {
+        $this->_map_id = (int)$value;
+    }
+
+    /**
+     *
      * @param int $ref_id
      * @return bool
      */
-    public function delete_message_by_ref_id($group_id = 0, $ref_id = 0 )
+    public function delete_message_by_ref_id($ref_id = 0 )
     {
-        if (!$group_id)
-        {
-            $group_id = $this->_group_id;
-        }
         if (!$ref_id)
         {
             $ref_id = $this->_ref_id;
         }
-        if( (! $group_id) || (! $ref_id ))
+        if( (! $this->_group_id) || (! $ref_id ))
         {
             return false;
         }
-
-
-        $where = "`groupid` = " . intval( $group_id );
-        $where .= " AND `refid`   = " . intval( $ref_id );
-
         // mark messages in index as deleted
-
         $sql = "UPDATE
                     `" . TABLE_PREFIX . "nntp_index`
                 SET
                     `deleted` = 'yes'
                 WHERE
-                    " . $where . "
-        ";
+                    `messagetype` = '" . $this->_get_message_type() . "' AND
+                    `groupid`   = " . $this->_group_id . " AND
+                    `refid`   = " . intval( $ref_id );
         $this->_db->query_write($sql);
         return true;
     }
 
     /**
      *
-     * @param vB_Database $db
-     * @param string $message_type
-     * @param array $postid_list
+     * @param array $post_id_list
      * @return bool
      */
-    public static function delete_messages_by_postid_list (&$db, $message_type, $postid_list )
+    public function delete_messages_by_post_id_list ($post_id_list )
     {
-        if( empty( $postid_list ) )
+        if( empty( $post_id_list ) )
         {
             return false;
         }
 
-        $postid_list = array_map('intval', $postid_list);
-        // mark messages in index as deleted
+        $post_id_list = array_map('intval', $post_id_list);
+        // mark messages in index as deletedelete_message_by_ref_idd
         $sql = "UPDATE
                     `" . TABLE_PREFIX . "nntp_index`
                 SET
                     `deleted` = 'yes'
                 WHERE
-                    `messagetype` = '" . $message_type . "' AND
-                    `postid` IN( '" . implode( "', '", $postid_list ) . "' )";
-        $db->query_write($sql);
+                    `messagetype` = '" . $this->_get_message_type() . "' AND
+                    `groupid`   = " . $this->_group_id . " AND
+                    `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
+        $this->_db->query_write($sql);
         return true;
     }
 
     /**
      *
-     * @param int $target_map_id
-     * @param int $ref_id
-     * @param bool $is_copy
-     * @param array $post_list
+     * @access public
      */
-    function move_by_map_id($target_map_id, $ref_id, $is_copy = false, $post_list = null)
+    public function delete_message_by_post_id()
     {
-        $this->get_group_id_from_db();
-        $target_group_id = $this->get_group_id_from_db($target_map_id, true);
-        if( $target_group_id && $this->_group_id != $target_group_id )
+        $post_id_list = array($this->_post_id);
+        return $this->delete_messages_by_post_id_list($post_id_list);
+    }
+
+    public function move_posts_by_parent_id($target_group_id, $parent_id)
+    {
+        if (!$this->_group_id)
         {
-            // Copy posts and index data to new destination group
-            $sql ="SELECT
+            $this->get_group_id_by_map_id();
+        }
+        if ( (!$target_group_id) OR  (!$parent_id) OR (!$this->_group_id))
+        {
+            return false;
+        }
+
+        $sql = "SELECT
+                    `groupid`,
                     `messageid`,
-                    `postid`
+					`refid`,
+					`title`,
+					`datetime`,
+					`userid`,
+					`deleted`    ,
+					`messagetype`,
+					`postid`
                 FROM
                     `" . TABLE_PREFIX . "nntp_index`
-                WHERE
-                    `groupid` = " . intval( $this->_group_id ) . "
-                    AND `refid`   = " . intval( $ref_id      ) . "
-                ORDER BY
-                `messageid` ASC";
-            $posts = $this->_db->query_read($sql);
+				WHERE
+                    `refid`   = " . $parent_id . " AND
+                    `messagetype` = '" . $this->_get_message_type() ."' AND
+					`groupid`   = " . $this->_group_id;
+        $res = $this->_db->query_read_slave($sql);
+        while( $index_info = $this->_db->fetch_array( $res ))
+        {
+            $this->move_post($target_group_id, $index_info);
+        }
+        return true;
+    }
 
-            // Attention! Posts ids are new when thread is copiing instead of moving
-            // ($copy == true)
-            // $postassoc["$oldpostid"] = $newpostid;
+    public function move_posts_by_id_list($target_group_id, $post_id_list)
+    {
+        if (!$this->_group_id)
+        {
+            $this->get_group_id_by_map_id();
+        }
+        if ( (!$target_group_id) OR empty($post_id_list)  OR (!$this->_group_id))
+        {
+            return false;
+        }
+        $post_id_list = array_map('intval', $post_id_list);
+        $sql = "SELECT
+                    `groupid`,
+                    `messageid`,
+					`refid`,
+					`title`,
+					`datetime`,
+					`userid`,
+					`deleted`    ,
+					`messagetype`,
+					`postid`
+                FROM
+                    `" . TABLE_PREFIX . "nntp_index`
+				WHERE
+                    `groupid`   = " . $this->_group_id . " AND
+					`messagetype` = '" . $this->_get_message_type() . "' AND
+                    `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
+        $res = $this->_db->query_read_slave($sql);
+        while( $index_info = $this->_db->fetch_array( $res ))
+        {
+            $this->move_post($target_group_id, $index_info);
+        }
+        return true;
+    }
 
-            while( $post = $this->_db->fetch_array( $posts ) )
-            {
-                $postid = $post["postid"];
-
-                if( $copy )
-                {
-                // find new post id
-                    $postid = $post_list[$postid];
-                }
-
-                // this check is only required for copy method to check if message
-                // allready exists on the forum, do not copy hard-deleted messages
-                if( intval( $postid ) > 0 )
-                {
-                    $sql ="INSERT INTO
-						`" . TABLE_PREFIX . "nntp_index`
-						( `groupid`		 ,
-							`refid`			 ,
-							`title`			 ,
-							`datetime`   ,
-							`userid`		 ,
-							`deleted`    ,
-							`messagetype`,
-							`postid` )
-					SELECT
-						" . intval( $target_group_id ) . ",
-						`refid`      ,
-						`title`      ,
-						`datetime`   ,
-						`userid`     ,
-						`deleted`		 ,
-						`messagetype`,
-						" . intval( $postid ) . "
-					FROM
-						`" . TABLE_PREFIX . "nntp_index`
-					WHERE
-								`groupid`   = " . intval( $this->_group_id        ) . "
-						AND `messageid` = " . intval( $post['messageid'] );
-                    $this->_db->query_write($sql);
-                    $newmessageid = $this->_db->insert_id();
-
-                    if( $newmessageid > 0 )
-                    {
-                        $sql = "INSERT INTO
-							`" . TABLE_PREFIX . "nntp_cache_messages`
-							( `groupid`		 ,
-								`messageid`	 ,
-								`body` )
-						SELECT
-							" . intval( $target_group_id   ) . ",
-							" . intval( $newmessageid ) . ",
-							`body`
-						FROM
-							`" . TABLE_PREFIX . "nntp_cache_messages`
-						WHERE
-									`groupid`   = " . intval( $this->_group_id        ) . "
-							AND `messageid` = " . intval( $post['messageid'] );
-                        $this->_db->query_write($sql);
-                    }
-                }
-            }
-
-            if( !$copy )
-            {
-            # mark messages as deleted in source group
-                $sql="UPDATE
+    public function move_post($target_group_id, $index_info)
+    {
+        if ( (!$target_group_id) OR empty($index_info) )
+        {
+            return false;
+        }
+        $sql = "INSERT INTO
 					`" . TABLE_PREFIX . "nntp_index`
 				SET
-					`deleted` = 'yes'
-				WHERE
-							`groupid` = " . intval( $this->_group_id ) . "
-					AND `refid`   = " . intval( $target_map_id      );
-                $this->_db->query_write($sql);
-            }
-        }
+                    `groupid` = " . $target_group_id .",
+					`refid` = " . $index_info['refid'] .",
+					`title` = '" . $index_info['title'] ."',
+					`datetime` = FROM_UNIXTIME( '" . $index_info['datetime'] ."'),
+					`userid` = " . $index_info['userid'] .",
+					`deleted` = '" . $index_info['deleted'] ."',
+					`messagetype` = '" . $index_info['messagetype'] ."',
+					`postid` = " . $index_info['postid'];
+        $this->_db->query_write($sql);
+        $new_message_id = $this->_db->insert_id();
+        
+        $this->set_post_id($index_info['postid']);
+        $this->delete_message_by_post_id();
+
+        $sql = "UPDATE
+					`" . TABLE_PREFIX . "nntp_cache_messages`
+                SET
+                    `groupid` = " . $target_group_id . ",
+                    `messageid` =  " . $new_message_id . "
+                WHERE
+                    `groupid`   = " . $this->_group_id . " AND
+					`messageid` = " . $index_info['messageid'];
+        $this->_db->query_write($sql);
+        
+        return true;
     }
 }

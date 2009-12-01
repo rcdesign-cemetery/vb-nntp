@@ -9,40 +9,23 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
     const MESSAGE_TYPE = 'forum';
 
     /**
-     * упразтить в пользу _ref_id
-     *
-     * @var int
-     */
-    protected $_thread_id;
-
-    /**
-     * уйдет в пользу map_id после рефакторинга базы
-     *
-     * @var int
-     */
-    protected $_forum_id = null;
-
-
-    /**
      *
      * @access public
      * @param array $vbphrase
      * @param string $prefixid
      * @param string $threadtitle
      */
-    public function get_message_title($vbphrase, $prefixid = '', $threadtitle = '')
+    public function make_message_title($vbphrase, $prefixid = '', $threadtitle = '')
     {
         if( empty($prefixid) OR empty($threadtitle))
         {
-            $row = $this->_db->query_first("
-                SELECT
-                    `prefixid`, `title`
-                FROM
-                    `" . TABLE_PREFIX . "thread`
-                WHERE
-                    `threadid` = " . $this->_thread_id . "
-                ");
-
+            $sql = "SELECT
+                        `prefixid`, `title`
+                    FROM
+                        `" . TABLE_PREFIX . "thread`
+                    WHERE
+                        `threadid` = " . $this->_ref_id;
+            $row = $this->_db->query_first($sql);
             if( !empty( $row ) )
             {
                 $prefixid = $row['prefixid'];
@@ -55,20 +38,9 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
             $prefixid = 'prefix_' . $prefixid . '_title_plain';
             $prefix   = $vbphrase["$prefixid"] . ' ';
         }
-        $this->_title = $prefix . $threadtitle;
+        $this->set_title($prefix . $threadtitle);
     }
-
-    /**
-     * Спорное решение, подумать может, можно иначе
-     *
-     * @access public
-     */
-    public function delete_message_by_post_id()
-    {
-        $message_type = $this->_get_message_type();
-        $postid_list = array($this->_post_id);
-        parent::delete_messages_by_postid_list($this->_db, $message_type, $postid_list);
-    }
+    
 
     /**
      *
@@ -81,26 +53,6 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         $this->_post = $value;
     }
 
-    /**
-     *
-     * @access public
-     * @param int $value
-     */
-    public function set_forum_id($value)
-    {
-        $this->_forum_id = (int)$value;
-    }
-
-    /**
-     *
-     * @access public
-     * @param int $value
-     */
-    public function set_thread_id($value)
-    {
-        $this->_thread_id = (int)$value;
-        $this->set_ref_id($value);
-    }
 
     /**
      * Get message for cache
@@ -108,7 +60,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
      * @global vB_Registry $vbulletin
      * @return string
      */
-    protected function _get_message_body()
+    protected function _make_message_body()
     {
         $message = '';
 
@@ -149,43 +101,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         return $message;
     }
 
-    /**
-     *
-     * @return int
-     */
-    public function get_group_id_by_map_id($forum_id, $external = false)
-    {
-        if (is_null($forum_id))
-        {
-            $forum_id = $this->_forum_id;
-        }
-        // Find group id by forum id
-        $group_id = 0;
-        if ( !$forum_id)
-        {
-            return false;
-        }
-
-        $sql = "SELECT `groupid`
-                FROM
-                    `" . TABLE_PREFIX . "nntp_groups_forums`
-                WHERE
-                    `forumid` =  " . $forum_id;
-        $res = $this->_db->query_first($sql);
-        if( !empty( $res ) )
-        {
-            $group_id = intval($res['groupid']);
-        }
-
-        if ($external)
-        {
-            return $group_id;
-        }
-        else
-        {
-            return $this->_group_id = $group_id;
-        }
-    }
+    
 
     /**
      * Get message type
