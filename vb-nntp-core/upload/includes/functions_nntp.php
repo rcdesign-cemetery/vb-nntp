@@ -589,8 +589,7 @@ function nntp_get_available_groups_list ( $membergroupids )
     FROM
       `" . TABLE_PREFIX . "nntp_groups`
     WHERE
-      `is_active` = 'yes' AND
-      `map_id`    = 0
+      `is_active` = 'yes'
     ORDER BY
       `group_name`
   ");

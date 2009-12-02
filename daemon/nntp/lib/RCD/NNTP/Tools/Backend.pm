@@ -193,7 +193,7 @@
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active` = 'yes'
-            AND G.`map_id`    = 0
+          /*AND G.`map_id`    = 0*/
           ORDER BY
             G.`group_name`
         } );
@@ -435,7 +435,7 @@
             `Index`.`title`       AS `title`     ,
             `Index`.`groupid`     AS `groupid`   ,
             `Index`.`messageid`   AS `messageid` ,
-            `Index`.`refid`       AS `refid`     ,
+            `Index`.`parentid`       AS `refid`     ,
             `Group`.`group_name`  AS `groupname` ,
             `User`.`username`     AS `username`  ,
             DATE_FORMAT(
@@ -507,7 +507,7 @@
                 `CM`.`messageid`      ,
                 `CM`.`body`           ,
                 `User`.`username`     ,
-                `Index`.`refid`       ,
+                `Index`.`parentid`   AS `refid`   ,
                 `Index`.`postid`      ,
                 `Index`.`title` AS subject,
                 DATE_FORMAT(

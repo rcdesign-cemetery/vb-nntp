@@ -42,6 +42,29 @@ $db->show_errors();]]></installcode>
 		</code>
 	</codes>
 	<templates>
+        <template name="postbit_nntp" templatetype="template" date="1258983509" username="e.shkuropat" version=""><![CDATA[<div>$post[message]</div>
+
+<if condition="$show['attachments']">
+	<br />
+
+	<if condition="$show['thumbnailattachment']">
+		$post[thumbnailattachments]
+	</if>
+
+	<if condition="$show['imageattachment']">
+			$post[imageattachments]
+	</if>
+
+	<if condition="$show['imageattachmentlink']">
+			$post[imageattachmentlinks]
+	</if>
+
+	<if condition="$show['otherattachment']">
+			$post[otherattachments]
+	</if>
+
+</if>]]>
+        </template>
 	</templates>
 	<plugins>
 		<plugin active="1" executionorder="99">

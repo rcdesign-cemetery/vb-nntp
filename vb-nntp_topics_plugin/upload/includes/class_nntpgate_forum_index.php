@@ -68,6 +68,8 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         {
             return $message;
         }
+        $post =  $this->_post;
+        $post['pagetext'] = $this->_post['message'];
         // get for attachments
         $attachs = $this->_db->query_read_slave("
     			SELECT dateline, thumbnail_dateline, filename, filesize, visible, attachmentid, counter,
@@ -83,21 +85,34 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
             {
                 $attachment['hasthumbnail'] = false;
     		}
-            $postattach["$attachment[attachmentid]"] = $attachment;
+            $postattach[$attachment['attachmentid']] = $attachment;
         }
-        global $vbulletin;
+        $post['attachments'] = $postattach;
+        
+        global $vbulletin, $foruminfo, $threadinfo;
         $userinfo = fetch_userinfo($post['userid']);
-        $bbcode_parser = & new vB_BbCodeParser($vbulletin, fetch_tag_list($vbulletin->options['bburl'] . '/'));
-        $bbcode_parser->set_parse_userinfo($userinfo);
-        $this->_post['attachments'] = $postattach;
-        $bbcode_parser->printable = true;
-
         require_once(DIR . '/includes/class_postbit.php');
         $postbit_factory =& new vB_Postbit_Factory();
         $postbit_factory->registry =& $vbulletin;
-        $postbit_factory->bbcode_parser = $bbcode_parser;
-        $postbit_obj = $postbit_factory->fetch_postbit('external');
-        $message = $postbit_obj->construct_postbit($this->_post);
+        $postbit_factory->forum =& $foruminfo;
+        $postbit_factory->thread =& $threadinfo;
+        $postbit_factory->cache = array();
+        $postbit_factory->bbcode_parser =& new vB_BbCodeParser($vbulletin, fetch_tag_list());
+        $postbit_factory->bbcode_parser->set_parse_userinfo($userinfo);
+        $postbit_obj =& $postbit_factory->fetch_postbit('post');
+
+        // вместо construct_postbit
+        $postbit_obj->post = &$post;
+        global $show, $vbphrase, $stylevar;
+
+        $session_url = $vbulletin->session->vars['sessionurl'];
+        $vbulletin->session->vars['sessionurl'] = '';
+
+        $postbit_obj->parse_bbcode();
+        $postbit_obj->process_attachments();
+
+        eval('$message = "' . fetch_template('postbit_nntp') . '";');
+        $vbulletin->session->vars['sessionurl'] = $session_url;
         return $message;
     }
 
