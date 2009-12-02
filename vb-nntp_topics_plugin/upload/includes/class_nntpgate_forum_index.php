@@ -70,6 +70,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         }
         $post =  $this->_post;
         $post['pagetext'] = $this->_post['message'];
+        $post['allowsmilie'] = $post['enablesmilies'];
         // get for attachments
         $attachs = $this->_db->query_read_slave("
     			SELECT dateline, thumbnail_dateline, filename, filesize, visible, attachmentid, counter,
@@ -104,7 +105,8 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         // вместо construct_postbit
         $postbit_obj->post = &$post;
         global $show, $vbphrase, $stylevar;
-
+        $tmp_show = $show;
+        $tmp_stylevar = $stylevar;
         $session_url = $vbulletin->session->vars['sessionurl'];
         $vbulletin->session->vars['sessionurl'] = '';
 
@@ -112,6 +114,8 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         $postbit_obj->process_attachments();
 
         eval('$message = "' . fetch_template('postbit_nntp') . '";');
+        $show = $tmp_show;
+        $stylevar = $tmp_stylevar;
         $vbulletin->session->vars['sessionurl'] = $session_url;
         return $message;
     }

@@ -82,7 +82,7 @@ $threadtitle = $threadman->fetch_field( 'title' );
 $prefix = $threadman->fetch_field( 'prefixid' );
 
 $nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
-$nntp_index->set_message_index();]]></phpcode>
+$nntp_index->save_message();]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Update forum info</title>
@@ -131,7 +131,7 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
     $prefix = $threadinfo['prefixid'];
 
     $nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
-    $nntp_index->set_message_index();]]></phpcode>
+    $nntp_index->save_message();]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Check available groups list</title>

@@ -139,7 +139,7 @@ abstract class NNTPGate_Index_Base
      *
      * @return bool
      */
-    public function set_message_index ()
+    public function save_message()
     {
 
         if (empty($this->_post['message']))
@@ -219,9 +219,6 @@ abstract class NNTPGate_Index_Base
      */
     abstract protected function _make_message_body();
 
-    /**
-     *
-     */
     /**
      *
      * @return int
@@ -328,7 +325,6 @@ abstract class NNTPGate_Index_Base
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
-                    `groupid`   = " . $this->_group_id . " AND
                     `parentid`   = " . intval( $parent_id );
         $this->_db->query_write($sql);
         return true;
@@ -354,7 +350,6 @@ abstract class NNTPGate_Index_Base
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
-                    `groupid`   = " . $this->_group_id . " AND
                     `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
         $this->_db->query_write($sql);
         return true;
