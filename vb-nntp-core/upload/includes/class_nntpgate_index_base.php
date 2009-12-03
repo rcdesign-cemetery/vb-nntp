@@ -1,13 +1,7 @@
 <?php
-abstract class NNTPGate_Index_Base
+require_once DIR . '/includes/class_nntpgate_object.php';
+abstract class NNTPGate_Index_Base extends NNTPGate_Object
 {
-
-/**
- *
- * @var vB_Database
- */
-    protected $_db = null;
-
     /**
      *
      * @var int
@@ -61,25 +55,6 @@ abstract class NNTPGate_Index_Base
      * @var int
      */
     protected $_map_id = null;
-
-    /**
-     *
-     * @global vB_Registry $vbulletin
-     * @param vB_Database $db
-     */
-    public function  __construct($db = null)
-    {
-        if (! is_null ($db))
-        {
-            $this->_db = $db;
-        }
-        else
-        {
-            global $vbulletin;
-            $this->_db =& $vbulletin->db;
-        }
-
-    }
 
     /**
      *

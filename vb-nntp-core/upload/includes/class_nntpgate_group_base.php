@@ -1,24 +1,9 @@
 <?php
-abstract class NNTPGate_Group_Base
+require_once DIR . '/includes/class_nntpgate_object.php';
+abstract class NNTPGate_Group_Base extends NNTPGate_Object
 {
-
-    protected $_db;
     protected $_group_id;
     protected $_map_id;
-
-    public function  __construct($db = null)
-    {
-        if (! is_null ($db))
-        {
-            $this->_db = $db;
-        }
-        else
-        {
-            global $vbulletin;
-            $this->_db =& $vbulletin->db;
-        }
-
-    }
 
     public function update_group_info($fields, $group_id = null)
     {
