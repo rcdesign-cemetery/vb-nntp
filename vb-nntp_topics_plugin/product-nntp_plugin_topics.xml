@@ -24,7 +24,7 @@ $db->query("
 $db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
 		</code>
-        <code version="1.6">
+		<code version="1.6">
 			<installcode><![CDATA[$db->hide_errors();
 $db->query("
   ALTER TABLE `" . TABLE_PREFIX . "nntp_index` CHANGE `refid` `parentid` INT( 10 ) UNSIGNED NOT NULL 
@@ -42,7 +42,7 @@ $db->show_errors();]]></installcode>
 		</code>
 	</codes>
 	<templates>
-        <template name="postbit_nntp" templatetype="template" date="1258983509" username="e.shkuropat" version=""><![CDATA[<div>$post[message]</div>
+		<template name="postbit_nntp" templatetype="template" date="1258983509" username="e.shkuropat" version=""><![CDATA[<div>$post[message]</div>
 
 <if condition="$show['attachments']">
 	<br />
@@ -63,8 +63,8 @@ $db->show_errors();]]></installcode>
 			$post[otherattachments]
 	</if>
 
-</if>]]>
-        </template>
+</if>
+        ]]></template>
 	</templates>
 	<plugins>
 		<plugin active="1" executionorder="99">
@@ -93,6 +93,15 @@ $nntp_index->save_message();]]></phpcode>
   nntp_gate_Topics_update_forum( $vbulletin->GPC['forumid'], $forumdata );
 }]]></phpcode>
 		</plugin>
+		<plugin active="0" executionorder="5">
+			<title>Delete forums</title>
+			<hookname>forumdata_delete</hookname>
+			<phpcode><![CDATA[if( $vbulletin->GPC['forumid'] )
+{
+  require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
+  nntp_gate_Topics_delete_forums( $forumlist );
+}]]></phpcode>
+		</plugin>
 		<plugin active="1" executionorder="99">
 			<title>delete forum</title>
 			<hookname>forumdata_delete</hookname>
@@ -108,14 +117,20 @@ foreach ($forumlist as $forum_id)
     $nntp_group->delete_group();
 }]]></phpcode>
 		</plugin>
-		<plugin active="0" executionorder="5">
-			<title>Delete forums</title>
-			<hookname>forumdata_delete</hookname>
-			<phpcode><![CDATA[if( $vbulletin->GPC['forumid'] )
+		<plugin active="1" executionorder="99">
+			<title>move list of thrad</title>
+			<hookname>inlinemod_domovethread</hookname>
+			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
+$nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
+$nntp_index->set_map_id( $foruminfo['forumid']);
+$target_map_id = $destforuminfo['forumid'];
+$target_group_id = $nntp_index->get_group_id_by_map_id($target_map_id, true);
+$threads_list = array_keys($threadarray);
+foreach ($threads_list as $target_parent_id)
 {
-  require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-  nntp_gate_Topics_delete_forums( $forumlist );
-}]]></phpcode>
+    $nntp_index->move_posts_by_parent_id($target_group_id, $target_parent_id);
+}
+]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
 			<title><![CDATA[add new post & thread]]></title>
@@ -245,12 +260,6 @@ $index->delete_message_by_post_id();]]></phpcode>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_postdata_postsave($this, $thread);]]></phpcode>
 		</plugin>
-		<plugin active="0" executionorder="5">
-			<title>Delete thread</title>
-			<hookname>threaddata_delete</hookname>
-			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-nntp_gate_Topics_threaddata_delete($this, $threadid);]]></phpcode>
-		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>thread delete post</title>
 			<hookname>threaddata_delete</hookname>
@@ -262,11 +271,23 @@ $index->get_group_id_by_map_id();
 $index->set_parent_id($threadid);
 $index->delete_message_by_parent_id();]]></phpcode>
 		</plugin>
+		<plugin active="0" executionorder="5">
+			<title>Delete thread</title>
+			<hookname>threaddata_delete</hookname>
+			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
+nntp_gate_Topics_threaddata_delete($this, $threadid);]]></phpcode>
+		</plugin>
 		<plugin active="0" executionorder="100">
 			<title>Add thread</title>
 			<hookname>threadfpdata_postsave</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_threadfpdata_postsave($this);]]></phpcode>
+		</plugin>
+		<plugin active="0" executionorder="100">
+			<title>Move thread</title>
+			<hookname>threadmanage_move_complete</hookname>
+			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
+nntp_gate_Topics_threadmanage_move_complete();]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>move thread</title>
@@ -283,12 +304,6 @@ if ('copy' != $method)
     $nntp_index->move_posts_by_parent_id($target_group_id, $target_parent_id);
 }
 ]]></phpcode>
-		</plugin>
-		<plugin active="0" executionorder="100">
-			<title>Move thread</title>
-			<hookname>threadmanage_move_complete</hookname>
-			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-nntp_gate_Topics_threadmanage_move_complete();]]></phpcode>
 		</plugin>
 	</plugins>
 	<phrases>
@@ -307,4 +322,3 @@ nntp_gate_Topics_threadmanage_move_complete();]]></phpcode>
 	<faqentries>
 	</faqentries>
 </product>
-

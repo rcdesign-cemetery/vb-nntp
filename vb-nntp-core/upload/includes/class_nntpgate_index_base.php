@@ -300,6 +300,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
+                    `groupid` = " . $this->_group_id . " AND
                     `parentid`   = " . intval( $parent_id );
         $this->_db->query_write($sql);
         return true;
@@ -325,6 +326,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
+                    `groupid` = " . $this->_group_id . " AND
                     `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
         $this->_db->query_write($sql);
         return true;
@@ -358,7 +360,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
 					`title`,
 					`datetime`,
 					`userid`,
-					`deleted`    ,
+					`deleted`,
 					`messagetype`,
 					`postid`
                 FROM
@@ -366,6 +368,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
 				WHERE
                     `parentid`   = " . $parent_id . " AND
                     `messagetype` = '" . $this->_get_message_type() ."' AND
+                    `deleted` = 'no' AND
 					`groupid`   = " . $this->_group_id;
         $res = $this->_db->query_read_slave($sql);
         while( $index_info = $this->_db->fetch_array( $res ))
@@ -422,7 +425,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `groupid` = " . $target_group_id .",
 					`parentid` = " . $index_info['parentid'] .",
 					`title` = '" . $index_info['title'] ."',
-					`datetime` = FROM_UNIXTIME( '" . $index_info['datetime'] ."'),
+					`datetime` =  '" . $index_info['datetime'] ."',
 					`userid` = " . $index_info['userid'] .",
 					`deleted` = '" . $index_info['deleted'] ."',
 					`messagetype` = '" . $index_info['messagetype'] ."',
