@@ -74,6 +74,7 @@ function nntp_gate_Topics_check_groups_list( &$activegroups, &$membergroupids )
 
   foreach( $activegroups as $nntpid => &$group )
   {
+      /*
     if( $group['settings']['plugin'] == NNTP_MESSAGE_TYPE )
     {
       // check only groups handled by this plugin
@@ -82,6 +83,15 @@ function nntp_gate_Topics_check_groups_list( &$activegroups, &$membergroupids )
         $group['available'] = true;
       }
     }
+    */
+        if( NNTP_MESSAGE_TYPE == $group['plugin_id'] )
+        {
+            // check only groups handled by this plugin
+            if( isset( $forumids[$group['map_id']] ) )
+            {
+                $group['available'] = true;
+            }
+        }
   }
 
   return;
