@@ -315,7 +315,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             $parent_id = $this->_parent_id;
         }
-        if( (! $this->_group_id) || (! $parent_id ))
+        if( !$parent_id )
         {
             return false;
         }
@@ -326,7 +326,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
-                    `groupid` = " . $this->_group_id . " AND
                     `parentid`   = " . intval( $parent_id );
         $this->_db->query_write($sql);
         return true;
@@ -353,7 +352,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `deleted` = 'yes'
                 WHERE
                     `messagetype` = '" . $this->_get_message_type() . "' AND
-                    `groupid` = " . $this->_group_id . " AND
                     `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
         $this->_db->query_write($sql);
         return true;
@@ -385,9 +383,13 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             $this->get_group_id_by_map_id();
         }
-        if ( (!$target_group_id) OR  (!$parent_id) OR (!$this->_group_id))
+        if (!$this->_group_id OR  (!$parent_id) )
         {
             return false;
+        }
+        if ( (!$target_group_id))
+        {
+            return $this->delete_message_by_parent_id($parent_id);
         }
 
         $sql = "SELECT
@@ -429,14 +431,18 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             $this->get_group_id_by_map_id();
         }
-        if ( (!$target_group_id) OR empty($post_id_list)  OR (!$this->_group_id))
+        if ( empty($post_id_list)  OR (!$this->_group_id))
         {
             return false;
+        }
+        if ((!$target_group_id))
+        {
+            return $this->delete_messages_by_post_id_list($post_id_list);
         }
         $post_id_list = array_map('intval', $post_id_list);
         $sql = "SELECT
                     `groupid`,
-                    `messageid`,<type>
+                    `messageid`,
 					`parentid`,
 					`title`,
 					`datetime`,
@@ -450,10 +456,12 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `groupid`   = " . $this->_group_id . " AND
 					`messagetype` = '" . $this->_get_message_type() . "' AND
                     `postid` IN( '" . implode( "', '", $post_id_list ) . "' )";
+       
         $res = $this->_db->query_read_slave($sql);
         while( $index_info = $this->_db->fetch_array( $res ))
         {
             $this->move_post($target_group_id, $index_info);
+
         }
         return true;
     }
@@ -474,6 +482,10 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             return false;
         }
+        $this->set_post_id($index_info['postid']);
+        $this->delete_message_by_post_id();
+
+
         $sql = "INSERT INTO
 					`" . TABLE_PREFIX . "nntp_index`
 				SET
@@ -487,9 +499,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
 					`postid` = " . $index_info['postid'];
         $this->_db->query_write($sql);
         $new_message_id = $this->_db->insert_id();
-        
-        $this->set_post_id($index_info['postid']);
-        $this->delete_message_by_post_id();
 
         $sql = "UPDATE
 					`" . TABLE_PREFIX . "nntp_cache_messages`
@@ -497,7 +506,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     `groupid` = " . $target_group_id . ",
                     `messageid` =  " . $new_message_id . "
                 WHERE
-                    `groupid`   = " . $this->_group_id . " AND
+                    `groupid`   = " . $index_info['groupid'] . " AND
 					`messageid` = " . $index_info['messageid'];
         $this->_db->query_write($sql);
         
