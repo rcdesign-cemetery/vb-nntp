@@ -193,7 +193,6 @@
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active` = 'yes'
-          /*AND G.`map_id`    = 0*/
           ORDER BY
             G.`group_name`
         } );
@@ -435,7 +434,7 @@
             `Index`.`title`       AS `title`     ,
             `Index`.`groupid`     AS `groupid`   ,
             `Index`.`messageid`   AS `messageid` ,
-            `Index`.`parentid`       AS `refid`     ,
+            `Index`.`parentid`    AS `refid`     ,
             `Group`.`group_name`  AS `groupname` ,
             `User`.`username`     AS `username`  ,
             DATE_FORMAT(
@@ -503,13 +502,13 @@
 
         my $res = $self->dbi->selectrow_hashref( q{
               SELECT
-                `CM`.`groupid`        ,
-                `CM`.`messageid`      ,
-                `CM`.`body`           ,
-                `User`.`username`     ,
-                `Index`.`parentid`   AS `refid`   ,
-                `Index`.`postid`      ,
-                `Index`.`title` AS subject,
+                `CM`.`groupid`     AS `groupid`  ,
+                `CM`.`messageid`   AS `messageid`,
+                `CM`.`body`        AS `body`     ,
+                `User`.`username`  AS `username` ,
+                `Index`.`postid`   AS `postid`   ,
+                `Index`.`parentid` AS `refid`    ,
+                `Index`.`title`    AS `subject`  ,
                 DATE_FORMAT(
                   CONVERT_TZ(
                     `Index`.`datetime`,
@@ -517,7 +516,7 @@
                     '+00:00'
                   ),
                   '%a, %d %b %Y %T +00:00'
-                )               AS `gmdate`
+                )                  AS `gmdate`
               FROM
                           `} . $tableprefix . q{nntp_cache_messages` AS `CM`
                 LEFT JOIN `} . $tableprefix . q{nntp_index`          AS `Index`
@@ -665,7 +664,6 @@
           WHERE
                 G.`id` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
             AND G.`is_active`    = 'yes'
-            AND G.`map_id`       = 0
             AND G.`date_create` >= STR_TO_DATE(
               '}
               . join( '.', $date->{year} , $date->{month}  , $date->{day}     )

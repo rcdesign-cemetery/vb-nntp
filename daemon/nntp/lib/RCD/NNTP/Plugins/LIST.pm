@@ -74,7 +74,7 @@
 
       my ( $uuid ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         #
         #   Update groups statistics
@@ -176,7 +176,7 @@
         $self->client( $uuid )->{groupids} = {};
       }
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         #
         #   Just return if user have no accessible groups

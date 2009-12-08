@@ -210,7 +210,7 @@
         #   Close open file descriptors
         #
 
-        foreach my $i ( 0 .. OpenMax() ) { POSIX::close( $i ) }
+        #foreach my $i ( 0 .. OpenMax() ) { POSIX::close( $i ) }
 
         #
         #   Reopen stderr, stdout, stdin to /dev/null

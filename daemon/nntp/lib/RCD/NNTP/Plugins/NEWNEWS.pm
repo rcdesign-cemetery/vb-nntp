@@ -111,7 +111,7 @@
 
       my ( $uuid, $groups, $date, $time, $gmt, $dists ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         $dists   =
           ( $dists && $dists =~ /^\<[^\>]*\>$/ ) ? $dists :

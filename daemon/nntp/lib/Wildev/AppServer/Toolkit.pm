@@ -13,7 +13,7 @@
     use Digin::Tools::Factory;
     use base qw(Digin::Base::Toolkit);
 
-    our $VERSION = "0.01"; # $Date: 2008/10/16 02:48:33 $
+    our $VERSION = "0.02"; # $Date: 2009/11/24 17:10:40 $
 
 
     __PACKAGE__->mk_accessors( qw(
@@ -49,7 +49,7 @@
       if( @_ )
       {
         $Config = $self->Factory->Create(
-          'Digin::Tools::ParseConfig',
+          'RCD::NNTP::Tools::Config',
           $_[0]
         ) if -r $_[0];
       }
@@ -77,6 +77,7 @@
               'maxlevel'        => $cnf->Get( 'log.MaxLevel'   ),
               'debug_trace'     => $cnf->Get( 'log.DebugTrace' ),
               'debug_mode'      => $cnf->Get( 'log.DebugMode'  ),
+              'alias'           => 'file-out',
               'message_layout'  => '%T [%P] [%L] %m',
             },
         );

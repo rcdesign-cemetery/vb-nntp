@@ -117,6 +117,97 @@
 
 
     #
+    #   Check some conditions such as auth, online/offline forum mode
+    #
+    #   Input parameters:
+    #     uuid - Connection ID
+    #
+
+    sub check_conditions
+    {
+      my $self = shift;
+      my $uuid = shift;
+
+      my $client = $self->{Toolkit}->Clients->{$uuid};
+
+      #
+      #   Auth check
+      #
+
+      if( $self->checkauth( $uuid ) )
+      {
+        #
+        #   Reload config
+        #
+
+        $self->cnf->Reload();
+
+        #
+        #   Check online/offline forum mode
+        #
+
+        if( $self->checkonline( $uuid ) )
+        {
+          return 1;
+        }
+      }
+
+      return 0;
+    }
+
+
+    #
+    #   Checks forum is online or forum offline and user is an administrator
+    #
+    #   Input parameters:
+    #     uuid - Connection ID
+    #
+
+    sub checkonline
+    {
+      my $self = shift;
+      my $uuid = shift;
+
+      unless( 0 + $self->cnf->Get( 'backend.BBActive' ) )
+      {
+        #
+        #   Forum is offline => check if user is an admin
+        #
+
+        my $admingroups =
+          ref( $self->cnf->Get( 'backend.AdminGroups' ) ) eq 'ARRAY'
+            ?   $self->cnf->Get( 'backend.AdminGroups' )
+            : [ $self->cnf->Get( 'backend.AdminGroups' ) ];
+
+        foreach my $admingroupid ( @{ $admingroups } )
+        {
+          foreach my $usergroupid ( @{ $self->client( $uuid )->{usergroupslist} } )
+          {
+            if( $admingroupid == $usergroupid )
+            {
+              #
+              #   User is an admin and can use gate even when forum is offline
+              #
+
+              return 1;
+            }
+          }
+        }
+
+        #
+        #   User is not an admin so he can't use gate where forum is offline
+        #
+
+        $self->WriteClient( $uuid, '400 The service is temporary offline' );
+
+        return 0;
+      }
+
+      1;
+    }
+
+
+    #
     #   Checks auth flag and prints auth required to client if flag is negative
     #
     #   Input parameters:
