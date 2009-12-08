@@ -72,7 +72,7 @@
 
       my ( $uuid, $date, $time, $gmt ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         my $date = $self->parse_date_time( $date, $time, $gmt );
 

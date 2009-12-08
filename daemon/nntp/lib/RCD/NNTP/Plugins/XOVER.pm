@@ -74,7 +74,7 @@
 
       my ( $uuid, $range ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         if( ! $self->client( $uuid )->{groupid} )
         {

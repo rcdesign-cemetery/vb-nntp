@@ -100,7 +100,7 @@
 
       my ( $uuid, $id ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         # is it required to set internal atricle pointer?
         my $set_message_id = 0;

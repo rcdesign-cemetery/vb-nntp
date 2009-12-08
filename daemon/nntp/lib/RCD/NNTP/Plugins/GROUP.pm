@@ -64,7 +64,7 @@
 
       my ( $uuid,  $groupname ) = @_;
 
-      if( $self->checkauth( $uuid ) )
+      if( $self->check_conditions( $uuid ) )
       {
         #
         #   Check for existing group id

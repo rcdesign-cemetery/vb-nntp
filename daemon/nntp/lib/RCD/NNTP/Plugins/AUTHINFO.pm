@@ -151,7 +151,7 @@
               '382 Authentication rejected'
             );
 
-          #$self->checkauth( $uuid );
+          #$self->check_conditions( $uuid );
         }
         else
         {
@@ -300,6 +300,9 @@
           $self->client( $uuid )->{demotext}   = $userinfo->{demotext}   || '';
           $self->client( $uuid )->{tmpl}       = $userinfo->{tmpl}       || '';
           $self->client( $uuid )->{groupslist} = $userinfo->{groupslist} || [];
+
+          $self->client( $uuid )->{usergroupslist} =
+            [ split( ',', $userinfo->{usergroupslist} ) ];
 
           return 1;
         }

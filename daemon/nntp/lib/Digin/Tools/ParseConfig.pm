@@ -7,7 +7,7 @@
     use strict;
     use vars qw($VERSION);
 
-    $VERSION = "0.04"; # $Date: 2007/07/05 23:11:45 $
+    $VERSION = "0.05"; # $Date: 2009/12/06 20:17:30 $
 
 
     sub new
@@ -18,6 +18,7 @@
 
       my $obj   = bless {
         'ConfigFile' => $ConfigFile,
+        'Data'       => {},
         @_,
       } => $class;
 
@@ -38,8 +39,50 @@
         if 1 == scalar @_;
 
       1 == scalar @_
-        ? $obj->{$_[0]}
-        : $obj->{ uc( $_[0] ) }->{$_[1]};
+        ? $obj->{Data}->{$_[0]}
+        : $obj->{Data}->{ uc( $_[0] ) }->{$_[1]};
+    }
+
+
+    # $cfg->Set( 'section.name', $value );
+    # $cfg->Set( 'section', 'name', $value );
+    sub Set ($$;$)
+    {
+      my $obj = shift;
+
+      if( 2 > scalar( @_ ) )
+      {
+        warn "No enough parameters to set value!";
+        return;
+      }
+
+      #
+      #   Value is the very last element of received array of parameters
+      #
+
+      my $value = pop @_;
+
+      #
+      #   Get parameter path
+      #
+
+      @_ = split( '\.', shift )
+        if 1 == scalar @_;
+
+      #
+      #   Set value
+      #
+
+      if   ( 1 == scalar @_ )
+      {
+        $obj->{Data}->{$_[0]} = $value;
+      }
+      elsif( 2 == scalar @_ )
+      {
+        $obj->{Data}->{ uc( $_[0] ) }->{$_[1]} = $value;
+      }
+
+      1;
     }
 
 
@@ -49,11 +92,10 @@
       my $class = ref( $obj ) || $obj;
       $obj      = $class->new( @_ ) unless ref( $obj );
 
-      open( ConfigFile, $obj->{ConfigFile} )
-        || die "Can't open config file for reading: $!";
-
+      my $configdata = $obj->_ReadConfig();
       my $_cname = '';
-      while( <ConfigFile> )
+
+      foreach $_ ( @{ $configdata } )
       {
         chomp;
 
@@ -74,6 +116,9 @@
               $_cline =~
                 /^[\s\t]*([^\s\t=#]+?)[\s\t]*=[\s\t]*(.+?)([\s\t]+(#.+)?)?$/ )
         {
+          $value =~ s/^ +//g;
+          $value =~ s/ +$//g;
+
           $value = $value =~ /^yes$/i
                    ? 1
                    : $value;
@@ -104,18 +149,54 @@
 
           if( $_cname =~ /^main$/i || !$_cname )
           {
-            $obj->{$key} = $value;
+            $obj->Set( $key, $value );
+            #$obj->{Data}->{$key} = $value;
           }
           else
           {
-            $obj->{uc( $_cname )}->{$key} = $value;
+            $obj->Set( $_cname, $key, $value );
+            #$obj->{Data}->{ uc( $_cname ) }->{$key} = $value;
           }
         }
       }
 
-      close( ConfigFile );
-
       1;
+    }
+
+
+    sub _ReadConfig
+    {
+      my $obj = shift;
+
+      my $configdata = [];
+
+      if( ref( $obj->{ConfigFile} ) eq 'ARRAY' )
+      {
+        $configdata = \@{ $obj->{ConfigFile} };
+      }
+      elsif( ! ref( $obj->{ConfigFile} )
+             && $obj->{ConfigFile} !~ /[\r\n]/
+             && -e $obj->{ConfigFile}           # file exists
+             && -f _                            # "simple" file (not pipe etc.)
+             && -T _ )                          # text file
+      {
+        open( ConfigFile, '<', $obj->{ConfigFile} )
+          || die "Can't open config file for reading: $!";
+  
+        while( <ConfigFile> )
+        {
+          push @{ $configdata }, $_;
+        }
+
+        close( ConfigFile );
+      }
+      elsif( ! ref( $obj->{ConfigFile} ) )
+      {
+        # just a text?
+        @{ $configdata } = split( /[\r\n]/, $obj->{ConfigFile} );
+      }
+
+      $configdata;
     }
 
 
