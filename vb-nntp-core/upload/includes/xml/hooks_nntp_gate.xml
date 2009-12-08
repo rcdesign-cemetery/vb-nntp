@@ -8,9 +8,9 @@
                 <hook>nntp_gate_group_save_settings_complete</hook>
                 <hook>nntp_gate_group_delete_start</hook>
                 <hook>nntp_gate_group_delete_complete</hook>
-                <hook>nntp_gate_group_reindex</hook>
+                <hook>nntp_gate_group_clear</hook>
                 <hook>nntp_gate_group_cleanup</hook>
-                <hook>nntp_gate_possible_groups_list</hook>
+                <hook>nntp_gate_groups_list</hook>
                 <hook>nntp_gate_get_messages_list</hook>
                 <hook>nntp_gate_get_message</hook>
                 <hook>nntp_gate_backend_groups_list</hook>

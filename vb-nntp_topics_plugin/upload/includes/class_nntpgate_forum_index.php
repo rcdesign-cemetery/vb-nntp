@@ -6,16 +6,20 @@ require_once DIR . '/includes/class_nntpgate_index_base.php';
  */
 class NNTPGate_Forum_Index extends NNTPGate_Index_Base
 {
+    /**
+     * тип сообщения
+     */
     const MESSAGE_TYPE = 'forum';
 
     /**
+     * Формируем заголовок сообщений, на основе заголовка треда
      *
      * @access public
      * @param array $vbphrase
      * @param string $prefixid
      * @param string $threadtitle
      */
-    public function make_message_title($vbphrase, $prefixid = '', $threadtitle = '')
+    public function make_message_title($vbphrase, $threadtitle = '', $prefixid = '')
     {
         if( empty($prefixid) OR empty($threadtitle))
         {
@@ -55,7 +59,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
 
 
     /**
-     * Get message for cache
+     * Формирует(но не сохраняет) тело сообщения для кэш-таблицы nntp_cache_messages
      *
      * @global vB_Registry $vbulletin
      * @return string
@@ -123,7 +127,8 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
     
 
     /**
-     * Get message type
+     * Должен быть специфицирован в каждом потомке так как php до версии 5.3
+     * не поддерживает конструкции типа get_class($this)::MESSAGE_TYPE
      *
      * @return string
      */

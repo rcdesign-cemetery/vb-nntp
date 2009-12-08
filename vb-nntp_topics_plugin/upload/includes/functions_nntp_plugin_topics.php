@@ -261,6 +261,7 @@ function nntp_gate_Topics_group_settings ( &$settings )
 
 function nntp_gate_Topics_possible_groups_list ( &$groups_list )
 {
+    return array();
   global $vbulletin, $vbphrase, $startdepth, $this_script;
 
   $used_forums = array();
@@ -674,33 +675,6 @@ function nntp_gate_Topics_delete_messages ( $postids )
   $messagetype = NNTP_MESSAGE_TYPE;
 
   nntp_delete_messages_by_messagetype_postid( $messagetype, $postids );
-}
-
-
-/*
- *  Hook: forumadmin_update_save
- * 
- *  Update forum info in nntp-group info
- * 
- *  This calls when a forum info updates
- * 
- */
-
-function nntp_gate_Topics_update_forum ( $forumid, &$forumdata )
-{
-  if( ! intval( $forumid ) ) return false;
-
-  # get group id
-  $groupid = nntp_gate_Topics_groupid_by_forumid( $forumid );
-
-  if( ! intval( $groupid ) ) return false;
-
-  # get group info
-  $groupinfo = nntp_get_group( $groupid );
-
-  $groupinfo['settings']['comment'] = $vbulletin->GPC['forum']['title'];
-
-  nntp_save_group( $groupinfo );
 }
 
 

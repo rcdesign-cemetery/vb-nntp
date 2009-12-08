@@ -84,7 +84,7 @@ $prefix = $threadman->fetch_field( 'prefixid' );
 $nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
 $nntp_index->save_message();]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Update forum info</title>
 			<hookname>forumadmin_update_save</hookname>
 			<phpcode><![CDATA[if( $vbulletin->GPC['forumid'] )
@@ -154,7 +154,7 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title><![CDATA[Create message's user menu]]></title>
 			<hookname>nntp_gate_backend_user_menu</hookname>
 			<phpcode><![CDATA[if ($group['plugin_id'] == 'forum')
@@ -162,7 +162,7 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
   $menu = fetch_template('nntp_message_forum_menu');
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Delete specific group settings</title>
 			<hookname>nntp_gate_group_delete_complete</hookname>
 			<phpcode><![CDATA[if ( $vbulletin->GPC['plugin'] == 'forum' && $settings['group_id'] && $settings['forum_id'] )
@@ -175,7 +175,7 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
   );
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Delete group</title>
 			<hookname>nntp_gate_group_delete_start</hookname>
 			<phpcode><![CDATA[if ( $vbulletin->GPC['plugin'] == 'forum' )
@@ -188,7 +188,7 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
   );
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Group re-index</title>
 			<hookname>nntp_gate_group_reindex</hookname>
 			<phpcode><![CDATA[if ($group['plugin_id'] == 'forum')
@@ -197,7 +197,7 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
   nntp_gate_Topics_group_reindex($group, $datelimit, $group_id);
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="10">
+		<plugin active="0" executionorder="10">
 			<title>Save group settings</title>
 			<hookname>nntp_gate_group_save_settings</hookname>
 			<phpcode><![CDATA[if ( $vbulletin->GPC['plugin'] == 'forum' )
@@ -206,7 +206,7 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
   nntp_gate_Topics_group_save_settings($settings);
 }]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Save specific group settings</title>
 			<hookname>nntp_gate_group_save_settings_complete</hookname>
 			<phpcode><![CDATA[if (   $vbulletin->GPC['plugin'] == 'forum'
@@ -220,10 +220,27 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
 		<plugin active="1" executionorder="10">
 			<title>Show group settings</title>
 			<hookname>nntp_gate_group_settings</hookname>
-			<phpcode><![CDATA[if ($vbulletin->GPC['plugin'] == 'forum')
+			<phpcode><![CDATA[if ('forum' == $vbulletin->GPC['plugin'])
 {
-  require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-  nntp_gate_Topics_group_settings($settings);
+    $selected_forum = $nntp_group->get_map_id();
+    require_once DIR . '/includes/class_nntpgate_forum_group.php';
+    //$groups_list = $nntp_group->get_groups_list($forum_list);
+    $nntp_forum_group = new NNTPGate_Forum_Group();
+    
+    $allowed_forum_list = $nntp_forum_group->get_allowed_forums_list($vbulletin->forumcache, $selected_forum);
+    $forum_list = array($vbphrase['no_one']) + $allowed_forum_list;
+    print_select_row($vbphrase['forum'], 'map_id', $forum_list, $selected_forum);
+    /*
+    print_forum_chooser(
+        $vbphrase['forum'],
+        'map_id',
+        $nntp_group->get_map_id(),
+        $vbphrase['no_one'],
+        false
+    );
+    */
+//require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
+//nntp_gate_Topics_group_settings($settings);
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="10">
@@ -232,10 +249,35 @@ nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
 			<phpcode><![CDATA[$plugins['forum'] = 'forum topics';]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="10">
-			<title>Show possible to add groups</title>
-			<hookname>nntp_gate_possible_groups_list</hookname>
-			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
-nntp_gate_Topics_possible_groups_list($groups_list);]]></phpcode>
+			<title>Show forum based groups </title>
+			<hookname>nntp_gate_groups_list</hookname>
+			<phpcode><![CDATA[//require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
+//nntp_gate_Topics_possible_groups_list($groups_list);
+print_form_header( $this_script, 'group_settings' );
+print_table_header( $vbphrase['nntp_forum_based_groups_list'], 2 );
+construct_hidden_code( 'plugin'  , 'forum' );
+print_cells_row( array( $vbphrase['nntp_group_name'], $vbphrase['controls'] ), 1 );
+
+require_once DIR . '/includes/class_nntpgate_forum_group.php';
+$nntp_group = new NNTPGate_Forum_Group();
+$forum_list = $vbulletin->forumcache;
+$groups_list = $nntp_group->get_groups_list($forum_list);
+foreach ( $groups_list AS $group )
+{
+    $group_status = '';
+    $controls = form_group_control($group);
+    print_cells_row( array(
+            '<b>' . $group['group_name'] . '</b>'
+            . $group_status
+            . ( !empty( $group['comment'] ) ? '<br />' . $group['comment'] : '' ),
+            $controls
+    ));
+}
+print_cells_row( array(
+            '',
+            construct_button_code($vbphrase['nntp_add_group'], 'submit')
+        ));
+print_table_footer( 2 );]]></phpcode>
 		</plugin>
 		<plugin active="0" executionorder="5">
 			<title>Delete post</title>
@@ -306,13 +348,18 @@ if ('copy' != $method)
 ]]></phpcode>
 		</plugin>
 	</plugins>
+
 	<phrases>
 		<phrasetype name="Control Panel Global" fieldname="cpglobal">
+            <phrase name="nntp_forum_based_groups_list" date="1217534551" username="Wildev" version=""><![CDATA[Existing forum based group list]]></phrase>
+<!--
 			<phrase name="nntp_forum_possible_groups" date="1249566809" username="Dimit" version=""><![CDATA[Possible to add forums based groups]]></phrase>
 			<phrase name="nntp_group_mapped_to" date="1218113247" username="Wildev" version=""><![CDATA[->]]></phrase>
 			<phrase name="nntp_map_to_group" date="1218109298" username="Wildev" version=""><![CDATA[Map to existing group]]></phrase>
+-->
 		</phrasetype>
 	</phrases>
+
 	<options>
 	</options>
 	<helptopics>

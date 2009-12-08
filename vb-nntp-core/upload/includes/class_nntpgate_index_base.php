@@ -57,6 +57,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     protected $_map_id = null;
 
     /**
+     * Получить пост по его post_id
+     * Поля которые необходимо получать задаются через параметр
      *
      * @param array $fields
      * @param int $post_id
@@ -111,6 +113,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Сохраняет новое сообщение в системе nntpgate
      *
      * @return bool
      */
@@ -162,6 +165,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Сохраняет сообщения в кэш-таблицы nntp_cache_messages
      *
      * @return bool
      */
@@ -190,12 +194,23 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Формирует(но не сохраняет) тело сообщения для кэш-таблицы nntp_cache_messages
      *
+     * @return string
      */
     abstract protected function _make_message_body();
 
     /**
+     * Get group id by map.
+     * Если значение map_id не передается в качестве параметра, то будет взято
+     * из self::_map_id
+     * От флага $external зависит будет ли результат записан в self::_group_id
      *
+     * @todo такой же метод есть в NNTPGate_Group_Base, так что или делегировать
+     * или выделить в отдельный метод
+     *
+     * @param int $map_id
+     * @param bool $external
      * @return int
      */
     public function get_group_id_by_map_id($map_id = null, $external = false)
@@ -206,7 +221,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         }
         if ( !$map_id)
         {
-            return false;
+            return 0;
         }
         // Find group id by map id
         $group_id = 0;
@@ -233,6 +248,12 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
 
+    /**
+     * Должен быть специфицирован в каждом потомке так как php до версии 5.3
+     * не поддерживает конструкции типа get_class($this)::MESSAGE_TYPE
+     *
+     * @return string
+     */
     abstract protected function _get_message_type();
 
     /**
@@ -254,6 +275,10 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         $this->_user_id = (int)$value;
     }
 
+    /**
+     *
+     * @param string $value
+     */
     public function set_title($value)
     {
         $this->_title = $this->_db->escape_string($value);
@@ -279,6 +304,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Удалить посты по общему предку
      *
      * @param int $parent_id
      * @return bool
@@ -307,6 +333,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Удалить посты по списку
      *
      * @param array $post_id_list
      * @return bool
@@ -333,8 +360,10 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
+     * Удалить один пост по self::_post_id
      *
      * @access public
+     * @return bool
      */
     public function delete_message_by_post_id()
     {
@@ -342,6 +371,14 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         return $this->delete_messages_by_post_id_list($post_id_list);
     }
 
+    /**
+     * Перемещение группы индексов по общему предку
+     * Копирование не поддерживается
+     *
+     * @param int $target_group_id
+     * @param int $parent_id
+     * @return bool
+     */
     public function move_posts_by_parent_id($target_group_id, $parent_id)
     {
         if (!$this->_group_id)
@@ -378,6 +415,14 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         return true;
     }
 
+    /**
+     * Перемещение группы индексов по списку
+     * Копирование не поддерживается
+     *
+     * @param int $target_group_id
+     * @param array $post_id_list
+     * @return bool
+     */
     public function move_posts_by_id_list($target_group_id, $post_id_list)
     {
         if (!$this->_group_id)
@@ -391,7 +436,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         $post_id_list = array_map('intval', $post_id_list);
         $sql = "SELECT
                     `groupid`,
-                    `messageid`,
+                    `messageid`,<type>
 					`parentid`,
 					`title`,
 					`datetime`,
@@ -413,6 +458,16 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         return true;
     }
 
+    /**
+     * Перемещение одного поста.
+     * Копирование не поддерживается
+     *
+     * @todo подумать как избавится от массива в параметрах.
+     *
+     * @param int $target_group_id
+     * @param array $index_info
+     * @return true
+     */
     public function move_post($target_group_id, $index_info)
     {
         if ( (!$target_group_id) OR empty($index_info) )

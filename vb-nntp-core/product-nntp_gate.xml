@@ -3,7 +3,7 @@
 <product productid="nntp_gate" active="1">
 	<title>NNTP Gate</title>
 	<description />
-	<version>1.5</version>
+	<version>1.6</version>
 	<url />
 	<versioncheckurl />
 	<apm_releasedate>1258927200</apm_releasedate>
@@ -282,12 +282,11 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<phrase name="nntp_group_is_active" date="1217533777" username="Wildev" version=""><![CDATA[Is group enabled?]]></phrase>
 			<phrase name="nntp_group_name" date="1217340623" username="Wildev" version=""><![CDATA[Group Name]]></phrase>
 			<phrase name="nntp_groups" date="1216933876" username="Wildev" version=""><![CDATA[Groups Setup]]></phrase>
-			<phrase name="nntp_groups_list" date="1217534551" username="Wildev" version=""><![CDATA[Existing Groups List]]></phrase>
 			<phrase name="nntp_plugin" date="1216934725" username="Wildev" version=""><![CDATA[Plugin to use]]></phrase>
 			<phrase name="nntp_set_group" date="1217340579" username="Wildev" version=""><![CDATA[Group Settings]]></phrase>
 			<phrase name="nntp_settings" date="1216934203" username="Wildev" version=""><![CDATA[Main Settings]]></phrase>
 			<phrase name="nntp_stats_login_number" date="1218458302" username="Wildev" version=""><![CDATA[Login Number]]></phrase>
-			<phrase name="reindex" date="1225399130" username="Wildev" version=""><![CDATA[Reindex]]></phrase>
+			<phrase name="clean" date="1225399130" username="Wildev" version=""><![CDATA[Clean]]></phrase>
 		</phrasetype>
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
 			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />
@@ -304,8 +303,9 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
 			<phrase name="nntp_cannot_remove_mapped_group" date="1218111169" username="Wildev" version=""><![CDATA[Can't remove group with mapped groups]]></phrase>
 			<phrase name="nntp_group_deleted_successfully" date="1217537461" username="Wildev" version=""><![CDATA[Selected group successfully deleted]]></phrase>
-			<phrase name="nntp_group_reindexed_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
+			<phrase name="nntp_group_cleaned_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
 			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
+            <phrase name="saved_nntp_group_settings_defeated" date="1217536946" username="varnak" version="1.6"><![CDATA[Group save settings defeated]]></phrase>
 		</phrasetype>
 		<phrasetype name="GLOBAL" fieldname="global">
 			<phrase name="nntp_gate" date="1216126747" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
