@@ -16,8 +16,8 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
      *
      * @access public
      * @param array $vbphrase
-     * @param string $prefixid
      * @param string $threadtitle
+     * @param string $prefixid
      */
     public function make_message_title($vbphrase, $threadtitle = '', $prefixid = '')
     {
