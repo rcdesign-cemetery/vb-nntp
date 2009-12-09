@@ -161,14 +161,6 @@ $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
 $db->show_errors();]]></installcode>
 			<uninstallcode />
 		</code>
-		<code version="1.6">
-			<installcode><![CDATA[$db->hide_errors();
-
-$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_groups` ADD `comment` TEXT NOT NULL ");
-
-$db->show_errors();]]></installcode>
-			<uninstallcode />
-		</code>
 	</codes>
 	<templates>
 		<template name="nntp_anounce" templatetype="template" date="1258983509" username="Dimit" version=""><![CDATA[$stylevar[htmldoctype]
