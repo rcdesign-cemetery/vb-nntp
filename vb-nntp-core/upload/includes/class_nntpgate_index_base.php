@@ -93,9 +93,9 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     FROM
                         `" . TABLE_PREFIX . "nntp_index`
                     WHERE
-                        `messagetype` = '" . $this->_get_message_type() . "'
-                        AND `postid`      =  " . (int) $this->_post_id . "
-                        AND `deleted`   = 'no'
+                        `messagetype` = '" . $this->_get_message_type() . "' AND 
+                        `postid`      =  " . (int) $this->_post_id . " AND
+                        `deleted`     = 'no'
                     LIMIT 1  ";
         $index = $this->_db->query_first($sql);
         if(! empty( $index ) )
@@ -387,32 +387,26 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             return false;
         }
+        $this->_parent_id = $parent_id;
+
         if ( (!$target_group_id))
         {
-            return $this->delete_message_by_parent_id($parent_id);
+            return $this->delete_message_by_parent_id();
         }
 
         $sql = "SELECT
-                    `groupid`,
                     `messageid`,
-					`parentid`,
-					`title`,
-					`datetime`,
-					`userid`,
-					`deleted`,
-					`messagetype`,
 					`postid`
                 FROM
                     `" . TABLE_PREFIX . "nntp_index`
 				WHERE
-                    `parentid`   = " . $parent_id . " AND
-                    `messagetype` = '" . $this->_get_message_type() ."' AND
-                    `deleted` = 'no' AND
-					`groupid`   = " . $this->_group_id;
+                    `groupid`   = " . $this->_group_id . " AND
+					`parentid`   = " . $this->_parent_id;
         $res = $this->_db->query_read_slave($sql);
         while( $index_info = $this->_db->fetch_array( $res ))
         {
-            $this->move_post($target_group_id, $index_info);
+            $this->set_post_id($index_info['postid']);
+            $this->move_post($target_group_id, $index_info['messageid']);
         }
         return true;
     }
@@ -441,14 +435,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         }
         $post_id_list = array_map('intval', $post_id_list);
         $sql = "SELECT
-                    `groupid`,
                     `messageid`,
-					`parentid`,
-					`title`,
-					`datetime`,
-					`userid`,
-					`deleted`    ,
-					`messagetype`,
 					`postid`
                 FROM
                     `" . TABLE_PREFIX . "nntp_index`
@@ -460,8 +447,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         $res = $this->_db->query_read_slave($sql);
         while( $index_info = $this->_db->fetch_array( $res ))
         {
-            $this->move_post($target_group_id, $index_info);
-
+            $this->set_post_id($index_info['postid']);
+            $this->move_post($target_group_id, (int)$index_info['messageid']);
         }
         return true;
     }
@@ -470,46 +457,53 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
      * Перемещение одного поста.
      * Копирование не поддерживается
      *
-     * @todo подумать как избавится от массива в параметрах.
-     *
      * @param int $target_group_id
-     * @param array $index_info
-     * @return true
+     * @param int $message_id
+     * @return bool
      */
-    public function move_post($target_group_id, $index_info)
+    public function move_post($target_group_id, $message_id)
     {
-        if ( (!$target_group_id) OR empty($index_info) )
+        if ( (!$target_group_id) OR empty($message_id) )
         {
             return false;
         }
-        $this->set_post_id($index_info['postid']);
-        $this->delete_message_by_post_id();
-
-
-        $sql = "INSERT INTO
-					`" . TABLE_PREFIX . "nntp_index`
-				SET
-                    `groupid` = " . $target_group_id .",
-					`parentid` = " . $index_info['parentid'] .",
-					`title` = '" . $index_info['title'] ."',
-					`datetime` =  '" . $index_info['datetime'] ."',
-					`userid` = " . $index_info['userid'] .",
-					`deleted` = '" . $index_info['deleted'] ."',
-					`messagetype` = '" . $index_info['messagetype'] ."',
-					`postid` = " . $index_info['postid'];
-        $this->_db->query_write($sql);
-        $new_message_id = $this->_db->insert_id();
-
-        $sql = "UPDATE
-					`" . TABLE_PREFIX . "nntp_cache_messages`
-                SET
-                    `groupid` = " . $target_group_id . ",
-                    `messageid` =  " . $new_message_id . "
+        $sql = "SELECT
+					*
+                FROM
+                    `" . TABLE_PREFIX . "nntp_index`
                 WHERE
-                    `groupid`   = " . $index_info['groupid'] . " AND
-					`messageid` = " . $index_info['messageid'];
-        $this->_db->query_write($sql);
-        
-        return true;
+                    `groupid`   = " . $this->_group_id . " AND
+                    `deleted`   = 'no' AND
+                    `messageid` = " . $message_id;
+        $index_info = $this->_db->query_first($sql);
+        if (!empty($index_info))
+        {
+            $this->delete_message_by_post_id();
+            unset($index_info['messageid']);
+            $index_info['groupid'] = $target_group_id;
+            $fields = array();
+            foreach ($index_info as $field_name=>$value)
+            {
+                $fields[] = $field_name .' = \''.$value.'\'';
+            }
+            $sql = "INSERT INTO
+                        `" . TABLE_PREFIX . "nntp_index`
+                    SET
+                        " . implode(", \n", $fields);
+            $this->_db->query_write($sql);
+            $new_message_id = $this->_db->insert_id();
+
+            $sql = "UPDATE
+                		`" . TABLE_PREFIX . "nntp_cache_messages`
+                    SET
+                        `groupid` = " . $target_group_id . ",
+                        `messageid` =  " . $new_message_id . "
+                    WHERE
+                        `groupid`   = " . $this->_group_id . " AND
+                		`messageid` = " . $message_id;
+            $this->_db->query_write($sql);
+            return true;
+        }
+        return false;
     }
-}
+ }
