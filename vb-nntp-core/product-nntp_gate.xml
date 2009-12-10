@@ -3,7 +3,7 @@
 <product productid="nntp_gate" active="1">
 	<title>NNTP Gate</title>
 	<description />
-	<version>1.6</version>
+	<version>1.7</version>
 	<url />
 	<versioncheckurl />
 	<apm_releasedate>0</apm_releasedate>
@@ -157,6 +157,18 @@ $db->show_errors();]]></uninstallcode>
 			<installcode><![CDATA[$db->hide_errors();
 
 $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
+
+$db->show_errors();]]></installcode>
+			<uninstallcode />
+		</code>
+        <code version="1.7">
+			<installcode><![CDATA[$db->hide_errors();
+
+$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_index` ADD INDEX `Parent` ( `groupid` , `parentid` ) ");
+$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_index` DROP INDEX `Post` ,
+ADD INDEX `Post` ( `messagetype` , `postid` , `deleted` ) ");
+$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_groups` ADD INDEX `ActivePlugin` ( `plugin_id` , `is_active` )");
+$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_groups` ADD INDEX `Active` ( `is_active` ) ");
 
 $db->show_errors();]]></installcode>
 			<uninstallcode />
