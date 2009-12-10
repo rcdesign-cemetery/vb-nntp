@@ -532,7 +532,34 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
     $membergroupids = array( $usergroupid );
   }
 
-  $nntpgroupslist = nntp_get_available_groups_list( $membergroupids );
+
+    $activegroups = array();
+    $nntp_gate_handlers = array();
+    /**
+     * Пример:
+     *
+     * $nntp_gate_handlers[] = new NNTPGate_Forum_Group(); // нужный потомок NNTPGate_Group_Base
+     */
+    ($hook = vBulletinHook::fetch_hook('nntp_gate_backend_check_groups_list')) ? eval($hook) : false;
+
+    foreach($nntp_gate_handlers as $nntp_group)
+    {
+        $groups = $nntp_group->get_avaliable_group_list($membergroupids);
+        $activegroups = $activegroups + $groups;
+        unset($nntp_group);
+    }
+
+    foreach( $activegroups as $nntpid => $group )
+    {
+        if( $group['available'] == true )
+        {
+            $availablegroups[] = $group['group_id'];
+        }
+    }
+
+  $nntpgroupslist = implode( ',', $availablegroups );
+
+////////////
   $access_level   = nntp_get_access_level( $usergroupid, $membergroupids );
   $template       = nntp_get_eval( fetch_template( 'nntp_message_template' ) );
   $css            = nntp_get_eval( fetch_template( 'nntp_message_css'      ) );

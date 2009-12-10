@@ -249,28 +249,46 @@ class NNTPGate_Group_Base extends NNTPGate_Object
     /**
      * Get all groups
      *
+     * @param bool $active
+     * @param string $plugin_id
      * @return array
      */
-    public function get_groups_list()
+    public function get_groups_list($active = null, $plugin_id = null)
     {
+        $conditions = array();
         $result = array();
         $sql = "SELECT
-                `id` AS 'group_id' ,
-                `plugin_id`,
-                `group_name`,
-                `is_active`,
-                `map_id`,
-                `date_create`
-            FROM
-                `nntp_groups`
-            ORDER BY
-                `group_name`";
+                    `id` AS 'group_id' ,
+                    `plugin_id`,
+                    `group_name`,
+                    `is_active`,
+                    `map_id`,
+                    `date_create`
+                FROM
+                    `nntp_groups`";
+        if (!is_null($plugin_id))
+        {
+            $conditions[] = '`plugin_id` = \'' . $plugin_id . '\'';
+        }
+        if (!is_null($active))
+        {
+            $conditions[] = '`is_active` = \'' . ($active ? 'yes' : 'no') . '\'';
+        }
+        if (!empty($conditions))
+        {
+            $sql .= 'WHERE
+                        ' . implode(' AND ', $conditions);
+        }
+        $sql .= "ORDER BY
+                    `group_name`";
         $db_groups_list = $this->_db->query_read($sql);
         while ( $row = $this->_db->fetch_array( $db_groups_list ) )
         {
             $result[] = $row;
         }
         return $result;
+        //ALTER TABLE `forum`.`nntp_groups` ADD INDEX `ActivePlugin` ( `plugin_id` , `is_active` )
+        //ALTER TABLE `forum`.`nntp_groups` ADD INDEX `Active` ( `is_active` ) 
     }
 
     /**
@@ -342,5 +360,17 @@ class NNTPGate_Group_Base extends NNTPGate_Object
             $this->_date_create = $res['date_create'];
         }
         return true;
+    }
+
+    /**
+     * Получить список доступных для группы пользователей
+     * Метод должен быть спецефецирован в потомке
+     *
+     * @param array $member_group_id_list
+     * @return array
+     */
+    public function get_avaliable_group_list($member_group_id_list)
+    {
+        return array();
     }
 }

@@ -152,11 +152,18 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
     $nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
     $nntp_index->save_message();]]></phpcode>
 		</plugin>
-		<plugin active="1" executionorder="5">
+		<plugin active="0" executionorder="5">
 			<title>Check available groups list</title>
 			<hookname>nntp_gate_backend_check_groups_list</hookname>
 			<phpcode><![CDATA[require_once(DIR . '/includes/functions_nntp_plugin_topics.php');
 nntp_gate_Topics_check_groups_list($activegroups, $membergroupids);]]></phpcode>
+		</plugin>
+        <plugin active="1" executionorder="5">
+			<title>Check available groups list</title>
+			<hookname>nntp_gate_backend_check_groups_list</hookname>
+			<phpcode><![CDATA[
+$nntp_gate_handlers[] = new NNTPGate_Forum_Group();
+            ]]></phpcode>
 		</plugin>
 		<plugin active="0" executionorder="5">
 			<title><![CDATA[Create message's user menu]]></title>
@@ -179,7 +186,7 @@ print_cells_row( array( $vbphrase['nntp_group_name'], $vbphrase['controls'] ), 1
 require_once DIR . '/includes/class_nntpgate_forum_group.php';
 $nntp_group = new NNTPGate_Forum_Group();
 $forum_list = $vbulletin->forumcache;
-$groups_list = $nntp_group->get_groups_list($forum_list);
+$groups_list = $nntp_group->get_groups_list_by_forum($forum_list);
 foreach ( $groups_list AS $group )
 {
     $group_status = '';
