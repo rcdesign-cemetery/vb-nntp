@@ -3,7 +3,7 @@
 || #################################################################### ||
 || # NNTP Gate 1.3                                                    # ||
 || # ---------------------------------------------------------------- # ||
-|| # Copyright � 2008 Dmitry Titov, Vitaly Puzrin.                    # ||
+|| # Copyright � 2008 Dmitry Titov, Vitaly Puzrin.                    # ||
 || # All Rights Reserved.                                             # ||
 || # This file may not be redistributed in whole or significant part. # ||
 || #################################################################### ||
@@ -29,11 +29,13 @@ $maxrowsnum = $vbulletin->options['nntp_max_messages_in_group'] - 1;
 
 /*
  *  Delete excess records (depends on group id)
+ *  При удаление необходимо учитывать, что должно остоваться хотя бы одна запись
+ *  на группу.
  */
 
 $groups = $db->query_read("
   SELECT
-    G.*,
+    G.id,
     ( SELECT
         MAX( `messageid` )
       FROM
@@ -101,6 +103,7 @@ $db->free_result($groups);
 
 /*
  *  Clean messages cache
+ *  Про записи помеченные как удаленные, не забыли(результат оптимизации)
  */
 
 $db->query_write("
