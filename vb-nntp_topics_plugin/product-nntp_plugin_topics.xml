@@ -6,6 +6,11 @@
 	<version>1.6</version>
 	<url />
 	<versioncheckurl />
+	<apm_releasedate>0</apm_releasedate>
+	<apm_author />
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -68,7 +73,7 @@ $db->show_errors();]]></installcode>
 	</templates>
 	<plugins>
 		<plugin active="1" executionorder="99">
-			<title><![CDATA[edit post/thread]]></title>
+			<title>edit post/thread</title>
 			<hookname>editpost_update_complete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 
@@ -114,7 +119,7 @@ foreach ($threads_list as $target_parent_id)
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
-			<title><![CDATA[add new post/thread]]></title>
+			<title>add new post/thread</title>
 			<hookname>newpost_complete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
@@ -132,9 +137,11 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
 		<plugin active="1" executionorder="5">
 			<title>Check available groups list</title>
 			<hookname>nntp_gate_backend_check_groups_list</hookname>
-			<phpcode><![CDATA[
-$nntp_gate_handlers[] = new NNTPGate_Forum_Group();
-            ]]></phpcode>
+			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_group.php';
+$nntp_group = new NNTPGate_Forum_Group();
+$groups = $nntp_group->get_avaliable_group_list($membergroupids);
+$activegroups = $activegroups + $groups;
+unset($nntp_group);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="10">
 			<title>Show forum based groups </title>
@@ -232,4 +239,6 @@ $index->delete_message_by_parent_id();]]></phpcode>
 	</cronentries>
 	<faqentries>
 	</faqentries>
+	<templateedits>
+	</templateedits>
 </product>

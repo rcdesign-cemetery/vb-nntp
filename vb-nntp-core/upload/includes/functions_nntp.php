@@ -57,16 +57,12 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
     /**
      * Пример:
      *
-     * $nntp_gate_handlers[] = new NNTPGate_Forum_Group(); // нужный потомок NNTPGate_Group_Base
+     * $nntp_group = new NNTPGate_Forum_Group(); // нужный потомок NNTPGate_Group_Base
+     * $groups = $nntp_group->get_avaliable_group_list($membergroupids);
+     * $activegroups = $activegroups + $groups;
+     * unset($nntp_group);
      */
     ($hook = vBulletinHook::fetch_hook('nntp_gate_backend_check_groups_list')) ? eval($hook) : false;
-
-    foreach($nntp_gate_handlers as $nntp_group)
-    {
-        $groups = $nntp_group->get_avaliable_group_list($membergroupids);
-        $activegroups = $activegroups + $groups;
-        unset($nntp_group);
-    }
 
     foreach( $activegroups as $nntpid => $group )
     {
