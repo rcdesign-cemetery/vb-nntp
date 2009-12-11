@@ -279,7 +279,7 @@
 
             if( $self->client( $uuid )->{access} eq 'demo' )
             {
-              $body = $self->demo( $uuid ) . $body;
+              $body = $body . $self->demo( $uuid );
 
               $self->{Toolkit}->Logger->debug(
                   'Message (id ' . $messageid . ') text prepended with demo text'

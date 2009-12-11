@@ -223,15 +223,16 @@
 
       $sth = $self->dbi->prepare( q{
           SELECT
-            I.`groupid`              AS 'id' ,
-            MIN( I.`messageid` ) + 0 AS 'min',
-            MAX( I.`messageid` ) + 0 AS 'max'
+            `Index`.`groupid`              AS 'id' ,
+            MIN( `Index`.`messageid` ) + 0 AS 'min',
+            MAX( `Index`.`messageid` ) + 0 AS 'max'
           FROM
-            `} . $tableprefix . q{nntp_index` AS I
+            `} . $tableprefix . q{nntp_index` AS `Index`
           WHERE
-            I.`groupid` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
+            `Index`.`groupid` IN(} . join( ',', @{ $groupssorted } ) . q{)
+            } . $self->_demo_conditions( $data->{access} ) . q{
           GROUP BY
-            I.`groupid`
+            `Index`.`groupid`
         } );
 
       $sth->execute();
@@ -260,16 +261,17 @@
 
       $sth = $self->dbi->prepare( q{
           SELECT
-            I.`groupid`              AS 'id' ,
-            MIN( I.`messageid` ) + 0 AS 'min',
-            MAX( I.`messageid` ) + 0 AS 'max'
+            `Index`.`groupid`              AS 'id' ,
+            MIN( `Index`.`messageid` ) + 0 AS 'min',
+            MAX( `Index`.`messageid` ) + 0 AS 'max'
           FROM
-            `} . $tableprefix . q{nntp_index` AS I
+            `} . $tableprefix . q{nntp_index` AS `Index`
           WHERE
-                I.`groupid` IN(} . join( ',', @{ $self->client->{groupslist} } ) . q{)
-            AND I.`deleted` = 'no'
+                `Index`.`groupid` IN(} . join( ',', @{ $groupssorted } ) . q{)
+            AND `Index`.`deleted` = 'no'
+            } . $self->_demo_conditions( $data->{access} ) . q{
           GROUP BY
-            I.`groupid`
+            `Index`.`groupid`
         } );
 
       $sth->execute();
@@ -328,12 +330,13 @@
 
       my $WDeleted = $self->dbi->selectrow_hashref( q{
           SELECT
-            MAX( `messageid` )   AS 'max',
-            MIN( `messageid` )   AS 'min'
+            MAX( `Index`.`messageid` )   AS 'max',
+            MIN( `Index`.`messageid` )   AS 'min'
           FROM
-            `} . $tableprefix . q{nntp_index`
+            `} . $tableprefix . q{nntp_index` AS `Index`
           WHERE
-            `groupid` = ?
+            `Index`.`groupid` = ?
+            } . $self->_demo_conditions( $data->{access} ) . q{
           },
           undef,
           $data->{groupid},
@@ -345,14 +348,15 @@
 
       my $WODeleted = $self->dbi->selectrow_hashref( q{
           SELECT
-            MAX( `messageid` )   AS 'max'  ,
-            MIN( `messageid` )   AS 'min'  ,
-            COUNT( `messageid` ) AS 'count'
+            MAX( `Index`.`messageid` )   AS 'max'  ,
+            MIN( `Index`.`messageid` )   AS 'min'  ,
+            COUNT( `Index`.`messageid` ) AS 'count'
           FROM
-            `} . $tableprefix . q{nntp_index`
+            `} . $tableprefix . q{nntp_index` AS `Index`
           WHERE
-                `groupid` = ?
-            AND `deleted` = ?
+                `Index`.`groupid` = ?
+            AND `Index`.`deleted` = ?
+            } . $self->_demo_conditions( $data->{access} ) . q{
           },
           undef,
           $data->{groupid},
@@ -454,6 +458,7 @@
           WHERE
                 `Index`.`groupid` = ?
             AND `Index`.`deleted` = ?
+            } . $self->_demo_conditions( $data->{access} ) . q{
             AND } . $matchrules
         );
 
@@ -527,6 +532,7 @@
               WHERE
                 `CM`.`groupid`   = ? AND
                 `CM`.`messageid` = ?
+              } . $self->_demo_conditions( $data->{access} ) . q{
             },
             undef,
             $data->{groupid}  ,
@@ -1085,6 +1091,19 @@
       }
 
       return $result;
+    }
+
+
+    sub _demo_conditions
+    {
+      my $self   = shift;
+      my $access = shift || '';
+
+      $access eq 'demo'
+        ? q{ AND `Index`.`datetime` <= DATE_SUB( NOW(), INTERVAL }
+          . ( 0 + $self->{Toolkit}->Config->Get( 'nntp.DemoDelay' ) )
+          . q{ HOUR ) }
+        : q{};
     }
 
 

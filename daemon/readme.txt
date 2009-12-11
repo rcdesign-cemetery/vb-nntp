@@ -69,3 +69,8 @@ Installation:
 требуется выполнить:
 	для Debian: update-rc.d nntpd defaults
 	для RedHat: chkconfig --add nntpd
+
+
+Пример файла конфигурации сервера приведен в файле app.cnf.example.
+Рабочий конфигурационный файл должен называться app.cnf (либо иное имя,
+указанное в app.pl).
