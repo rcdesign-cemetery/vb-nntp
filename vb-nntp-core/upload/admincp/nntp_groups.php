@@ -235,31 +235,3 @@ if ( $_REQUEST['do'] == 'group_clean' )
     define('CP_REDIRECT', $this_script . '.php?do=list');
     print_stop_message( 'nntp_group_cleaned_successfully');
 }
-
-
-// ###################### Functions ######################################
-
-
-function nntp_get_group_settings ( $group_id, $plugin_name )
-{
-    $settings = array();
-
-    $group = nntp_get_group( $group_id );
-
-    if( empty( $group ) || $group['plugin_id'] != $plugin_name )
-        return $settings;
-
-    $settings = $group['settings'];
-
-    return $settings;
-}
-
-
-function nntp_set_group_settings ( $settings = array() )
-{
-    $groupinfo = array( 'settings' => $settings );
-
-    nntp_save_group( $groupinfo );
-
-    return true;
-}
