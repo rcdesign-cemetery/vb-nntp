@@ -218,44 +218,6 @@
 
 
       #
-      #   Get list of min/max message ids
-      #
-
-      $sth = $self->dbi->prepare( q{
-          SELECT
-            `Index`.`groupid`              AS 'id' ,
-            MIN( `Index`.`messageid` ) + 0 AS 'min',
-            MAX( `Index`.`messageid` ) + 0 AS 'max'
-          FROM
-            `} . $tableprefix . q{nntp_index` AS `Index`
-          WHERE
-            `Index`.`groupid` IN(} . join( ',', @{ $groupssorted } ) . q{)
-            } . $self->_demo_conditions( $data->{access} ) . q{
-          GROUP BY
-            `Index`.`groupid`
-        } );
-
-      $sth->execute();
-
-      while( my $group = $sth->fetchrow_hashref() )
-      {
-        if( exists( $groupstmp->{ $group->{id} } ) )
-        {
-          if( $group->{min} == $group->{max} )
-          {
-            $group->{min} = $group->{min} > 0 ? -- $group->{min} : 0;
-            $group->{max} = $group->{min};
-          }
-
-          $groupstmp->{ $group->{id} }->{first} = $group->{min};
-          $groupstmp->{ $group->{id} }->{last}  = $group->{max};
-        }
-      }
-
-      $sth->finish();
-
-
-      #
       #   Get list of min/max message ids with not deleted messages
       #
 
@@ -269,7 +231,6 @@
           WHERE
                 `Index`.`groupid` IN(} . join( ',', @{ $groupssorted } ) . q{)
             AND `Index`.`deleted` = 'no'
-            } . $self->_demo_conditions( $data->{access} ) . q{
           GROUP BY
             `Index`.`groupid`
         } );
@@ -324,73 +285,77 @@
 
       my $tableprefix = $self->{Toolkit}->Config->Get( 'backend.TablePrefix' );
 
-      #
-      #   Info WITH deleted messages
-      #
-
-      my $WDeleted = $self->dbi->selectrow_hashref( q{
-          SELECT
-            MAX( `Index`.`messageid` )   AS 'max',
-            MIN( `Index`.`messageid` )   AS 'min'
-          FROM
-            `} . $tableprefix . q{nntp_index` AS `Index`
-          WHERE
-            `Index`.`groupid` = ?
-            } . $self->_demo_conditions( $data->{access} ) . q{
-          },
-          undef,
-          $data->{groupid},
-        );
+      my $WODeleted = undef;
 
       #
       #   Info W/O deleted messages
       #
 
-      my $WODeleted = $self->dbi->selectrow_hashref( q{
-          SELECT
-            MAX( `Index`.`messageid` )   AS 'max'  ,
-            MIN( `Index`.`messageid` )   AS 'min'  ,
-            COUNT( `Index`.`messageid` ) AS 'count'
-          FROM
-            `} . $tableprefix . q{nntp_index` AS `Index`
-          WHERE
-                `Index`.`groupid` = ?
-            AND `Index`.`deleted` = ?
-            } . $self->_demo_conditions( $data->{access} ) . q{
-          },
-          undef,
-          $data->{groupid},
-          'no'
-        );
+      if( $data->{access} eq 'demo' )
+      {
+        #
+        #   Use demo delay
+        #
 
-      if(    $WDeleted  && ref( $WDeleted  ) eq 'HASH'
-          && $WODeleted && ref( $WODeleted ) eq 'HASH' )
+        my ( undef, undef, $hour, $mday, $mon, $year ) = localtime(time);
+
+        $year += 1900;
+        $mon  ++;
+
+        my $delaytime = sprintf(
+            "%04d-%02d-%02d %02d:%02d:%02d",
+            $year, $mon, $mday, $hour, 0, 0
+          );
+
+        $WODeleted = $self->dbi->selectrow_hashref( q{
+            SELECT
+              MAX( `Index`.`messageid` )   AS 'max'  ,
+              MIN( `Index`.`messageid` )   AS 'min'  ,
+              COUNT( `Index`.`messageid` ) AS 'count'
+            FROM
+              `} . $tableprefix . q{nntp_index` AS `Index`
+            WHERE
+                  `Index`.`groupid`   = ?
+              AND `Index`.`deleted`   = ?
+              AND `Index`.`datetime` <= ?
+            },
+            undef,
+            $data->{groupid},
+            'no',
+            $delaytime
+          );
+      }
+      else
+      {
+        $WODeleted = $self->dbi->selectrow_hashref( q{
+            SELECT
+              MAX( `Index`.`messageid` )   AS 'max'  ,
+              MIN( `Index`.`messageid` )   AS 'min'  ,
+              COUNT( `Index`.`messageid` ) AS 'count'
+            FROM
+              `} . $tableprefix . q{nntp_index` AS `Index`
+            WHERE
+                  `Index`.`groupid` = ?
+              AND `Index`.`deleted` = ?
+            },
+            undef,
+            $data->{groupid},
+            'no'
+          );
+      }
+
+      if( $WODeleted && ref( $WODeleted ) eq 'HASH' )
       {
         $WODeleted->{count} += 0;
         $WODeleted->{min}   += 0;
         $WODeleted->{max}   += 0;
 
-        $WDeleted->{min} --;
-        $WDeleted->{max} --;
-
-        my $min =
-          $WODeleted->{min} > $WDeleted->{min}
-            ? $WODeleted->{min}
-            : $WDeleted->{min};
-
-        my $max =
-          $WODeleted->{max} > $WDeleted->{max}
-            ? $WODeleted->{max}
-            : $WDeleted->{max};
-
-        my $count = $WODeleted->{count};
-
         $groupinfo = {
             id    => $data->{groupid}   ,
             name  => $data->{groupname} ,
-            first => $min               ,
-            last  => $max               ,
-            count => $count             ,
+            first => $WODeleted->{min}  ,
+            last  => $WODeleted->{max}  ,
+            count => $WODeleted->{count},
           };
       }
 
@@ -458,7 +423,6 @@
           WHERE
                 `Index`.`groupid` = ?
             AND `Index`.`deleted` = ?
-            } . $self->_demo_conditions( $data->{access} ) . q{
             AND } . $matchrules
         );
 
@@ -532,7 +496,6 @@
               WHERE
                 `CM`.`groupid`   = ? AND
                 `CM`.`messageid` = ?
-              } . $self->_demo_conditions( $data->{access} ) . q{
             },
             undef,
             $data->{groupid}  ,
@@ -1091,19 +1054,6 @@
       }
 
       return $result;
-    }
-
-
-    sub _demo_conditions
-    {
-      my $self   = shift;
-      my $access = shift || '';
-
-      $access eq 'demo'
-        ? q{ AND `Index`.`datetime` <= DATE_SUB( NOW(), INTERVAL }
-          . ( 0 + $self->{Toolkit}->Config->Get( 'nntp.DemoDelay' ) )
-          . q{ HOUR ) }
-        : q{};
     }
 
 
