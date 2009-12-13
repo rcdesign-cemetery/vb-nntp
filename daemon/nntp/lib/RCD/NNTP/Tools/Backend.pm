@@ -291,13 +291,17 @@
       #   Info W/O deleted messages
       #
 
-      if( $data->{access} eq 'demo' )
+      if( $data->{access} eq 'demo'
+          && ( 0 + $self->{Toolkit}->Config->Get( 'nntp.DemoDelay' ) > 0 ) )
       {
         #
         #   Use demo delay
         #
 
-        my ( undef, undef, $hour, $mday, $mon, $year ) = localtime(time);
+        my $delayhours = 0 + $self->{Toolkit}->Config->Get( 'nntp.DemoDelay' );
+
+        my ( undef, undef, $hour, $mday, $mon, $year ) =
+          localtime( time - $delayhours * 60 * 60 );
 
         $year += 1900;
         $mon  ++;
