@@ -80,15 +80,15 @@
       #
 
       $self->{DBMap} = {
-          nntp_server_addr    => 'appserver.LocalAddr',
-          nntp_port           => 'appserver.LocalPort',
-          nntp_demo_delay     => 'nntp.DemoDelay'     ,
-          nntp_message_id     => 'backend.GateID'     ,
-          nntp_forum_charset  => 'backend.Charset'    ,
-          nntp_from_address   => 'backend.FromAddress',
-          bburl               => 'backend.BBURL'      ,
-          bbactive            => 'backend.BBActive'   ,
-          nntp_debug_users    => 'log.DebugUsers'     ,
+          nntp_server_addr    => 'appserver.LocalAddrDB',
+          nntp_port           => 'appserver.LocalPortDB',
+          nntp_demo_delay     => 'nntp.DemoDelay'       ,
+          nntp_message_id     => 'backend.GateID'       ,
+          nntp_forum_charset  => 'backend.Charset'      ,
+          nntp_from_address   => 'backend.FromAddress'  ,
+          bburl               => 'backend.BBURL'        ,
+          bbactive            => 'backend.BBActive'     ,
+          nntp_debug_users    => 'log.DebugUsers'       ,
         };
 
       $self;

@@ -18,7 +18,7 @@
     use Cache::FastMmap;
     use Wildev::AppServer::Toolkit;
 
-    our $VERSION = "0.04"; # $Date: 2009/11/03 16:50:23 $
+    our $VERSION = "0.05"; # $Date: 2009/12/11 16:58:29 $
 
     our @EXPORT    = qw();
     our @EXPORT_OK = qw(WriteClient cache dbi check_dbi uuid client cnf);
@@ -131,11 +131,23 @@
       my $client = $self->{Toolkit}->Clients->{$uuid};
 
       #
+      #   Set default log levels (defined within config)
+      #
+
+      $self->setloglevel( $uuid );
+
+      #
       #   Auth check
       #
 
       if( $self->checkauth( $uuid ) )
       {
+        #
+        #   Set debug log level if applicable for current user
+        #
+
+        $self->setloglevel( $uuid );
+
         #
         #   Reload config
         #
@@ -659,6 +671,53 @@
       }
 
       $text;
+    }
+
+
+    #
+    #   Set usual (defined within config) or debug log level depending
+    #   on userid
+    #
+    #   Input parameters:
+    #     uuid - Connection ID
+    #
+
+    sub setloglevel ($)
+    {
+      my $self = shift;
+      my $uuid = shift;
+
+      my $minlevel = $self->cnf->Get( 'log.MinLevel' );
+      my $maxlevel = $self->cnf->Get( 'log.MaxLevel' );
+
+      if( $self->client( $uuid )->{userid} > 0 )
+      {
+        #
+        #   Check if current user should be logged with debug info
+        #
+
+        my @debuguserslist = split( ',', $self->cnf->Get( 'log.DebugUsers' ) );
+
+        foreach my $checkuserid ( @debuguserslist )
+        {
+          if( $checkuserid == $self->client( $uuid )->{userid} )
+          {
+            $minlevel = 'emerg';
+            $maxlevel = 'debug';
+
+            last;
+          }
+        }
+      }
+
+      $self->{Toolkit}->Logger->set_level(
+          'file-out' => {
+              'minlevel' => $minlevel,
+              'maxlevel' => $maxlevel,
+            }
+        );
+
+      1;
     }
 
 

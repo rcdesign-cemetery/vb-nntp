@@ -161,21 +161,47 @@
           $self->Get( 'backend.BBURL' ) . '/' . $self->Get( 'backend.URI' )
         );
 
+
       #
-      #   Add address to listen
+      #   Listen port/address from config file
       #
 
-      my $curlisten = $self->Get( 'appserver.Listen' );
+      my $cfglisten = $self->Get( 'appserver.Listen' );
 
-      my $addlisten =
-          $self->Get( 'appserver.LocalAddr' )
-        . ':'
-        . $self->Get( 'appserver.LocalPort' );
-
-      if( $addlisten ne ':' )
+      if( ( 0 + $self->Get( 'appserver.LocalPort' ) ) > 0 )
       {
-        $self->Set( 'appserver.Listen', [ $addlisten ] );
+        unless( $cfglisten && ref( $cfglisten ) eq 'ARRAY' )
+        {
+          $cfglisten = [];
+        }
+
+        push @{ $cfglisten }, 
+            $self->Get( 'appserver.LocalAddr' )
+          . ':'
+          . ( $self->Get( 'appserver.LocalPort' ) || '0.0.0.0' );
       }
+
+      #
+      #   If no port/address settings found within config file use settings
+      #   from DB
+      #
+
+      unless( $cfglisten
+              && ref( $cfglisten ) eq 'ARRAY'
+              && scalar( @{ $cfglisten } ) )
+      {
+        if( ( 0 + $self->Get( 'appserver.LocalPortDB' ) ) > 0 )
+        {
+          $cfglisten = [];
+  
+          push @{ $cfglisten }, 
+              $self->Get( 'appserver.LocalAddrDB' )
+            . ':'
+            . ( $self->Get( 'appserver.LocalPortDB' ) || '0.0.0.0' );
+        }
+      }
+
+      $self->Set( 'appserver.Listen', $cfglisten );
 
       1;
     }
