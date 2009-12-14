@@ -119,11 +119,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
      */
     public function save_message()
     {
-
-        if (empty($this->_post['message']))
-        {
-            return false;
-        }
         $this->_get_index_by_post(array('_group_id', '_message_id'));
         if (0 == $this->_group_id )
         {
