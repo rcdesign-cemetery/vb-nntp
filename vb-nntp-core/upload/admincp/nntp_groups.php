@@ -101,27 +101,44 @@ if ( empty( $do ) || $do == 'list' )
     ($hook = vBulletinHook::fetch_hook('nntp_gate_groups_list')) ? eval($hook) : false;
 }
 
+
+/**
+ * При работе с конкретными записями, лучше использовать наследников
+ * Так решаются такие проблемы как попытка удалить группу блогов
+ * Исли обработчик не выставлен, то используем методы базового класса
+ * Пример:
+ *
+ * if ('forum' == $vbulletin->GPC['plugin'])
+ * {
+ *     require_once DIR . '/includes/class_nntpgate_forum_group.php';
+ *     $nntp_group = new NNTPGate_Forum_Group();
+ * }
+ */
+$vbulletin->input->clean_array_gpc( 'r', array(
+        'plugin'        => TYPE_STR,
+        'group_id'      => TYPE_INT,
+        ) );
+$nntp_group = null;
+($hook = vBulletinHook::fetch_hook('nntp_gate_group_handler')) ? eval($hook) : false;
+if (is_null($nntp_group) OR (! $nntp_group instanceof NNTPGate_Group_Base))
+{
+    $nntp_group = new NNTPGate_Group_Base();
+}
+
 // ############## ADD/EDIT GROUP SETTINGS ################################
 if ( $do == 'set_group_settings' )
 {
     $vbulletin->input->clean_array_gpc( 'r', array(
-        'plugin'        => TYPE_STR,
-        'group_id'      => TYPE_INT,
         'group_name'    => TYPE_STR,
         'is_active'     => TYPE_INT,
         'map_id'        => TYPE_INT,
         ) );
 
-    $nntp_group = null;
-
-    $nntp_group = new NNTPGate_Group_Base();
-    
     $nntp_group->set_group_id($vbulletin->GPC['group_id']);
     $nntp_group->set_group_name($vbulletin->GPC['group_name']);
     $nntp_group->set_plugin_id($vbulletin->GPC['plugin']);
     $nntp_group->set_is_active($vbulletin->GPC['is_active']);
     $nntp_group->set_map_id($vbulletin->GPC['map_id']);
-
     define('CP_REDIRECT', $this_script . '.php?do=list');
     // save settings
     if ($nntp_group->save_group() )
@@ -138,11 +155,6 @@ if ( $do == 'set_group_settings' )
 // ############## ADD/EDIT GROUP SETTINGS FORM ###########################
 if ( $do == 'group_settings' )
 {
-    $vbulletin->input->clean_array_gpc( 'r', array(
-        'plugin'			=> TYPE_STR,
-        'group_id'		=> TYPE_INT,
-        ) );
-
     // check for existing plugin
     if ( ! array_key_exists( $vbulletin->GPC['plugin'], $plugins ) )
     {
@@ -152,7 +164,6 @@ if ( $do == 'group_settings' )
 
     // load existing group
     $group_id = $vbulletin->GPC['group_id'];
-    $nntp_group = new NNTPGate_Group_Base();
     $nntp_group->get_group($group_id);
     
     print_form_header( $this_script, 'set_group_settings' );
@@ -185,9 +196,6 @@ if ( $do == 'group_settings' )
 
 if ( $_REQUEST['do'] == 'remove_group' )
 {
-    $vbulletin->input->clean_array_gpc( 'r', array(
-        'group_id' => TYPE_INT,
-        ) );
 
     // check for there is no groups mapped to this one
     //    admincp_check_for_mapped_groups( $vbulletin->GPC['group_id'] );
@@ -203,14 +211,10 @@ if ( $_REQUEST['do'] == 'remove_group' )
 
 if ( $_REQUEST['do'] == 'kill_group' )
 {
-    $vbulletin->input->clean_array_gpc( 'r', array(
-        'group_id' => TYPE_INT,
-        ) );
 
     //    admincp_check_for_mapped_groups( $vbulletin->GPC['group_id'] );
     $group_id = $vbulletin->GPC['group_id'];
     
-    $nntp_group = new NNTPGate_Group_Base();
     $nntp_group->delete_group($group_id);
 
     //nntp_delete_group( $vbulletin->GPC['group_id'] );
@@ -223,13 +227,7 @@ if ( $_REQUEST['do'] == 'kill_group' )
 
 if ( $_REQUEST['do'] == 'group_clean' )
 {
-    $vbulletin->input->clean_array_gpc( 'r', array(
-        'plugin'		=> TYPE_STR,
-        'group_id'		=> TYPE_INT,
-        ) );
-
     $group_id = $vbulletin->GPC['group_id'];
-    $nntp_group = new NNTPGate_Group_Base();
     $nntp_group->clean_group($group_id);
 
     define('CP_REDIRECT', $this_script . '.php?do=list');
