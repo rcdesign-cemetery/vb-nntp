@@ -187,9 +187,50 @@ print_table_footer( 2 );]]></phpcode>
     $selected_forum = $nntp_group->get_map_id();
     require_once DIR . '/includes/class_nntpgate_forum_group.php';
     $nntp_forum_group = new NNTPGate_Forum_Group();
-    
-    $allowed_forum_list = $nntp_forum_group->get_allowed_forums_list($vbulletin->forumcache, $selected_forum);
-    $forum_list = array($vbphrase['no_one']) + $allowed_forum_list;
+
+    $group_list = $nntp_forum_group->get_groups_list();
+    foreach ($group_list as $group)
+    {
+        $gated_forum_list[$group['map_id']] = true;
+    }
+
+    $allowed_forum_list = array();
+    // collect a list of available forums, as well as their ancestors
+    foreach ($vbulletin->forumcache as $forum_id=>$forum_info)
+    {
+        if ($forum_info['link'])
+        {
+            continue;
+        }
+        if (!($forum_info['options'] & $vbulletin->bf_misc_forumoptions['allowposting']) )
+        {
+            continue;
+        }
+        if(( $selected_forum != $forum_id) AND array_key_exists( $forum_id, $gated_forum_list ) )
+        {
+            continue;
+        }
+        $parent_list = explode(',', $forum_info['parentlist']);
+        foreach ($parent_list as $parent_id)
+        {
+            $allowed_forum_list[(int)$parent_id] = true;
+        }
+
+    }
+    // Key "-1", is a flag that parenting forums are no more.
+    unset ($allowed_forum_list[-1]);
+    $formed_elements = array();
+    // forming an array for print_select_row
+    foreach ($vbulletin->forumcache as $forum_id=>$forum_info)
+    {
+        if (array_key_exists( $forum_id, $allowed_forum_list ))
+        {
+            $formed_elements[$forum_id] = construct_depth_mark($forum_info['depth'] + 1, '--', $startdepth);
+            $formed_elements[$forum_id] .= ' ' . $forum_info['title'];
+        }
+    }
+
+    $forum_list = array($vbphrase['no_one']) + $formed_elements;
     print_select_row($vbphrase['forum'], 'map_id', $forum_list, $selected_forum);
 }]]></phpcode>
 		</plugin>
