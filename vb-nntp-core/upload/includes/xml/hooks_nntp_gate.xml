@@ -6,5 +6,6 @@
                 <hook>nntp_gate_group_settings</hook>
                 <hook>nntp_gate_groups_list</hook>
                 <hook>nntp_gate_backend_check_groups_list</hook>
+                <hook>nntp_gate_group_handler</hook>
         </hooktype>
 </hooks>
