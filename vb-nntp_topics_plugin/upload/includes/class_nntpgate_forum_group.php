@@ -12,24 +12,6 @@ class NNTPGate_Forum_Group extends NNTPGate_Group_Base
     const PLUGIN_ID = 'forum';
 
 
-
-    /**
-     * Get all forum based groups
-     *
-     * @return array
-     */
-    public function get_groups_list_by_forum($forums_list)
-    {
-        $groups_list = $this->get_groups_list();
-        foreach($groups_list as $key=>&$group)
-        {
-            $forum_id = $group['map_id'];
-            $comment = $forums_list[$forum_id]['title'];
-            $group['comment'] = $comment;
-        }
-        return $groups_list;
-    }
-
     /**
      * Получить список доступных для мапинга форумов
      *
