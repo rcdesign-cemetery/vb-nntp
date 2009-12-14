@@ -96,7 +96,7 @@ if ( empty( $do ) || $do == 'list' )
                                  />\n\t";
         return $controls;
     }
-   
+
 
     ($hook = vBulletinHook::fetch_hook('nntp_gate_groups_list')) ? eval($hook) : false;
 }
@@ -115,9 +115,9 @@ if ( empty( $do ) || $do == 'list' )
  * }
  */
 $vbulletin->input->clean_array_gpc( 'r', array(
-        'plugin'        => TYPE_STR,
-        'group_id'      => TYPE_INT,
-        ) );
+    'plugin'        => TYPE_STR,
+    'group_id'      => TYPE_INT,
+    ) );
 $nntp_group = null;
 ($hook = vBulletinHook::fetch_hook('nntp_gate_group_handler')) ? eval($hook) : false;
 if (is_null($nntp_group) OR (! $nntp_group instanceof NNTPGate_Group_Base))
@@ -165,7 +165,7 @@ if ( $do == 'group_settings' )
     // load existing group
     $group_id = $vbulletin->GPC['group_id'];
     $nntp_group->get_group($group_id);
-    
+
     print_form_header( $this_script, 'set_group_settings' );
 
     construct_hidden_code( 'plugin'  , $vbulletin->GPC['plugin']   );
@@ -211,16 +211,16 @@ if ( $_REQUEST['do'] == 'remove_group' )
 
 if ( $_REQUEST['do'] == 'kill_group' )
 {
-
-    //    admincp_check_for_mapped_groups( $vbulletin->GPC['group_id'] );
     $group_id = $vbulletin->GPC['group_id'];
-    
-    $nntp_group->delete_group($group_id);
-
-    //nntp_delete_group( $vbulletin->GPC['group_id'] );
-
     define('CP_REDIRECT', $this_script . '.php?do=list');
-    print_stop_message( 'nntp_group_deleted_successfully');
+    if ($nntp_group->delete_group($group_id))
+    {
+        print_stop_message( 'nntp_group_deleted_successfully');
+    }
+    else
+    {
+        print_stop_message( 'nntp_group_deleted_defeated');
+    }
 }
 
 // ###################### Start clean #####################################
@@ -228,8 +228,14 @@ if ( $_REQUEST['do'] == 'kill_group' )
 if ( $_REQUEST['do'] == 'group_clean' )
 {
     $group_id = $vbulletin->GPC['group_id'];
-    $nntp_group->clean_group($group_id);
 
     define('CP_REDIRECT', $this_script . '.php?do=list');
-    print_stop_message( 'nntp_group_cleaned_successfully');
+    if ($nntp_group->clean_group($group_id))
+    {
+        print_stop_message( 'nntp_group_cleaned_successfully');
+    }
+    else
+    {
+        print_stop_message( 'nntp_group_cleaned_defeated');
+    }
 }
