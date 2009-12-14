@@ -6,11 +6,6 @@
 	<version>1.6</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>0</apm_releasedate>
-	<apm_author />
-	<apm_relatedurl />
-	<apm_extrainfo />
-	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -173,6 +168,15 @@ print_cells_row( array(
         ));
 print_table_footer( 2 );]]></phpcode>
 		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Add handler for forum based groups</title>
+			<hookname>nntp_gate_group_handler</hookname>
+			<phpcode><![CDATA[if ('forum' == $vbulletin->GPC['plugin'])
+{
+    require_once DIR . '/includes/class_nntpgate_forum_group.php';
+    $nntp_group = new NNTPGate_Forum_Group();
+}]]></phpcode>
+		</plugin>
 		<plugin active="1" executionorder="10">
 			<title>Show group settings</title>
 			<hookname>nntp_gate_group_settings</hookname>
@@ -239,6 +243,4 @@ $index->delete_message_by_parent_id();]]></phpcode>
 	</cronentries>
 	<faqentries>
 	</faqentries>
-	<templateedits>
-	</templateedits>
 </product>
