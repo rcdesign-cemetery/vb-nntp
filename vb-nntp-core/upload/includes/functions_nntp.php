@@ -53,7 +53,6 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
 
 
     $activegroups = array();
-    $nntp_gate_handlers = array();
     /**
      * Пример:
      *
