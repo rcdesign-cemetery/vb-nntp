@@ -957,6 +957,7 @@
       my $self     = shift;
       my $username = shift;
 
+      $username =~ s{\\}{\\\\}g;
       $username =~ s{"}{\"}g;
 
       my $from =

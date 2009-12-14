@@ -675,7 +675,7 @@
 
 
     #
-    #   Set usual (defined withi config) or debug log level depending
+    #   Set usual (defined within config) or debug log level depending
     #   on userid
     #
     #   Input parameters:
