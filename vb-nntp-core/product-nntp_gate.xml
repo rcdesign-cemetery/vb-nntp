@@ -206,27 +206,19 @@ $footer
 </body>
 </html>]]></template>
 		<template name="nntp_message_css" templatetype="template" date="1258957473" username="Vitaly" version=""><![CDATA[<style type="text/css">
-
 <!--
-
-body { background: #FFFFFF; color: #000000; font: 10pt Tahoma, Verdana, Geneva, sans-serif; margin: 5px 10px 10px 10px; padding: 0px; }
-
+body { background: #FFFFFF; color: #000000; font: 10pt Tahoma,
+Verdana, Geneva, sans-serif; margin: 5px 10px 10px 10px; padding: 0px;
+}
 a:link { color: #22229C; }
-
 a:visited { color: #22229C; }
-
 a:hover, a:active { color: #FF4400; }
-
-td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
-
+td, th, p, li { font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 .alt2 { background: #E4E4E4; color: #000000; }
-
 .smallfont { font: 11px Tahoma, Verdana, Geneva, sans-serif; }
-
 .inlineimg { vertical-align: middle; }
-
+.demo, .demo a { font-size: 11px; color: #808080; padding-top: 10px;}
 -->
-
 </style>]]></template>
 		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
 <a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">$vbphrase[original_post]</a>

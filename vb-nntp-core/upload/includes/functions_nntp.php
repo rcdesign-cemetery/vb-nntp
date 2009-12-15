@@ -120,7 +120,7 @@ function nntp_get_demo ()
 {
   global $vbulletin;
 
-  $demomessage = $vbulletin->options['nntp_demo_text'];
+  $demomessage = '<br /><div class="smallfont">' . $vbulletin->options['nntp_demo_text'] . '</div>';
 
   return $demomessage;
 }
