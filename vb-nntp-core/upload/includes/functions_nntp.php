@@ -119,9 +119,9 @@ function nntp_get_eval ( $text = '' )
 function nntp_get_demo ()
 {
   global $vbulletin;
-
-  $demomessage = '<br /><div class="smallfont">' . $vbulletin->options['nntp_demo_text'] . '</div>';
-
+  $nntp_demo_text = $vbulletin->options['nntp_demo_text'];
+  $demomessage = '';
+  eval('$demomessage = "' . fetch_template('nntp_demo_text') . '";');
   return $demomessage;
 }
 
