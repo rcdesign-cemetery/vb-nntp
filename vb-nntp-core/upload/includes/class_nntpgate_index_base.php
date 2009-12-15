@@ -119,11 +119,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
      */
     public function save_message()
     {
-
-        if (empty($this->_post['message']))
-        {
-            return false;
-        }
         $this->_get_index_by_post(array('_group_id', '_message_id'));
         if (0 == $this->_group_id )
         {
@@ -176,7 +171,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             return false;
         }
-        $body = $this->_make_message_body();
+        $body = $this->_db->escape_string($this->_make_message_body());
 
         /*
          *  Save message info to cache
@@ -345,7 +340,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         }
 
         $post_id_list = array_map('intval', $post_id_list);
-        // mark messages in index as deletedelete_message_by_parent_idd
+        // mark messages in index as delete
         $sql = "UPDATE
                     `" . TABLE_PREFIX . "nntp_index`
                 SET

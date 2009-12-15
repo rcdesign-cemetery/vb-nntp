@@ -124,7 +124,19 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         return $message;
     }
 
-    
+    /**
+     * Сохраняет новое сообщение в системе nntpgate
+     *
+     * @return bool
+     */
+    public function save_message()
+    {
+        if (empty($this->_post['message']))
+        {
+            return false;
+        }
+        parent::save_message();
+    }
 
     /**
      * Должен быть специфицирован в каждом потомке так как php до версии 5.3

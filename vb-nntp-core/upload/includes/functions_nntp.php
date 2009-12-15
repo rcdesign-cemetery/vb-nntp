@@ -53,7 +53,6 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
 
 
     $activegroups = array();
-    $nntp_gate_handlers = array();
     /**
      * Пример:
      *
@@ -120,9 +119,9 @@ function nntp_get_eval ( $text = '' )
 function nntp_get_demo ()
 {
   global $vbulletin;
-
-  $demomessage = $vbulletin->options['nntp_demo_text'];
-
+  $nntp_demo_text = $vbulletin->options['nntp_demo_text'];
+  $demomessage = '';
+  eval('$demomessage = "' . fetch_template('nntp_demo_text') . '";');
   return $demomessage;
 }
 

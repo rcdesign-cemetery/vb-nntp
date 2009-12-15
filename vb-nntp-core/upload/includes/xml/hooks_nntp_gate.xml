@@ -4,31 +4,8 @@
         <hooktype type="nntp_gate_hooks">
                 <hook>nntp_gate_plugins</hook>
                 <hook>nntp_gate_group_settings</hook>
-                <hook>nntp_gate_group_save_settings</hook>
-                <hook>nntp_gate_group_save_settings_complete</hook>
-                <hook>nntp_gate_group_delete_start</hook>
-                <hook>nntp_gate_group_delete_complete</hook>
-                <hook>nntp_gate_group_clear</hook>
-                <hook>nntp_gate_group_cleanup</hook>
                 <hook>nntp_gate_groups_list</hook>
-                <hook>nntp_gate_get_messages_list</hook>
-                <hook>nntp_gate_get_message</hook>
-                <hook>nntp_gate_backend_groups_list</hook>
-                <hook>nntp_gate_backend_groups_pre_list</hook>
-                <hook>nntp_gate_backend_groups_post_list</hook>
-                <hook>nntp_gate_backend_group_info</hook>
-                <hook>nntp_gate_profile_start</hook>
-                <hook>nntp_gate_editpassword_start</hook>
-                <hook>nntp_gate_updatepassword_start</hook>
-                <hook>nntp_gate_updatepassword_complete</hook>
-                <hook>nntp_gate_profile_complete</hook>
-                <hook>nntp_gate_backend_messages_pre_list</hook>
-                <hook>nntp_gate_backend_messages_list</hook>
-                <hook>nntp_gate_backend_messages_post_list</hook>
-                <hook>nntp_gate_backend_get_message</hook>
-                <hook>nntp_gate_backend_messages_xover</hook>
-                <hook>nntp_gate_backend_user_menu</hook>
                 <hook>nntp_gate_backend_check_groups_list</hook>
-                <hook>nntp_gate_backend_get_message_template</hook>
+                <hook>nntp_gate_group_handler</hook>
         </hooktype>
 </hooks>

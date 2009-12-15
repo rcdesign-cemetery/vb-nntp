@@ -6,11 +6,6 @@
 	<version>1.6</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>0</apm_releasedate>
-	<apm_author />
-	<apm_relatedurl />
-	<apm_extrainfo />
-	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -144,25 +139,27 @@ $activegroups = $activegroups + $groups;
 unset($nntp_group);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="10">
-			<title>Show forum based groups </title>
+			<title>Show forum based groups</title>
 			<hookname>nntp_gate_groups_list</hookname>
-			<phpcode><![CDATA[
-print_form_header( $this_script, 'group_settings' );
+			<phpcode><![CDATA[print_form_header( $this_script, 'group_settings' );
 print_table_header( $vbphrase['nntp_forum_based_groups_list'], 2 );
 construct_hidden_code( 'plugin'  , 'forum' );
 print_cells_row( array( $vbphrase['nntp_group_name'], $vbphrase['controls'] ), 1 );
 
 require_once DIR . '/includes/class_nntpgate_forum_group.php';
 $nntp_group = new NNTPGate_Forum_Group();
-$forum_list = $vbulletin->forumcache;
-$groups_list = $nntp_group->get_groups_list_by_forum($forum_list);
+$forums_list = $vbulletin->forumcache;
+
+$groups_list = $nntp_group->get_groups_list();
+
 foreach ( $groups_list AS $group )
 {
-    $group_status = '';
+    $forum_id = $group['map_id'];
+    $comment = $forums_list[$forum_id]['title'];
+    $group['comment'] = $comment;
     $controls = form_group_control($group);
     print_cells_row( array(
             '<b>' . $group['group_name'] . '</b>'
-            . $group_status
             . ( !empty( $group['comment'] ) ? '<br />' . $group['comment'] : '' ),
             $controls
     ));
@@ -173,6 +170,15 @@ print_cells_row( array(
         ));
 print_table_footer( 2 );]]></phpcode>
 		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Add handler for forum based groups</title>
+			<hookname>nntp_gate_group_handler</hookname>
+			<phpcode><![CDATA[if ('forum' == $vbulletin->GPC['plugin'])
+{
+    require_once DIR . '/includes/class_nntpgate_forum_group.php';
+    $nntp_group = new NNTPGate_Forum_Group();
+}]]></phpcode>
+		</plugin>
 		<plugin active="1" executionorder="10">
 			<title>Show group settings</title>
 			<hookname>nntp_gate_group_settings</hookname>
@@ -181,9 +187,50 @@ print_table_footer( 2 );]]></phpcode>
     $selected_forum = $nntp_group->get_map_id();
     require_once DIR . '/includes/class_nntpgate_forum_group.php';
     $nntp_forum_group = new NNTPGate_Forum_Group();
-    
-    $allowed_forum_list = $nntp_forum_group->get_allowed_forums_list($vbulletin->forumcache, $selected_forum);
-    $forum_list = array($vbphrase['no_one']) + $allowed_forum_list;
+
+    $group_list = $nntp_forum_group->get_groups_list();
+    foreach ($group_list as $group)
+    {
+        $gated_forum_list[$group['map_id']] = true;
+    }
+
+    $allowed_forum_list = array();
+    // collect a list of available forums, as well as their ancestors
+    foreach ($vbulletin->forumcache as $forum_id=>$forum_info)
+    {
+        if ($forum_info['link'])
+        {
+            continue;
+        }
+        if (!($forum_info['options'] & $vbulletin->bf_misc_forumoptions['allowposting']) )
+        {
+            continue;
+        }
+        if(( $selected_forum != $forum_id) AND array_key_exists( $forum_id, $gated_forum_list ) )
+        {
+            continue;
+        }
+        $parent_list = explode(',', $forum_info['parentlist']);
+        foreach ($parent_list as $parent_id)
+        {
+            $allowed_forum_list[(int)$parent_id] = true;
+        }
+
+    }
+    // Key "-1", is a flag that parenting forums are no more.
+    unset ($allowed_forum_list[-1]);
+    $formed_elements = array();
+    // forming an array for print_select_row
+    foreach ($vbulletin->forumcache as $forum_id=>$forum_info)
+    {
+        if (array_key_exists( $forum_id, $allowed_forum_list ))
+        {
+            $formed_elements[$forum_id] = construct_depth_mark($forum_info['depth'] + 1, '--', $startdepth);
+            $formed_elements[$forum_id] .= ' ' . $forum_info['title'];
+        }
+    }
+
+    $forum_list = array($vbphrase['no_one']) + $formed_elements;
     print_select_row($vbphrase['forum'], 'map_id', $forum_list, $selected_forum);
 }]]></phpcode>
 		</plugin>
@@ -239,6 +286,4 @@ $index->delete_message_by_parent_id();]]></phpcode>
 	</cronentries>
 	<faqentries>
 	</faqentries>
-	<templateedits>
-	</templateedits>
 </product>

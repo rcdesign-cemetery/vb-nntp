@@ -6,11 +6,6 @@
 	<version>1.7</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate>0</apm_releasedate>
-	<apm_author />
-	<apm_relatedurl />
-	<apm_extrainfo />
-	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -161,7 +156,7 @@ $db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
 $db->show_errors();]]></installcode>
 			<uninstallcode />
 		</code>
-        <code version="1.7">
+		<code version="1.7">
 			<installcode><![CDATA[$db->hide_errors();
 
 $db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_index` ADD INDEX `Parent` ( `groupid` , `parentid` ) ");
@@ -210,28 +205,19 @@ $navbar
 $footer
 </body>
 </html>]]></template>
-		<template name="nntp_message_css" templatetype="template" date="1258957473" username="Vitaly" version=""><![CDATA[<style type="text/css">
-
+		<template name="nntp_demo_text" templatetype="template" date="1249904316" username="varnak" version=""><![CDATA[<div class="demo">$nntp_demo_text</div>]]></template>
+		<template name="nntp_message_css" templatetype="template" date="1260813965" username="Vitaly" version="1.7"><![CDATA[<style type="text/css">
 <!--
-
 body { background: #FFFFFF; color: #000000; font: 10pt Tahoma, Verdana, Geneva, sans-serif; margin: 5px 10px 10px 10px; padding: 0px; }
-
 a:link { color: #22229C; }
-
 a:visited { color: #22229C; }
-
 a:hover, a:active { color: #FF4400; }
-
 td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
-
 .alt2 { background: #E4E4E4; color: #000000; }
-
 .smallfont { font: 11px Tahoma, Verdana, Geneva, sans-serif; }
-
 .inlineimg { vertical-align: middle; }
-
+.demo, .demo a { font-size: 11px; color: #808080; padding-top: 10px;}
 -->
-
 </style>]]></template>
 		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
 <a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">$vbphrase[original_post]</a>
@@ -315,8 +301,11 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		<phrasetype name="Error Messages" fieldname="error">
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
 			<phrase name="nntp_cannot_remove_mapped_group" date="1218111169" username="Wildev" version=""><![CDATA[Can't remove group with mapped groups]]></phrase>
+			<phrase name="nntp_group_cleaned_defeated" date="1260785885" username="varnak" version="1.7"><![CDATA[This group can not be cleared]]></phrase>
 			<phrase name="nntp_group_cleaned_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
+			<phrase name="nntp_group_deleted_defeated" date="1260785836" username="varnak" version="1.7"><![CDATA[This group can not be removed]]></phrase>
 			<phrase name="nntp_group_deleted_successfully" date="1217537461" username="Wildev" version=""><![CDATA[Selected group successfully deleted]]></phrase>
+			<phrase name="saved_nntp_group_settings_defeated" date="1260785779" username="varnak" version="1.7"><![CDATA[Group settings can not be changed]]></phrase>
 			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
 		</phrasetype>
 		<phrasetype name="GLOBAL" fieldname="global">
@@ -440,6 +429,4 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 	</cronentries>
 	<faqentries>
 	</faqentries>
-	<templateedits>
-	</templateedits>
 </product>

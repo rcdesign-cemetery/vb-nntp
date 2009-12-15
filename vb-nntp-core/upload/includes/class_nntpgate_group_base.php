@@ -191,14 +191,14 @@ class NNTPGate_Group_Base extends NNTPGate_Object
             return false;
         }
         $sql = "DELETE FROM
-                    `" . TABLE_PREFIX . "nntp_index`
-                WHERE
-                    `groupid` = " . (int) $group_id;
-        $this->_db->query_write($sql);
-        $sql = "DELETE FROM
                     `" . TABLE_PREFIX . "nntp_groups`
                 WHERE
                     `id` = " . (int) $group_id;
+        $this->_db->query_write($sql);
+        $sql = "DELETE FROM
+                    `" . TABLE_PREFIX . "nntp_index`
+                WHERE
+                    `groupid` = " . (int) $group_id;
         $this->_db->query_write($sql);
         return true;
     }
@@ -287,8 +287,6 @@ class NNTPGate_Group_Base extends NNTPGate_Object
             $result[] = $row;
         }
         return $result;
-        //ALTER TABLE `forum`.`nntp_groups` ADD INDEX `ActivePlugin` ( `plugin_id` , `is_active` )
-        //ALTER TABLE `forum`.`nntp_groups` ADD INDEX `Active` ( `is_active` ) 
     }
 
     /**
@@ -299,7 +297,7 @@ class NNTPGate_Group_Base extends NNTPGate_Object
      * @param int $group_id
      * @return bool
      */
-    public function clean_group($group_id = null )
+    public function clean_group($group_id = null)
     {
         if (is_null($group_id))
         {
