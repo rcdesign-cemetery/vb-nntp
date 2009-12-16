@@ -611,8 +611,8 @@
 
 
     #
-    #   Build message id string as "<groupid>.<messageid>@<gateid>"
-    #   Example: "12.5902@example.com"
+    #   Build message id string as "<messageid>@<gateid>"
+    #   Example: "5902@example.com"
     #
     #   Input parameters:
     #     group id   - int
@@ -626,13 +626,13 @@
 
       my ( $groupid, $messageid, $gateid ) = @_;
 
-      return $groupid . '.' . $messageid . '@' . $gateid;
+      return $messageid . '@' . $gateid;
     }
 
 
     #
-    #   Build reference id string as "<groupid>.<referenceid>.ref@<gateid>"
-    #   Example: "12.120.ref@example.com"
+    #   Build reference id string as "<referenceid>.ref@<gateid>"
+    #   Example: "120.ref@example.com"
     #
     #   Input parameters:
     #     group id     - int
@@ -646,7 +646,7 @@
 
       my ( $groupid, $refid, $gateid ) = @_;
 
-      return $groupid . '.' . $refid . '.ref@' . $gateid;
+      return $refid . '.ref@' . $gateid;
     }
 
 

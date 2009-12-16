@@ -17,7 +17,7 @@
     use MIME::Base64 qw(encode_base64 decode_base64);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.03"; # $Date: 2009/11/02 17:05:15 $
+    our $VERSION = "0.04"; # $Date: 2009/12/15 13:11:28 $
 
     our @EXPORT    = qw();
     our @EXPORT_OK = qw(parse_message_id);
@@ -105,13 +105,14 @@
         # is it required to set internal atricle pointer?
         my $set_message_id = 0;
 
-        my ( $groupid, $messageid, $gateid ) = ( undef, undef, '' );
+        my ( $groupid, $messageid, $gateid, $match ) = ( undef, undef, '', '' );
 
         my $res = $self->parse_message_id( $uuid, $id );
 
         $groupid   = $res->{groupid}  ;
         $messageid = $res->{messageid};
         $gateid    = $res->{gateid}   ;
+        $match     = $res->{matched}  ;
 
         $set_message_id = $res->{setid}
           if $res->{setid};
@@ -153,6 +154,7 @@
             messageid     => $messageid ,
             groupid       => $groupid   ,
             gateid        => $gateid    ,
+            match         => $match     ,
             subj          => $subj      , # all/head/body
           } );
 
@@ -162,7 +164,7 @@
           #   Set current pointer if requested
           #
 
-          $self->client( $uuid )->{messageid} = $messageid
+          $self->client( $uuid )->{messageid} = $message->{messageid}
             if $set_message_id;
 
           #
@@ -173,7 +175,7 @@
               '<'
               . $self->build_message_id(
                     $message->{groupid}   ,
-                    $message->{messageid} ,
+                    $message->{postid}    ,
                     $message->{gateid}    ,
                   )
               . '>';
@@ -191,8 +193,20 @@
                   )
               . '>';
 
+          #
+          #   Xref
+          #
+
+          $message->{headers}->{'Xref'} =
+            $self->cnf->Get( 'nntp.ServerDomain' )
+            . ' '
+            . $self->client( $uuid )->{groupids}->{ $message->{groupid} }->{name}
+            . ':'
+            . $messageid;
+
+
           my $message_id =
-            ( $res->{matched} eq 'messageid' ? 0 : $messageid )
+            ( $res->{matched} eq 'messageid' ? 0 : $message->{messageid} )
             . ' ' . $message->{headers}->{'Message-ID'};
 
           my $status_response =
@@ -222,12 +236,38 @@
             #   Print headers
             #
 
-            foreach my $key ( keys %{ $message->{headers} } )
+            my $headers_order = [
+                'Path',
+                'From',
+                'Newsgroups',
+                'Subject',
+                'Date',
+                'Organization',
+                'Lines',
+                'Message-ID',
+                'References',
+                'Reply-To',
+                'NNTP-Posting-Host',
+                'Mime-Version',
+                'Content-Type',
+                'Content-Transfer-Encoding',
+                'Charset',
+                'X-Trace',
+                'X-Complaints-To',
+                'NNTP-Posting-Date',
+                'X-Newsreader',
+                'Xref',
+              ];
+
+            foreach my $key ( @{ $headers_order } )
             {
-              $self->WriteClient(
-                  $uuid,
-                  $key . ': ' . $message->{headers}->{$key},
-                );
+              if( exists( $message->{headers}->{$key} ) )
+              {
+                $self->WriteClient(
+                    $uuid,
+                    $key . ': ' . $message->{headers}->{$key},
+                  );
+              }
             }
 
             unless( $subj eq 'head' )
@@ -390,6 +430,18 @@
         $res->{gateid}  = $3;
 
         $res->{matched} = 'messageid';
+      }
+      elsif( $id =~ /^<(\d+)@([^>]+)>$/ )
+      {
+        #
+        #   the message-id (by post id)
+        #
+
+        $res->{groupid} = $self->client( $uuid )->{groupid};
+        $res->{id}      = $1;
+        $res->{gateid}  = $2;
+
+        $res->{matched} = 'postid';
       }
       elsif( $id =~ /^(\d+)$/ )
       {

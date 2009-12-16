@@ -216,6 +216,7 @@
               messageid     => $range->{id}     ,
               messagefrom   => $from            ,
               messageto     => $to              ,
+              match         => $range->{matched},
             } );
 
           if( ref( $messages ) eq 'ARRAY' )
@@ -231,7 +232,7 @@
 
               $m->{message_id} = $self->build_message_id(  # message id
                   $m->{groupid}   ,
-                  $m->{messageid} ,
+                  $m->{postid}    ,
                   $m->{gateid}    ,
                 );
 
@@ -244,10 +245,11 @@
               $self->WriteClient(
                   $uuid,
                   (
-                    $range->{matched} eq 'messageid'
+                    (    $range->{matched} eq 'messageid'
+                      || $range->{matched} eq 'postid'    )
                       ? $self->build_message_id(  # message id
                             $m->{groupid}   ,
-                            $m->{messageid} ,
+                            $m->{postid}    ,
                             $m->{gateid}    ,
                           )
                       : $m->{messageid}
