@@ -105,14 +105,13 @@
         # is it required to set internal atricle pointer?
         my $set_message_id = 0;
 
-        my ( $groupid, $messageid, $gateid, $match ) = ( undef, undef, '', '' );
+        my ( $groupid, $messageid, $gateid ) = ( undef, undef, '' );
 
         my $res = $self->parse_message_id( $uuid, $id );
 
         $groupid   = $res->{groupid}  ;
         $messageid = $res->{messageid};
         $gateid    = $res->{gateid}   ;
-        $match     = $res->{matched}  ;
 
         $set_message_id = $res->{setid}
           if $res->{setid};
@@ -154,7 +153,6 @@
             messageid     => $messageid ,
             groupid       => $groupid   ,
             gateid        => $gateid    ,
-            match         => $match     ,
             subj          => $subj      , # all/head/body
           } );
 

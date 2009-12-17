@@ -216,7 +216,6 @@
               messageid     => $range->{id}     ,
               messagefrom   => $from            ,
               messageto     => $to              ,
-              match         => $range->{matched},
             } );
 
           if( ref( $messages ) eq 'ARRAY' )
