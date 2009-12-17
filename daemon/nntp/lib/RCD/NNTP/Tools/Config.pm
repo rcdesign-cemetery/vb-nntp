@@ -163,6 +163,16 @@
 
 
       #
+      #   Server domain
+      #
+
+      my ( $serverdomain ) =
+        $self->Get( 'backend.BBURL' ) =~ m{^(?:http://)?([^:/]+)};
+
+      $self->Set( 'nntp.ServerDomain', $serverdomain );
+
+
+      #
       #   Listen port/address from config file
       #
 

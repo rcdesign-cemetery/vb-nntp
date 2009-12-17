@@ -296,6 +296,20 @@
         }
 
         #
+        #   Run start helper
+        #
+
+        if( $self->{Toolkit}->Config->Get( 'helpers.Start' ) )
+        {
+          $self->{Toolkit}->Logger->notice( 'Runing start helper' );
+
+          $self->{Toolkit}->Factory->Create(
+            $self->{Toolkit}->Config->Get( 'helpers.Start' ),
+            '-sub' => 'run'
+          );
+        }
+
+        #
         #   Prefork kids
         #
 
@@ -327,6 +341,20 @@
 
           $KidChecker = $self->CheckSpareKids()
             unless kill 0 => $KidChecker;
+        }
+
+        #
+        #   Run stop helper
+        #
+
+        if( $self->{Toolkit}->Config->Get( 'helpers.Stop' ) )
+        {
+          $self->{Toolkit}->Logger->notice( 'Runing stop helper' );
+
+          $self->{Toolkit}->Factory->Create(
+            $self->{Toolkit}->Config->Get( 'helpers.Stop' ),
+            '-sub' => 'run'
+          );
         }
 
         #$state->{Server}->shutdown( 2 );

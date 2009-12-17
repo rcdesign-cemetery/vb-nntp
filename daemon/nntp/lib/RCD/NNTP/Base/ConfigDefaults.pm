@@ -57,6 +57,10 @@
   
           [handler]
           Controller        = Wildev::AppServer::Protocol::NNTP
+
+          [helpers]
+          Start             = RCD::NNTP::Helpers::Start
+          Stop              = 
   
           [nntp]
           PluginBaseName    = RCD::NNTP::Plugins

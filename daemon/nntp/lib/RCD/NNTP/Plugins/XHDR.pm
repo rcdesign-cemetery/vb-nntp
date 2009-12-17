@@ -231,7 +231,7 @@
 
               $m->{message_id} = $self->build_message_id(  # message id
                   $m->{groupid}   ,
-                  $m->{messageid} ,
+                  $m->{postid}    ,
                   $m->{gateid}    ,
                 );
 

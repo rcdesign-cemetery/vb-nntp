@@ -17,7 +17,7 @@
     use MIME::Base64 qw(encode_base64 decode_base64);
     use base qw(RCD::NNTP::Base::Plugin);
 
-    our $VERSION = "0.03"; # $Date: 2009/11/02 17:05:15 $
+    our $VERSION = "0.04"; # $Date: 2009/12/15 13:11:28 $
 
     our @EXPORT    = qw();
     our @EXPORT_OK = qw(parse_message_id);
@@ -173,7 +173,7 @@
               '<'
               . $self->build_message_id(
                     $message->{groupid}   ,
-                    $message->{messageid} ,
+                    $message->{postid}    ,
                     $message->{gateid}    ,
                   )
               . '>';
@@ -190,6 +190,18 @@
                     $message->{gateid}    ,
                   )
               . '>';
+
+          #
+          #   Xref
+          #
+
+          $message->{headers}->{'Xref'} =
+            $self->cnf->Get( 'nntp.ServerDomain' )
+            . ' '
+            . $self->client( $uuid )->{groupids}->{ $message->{groupid} }->{name}
+            . ':'
+            . $messageid;
+
 
           my $message_id =
             ( $res->{matched} eq 'messageid' ? 0 : $messageid )
@@ -222,12 +234,38 @@
             #   Print headers
             #
 
-            foreach my $key ( keys %{ $message->{headers} } )
+            my $headers_order = [
+                'Path',
+                'From',
+                'Newsgroups',
+                'Subject',
+                'Date',
+                'Organization',
+                'Lines',
+                'Message-ID',
+                'References',
+                'Reply-To',
+                'NNTP-Posting-Host',
+                'Mime-Version',
+                'Content-Type',
+                'Content-Transfer-Encoding',
+                'Charset',
+                'X-Trace',
+                'X-Complaints-To',
+                'NNTP-Posting-Date',
+                'X-Newsreader',
+                'Xref',
+              ];
+
+            foreach my $key ( @{ $headers_order } )
             {
-              $self->WriteClient(
-                  $uuid,
-                  $key . ': ' . $message->{headers}->{$key},
-                );
+              if( exists( $message->{headers}->{$key} ) )
+              {
+                $self->WriteClient(
+                    $uuid,
+                    $key . ': ' . $message->{headers}->{$key},
+                  );
+              }
             }
 
             unless( $subj eq 'head' )
@@ -388,6 +426,18 @@
         $res->{groupid} = $1;
         $res->{id}      = $2;
         $res->{gateid}  = $3;
+
+        $res->{matched} = 'messageid';
+      }
+      elsif( $id =~ /^<(\d+)@([^>]+)>$/ )
+      {
+        #
+        #   the message-id (new, w/o group id)
+        #
+
+        $res->{groupid} = $self->client( $uuid )->{groupid};
+        $res->{id}      = $1;
+        $res->{gateid}  = $2;
 
         $res->{matched} = 'messageid';
       }

@@ -408,6 +408,7 @@
             `Index`.`groupid`     AS `groupid`   ,
             `Index`.`messageid`   AS `messageid` ,
             `Index`.`parentid`    AS `refid`     ,
+            `Index`.`postid`      AS `postid`    ,
             `Group`.`group_name`  AS `groupname` ,
             `User`.`username`     AS `username`  ,
             DATE_FORMAT(
@@ -439,10 +440,11 @@
 
         my $anounce = {
             'messageid' => $info->{messageid} ,
+            'postid'    => $info->{postid}    ,
             'refid'     => $info->{refid}     ,
             'groupid'   => $info->{groupid}   ,
             'groupname' => $info->{groupname} ,
-            'gateid'    => $self->{Toolkit}->Config->Get( 'backend.GeteID' ),
+            'gateid'    => $self->{Toolkit}->Config->Get( 'backend.GateID' ),
             'subject'   => $subject           ,
             'from'      => $from              ,
             'date'      => $info->{gmdate}    ,
@@ -498,12 +500,14 @@
                 LEFT JOIN `} . $tableprefix . q{user`                AS `User`
                   ON( `Index`.`userid`  = `User`.`userid` )
               WHERE
-                `CM`.`groupid`   = ? AND
-                `CM`.`messageid` = ?
+                    `CM`.`groupid`    = ?
+                AND `CM`.`messageid`  = ?
+                AND `Index`.`deleted` = ?
             },
             undef,
             $data->{groupid}  ,
             $data->{messageid},
+            'no',
           );
 
         if( $res
@@ -523,7 +527,7 @@
           my $from    = $self->_build_from_address( $res->{username} );
           my $subject = $self->_build_subject( $res->{subject} );
 
-          my $gateid  = $self->{Toolkit}->Config->Get( 'backend.GeteID'  );
+          my $gateid  = $self->{Toolkit}->Config->Get( 'backend.GateID'  );
           my $charset = $self->{Toolkit}->Config->Get( 'backend.Charset' );
 
           my $contenttype =
