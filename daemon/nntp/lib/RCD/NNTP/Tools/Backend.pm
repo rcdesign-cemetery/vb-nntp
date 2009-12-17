@@ -380,17 +380,11 @@
       my $matchrules  = '';
       my $group;
 
-      if   ( $data->{messageid} > 0 && $data->{match} eq 'messageid' )
+      if   ( $data->{messageid} > 0 )
       {
         # just one defined message
         $matchrules = 
           '`messageid` = ' . ( 0 + $data->{messageid} );
-      }
-      elsif( $data->{messageid} > 0 && $data->{match} eq 'postid' )
-      {
-        # just one defined message
-        $matchrules = 
-          '`postid` = ' . ( 0 + $data->{messageid} );
       }
       elsif( $data->{messagefrom} && $data->{messageto} )
       {
@@ -507,11 +501,7 @@
                   ON( `Index`.`userid`  = `User`.`userid` )
               WHERE
                     `CM`.`groupid`    = ?
-              } . (
-                $data->{match} eq 'postid'
-                  ? q{ AND `CM`.`postid`    = ? }
-                  : q{ AND `CM`.`messageid` = ? }
-              ) . q{
+                AND `CM`.`messageid`  = ?
                 AND `Index`.`deleted` = ?
             },
             undef,

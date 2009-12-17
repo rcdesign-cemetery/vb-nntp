@@ -245,11 +245,10 @@
               $self->WriteClient(
                   $uuid,
                   (
-                    (    $range->{matched} eq 'messageid'
-                      || $range->{matched} eq 'postid'    )
+                    $range->{matched} eq 'messageid'
                       ? $self->build_message_id(  # message id
                             $m->{groupid}   ,
-                            $m->{postid}    ,
+                            $m->{messageid} ,
                             $m->{gateid}    ,
                           )
                       : $m->{messageid}

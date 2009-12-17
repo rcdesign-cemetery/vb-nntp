@@ -164,7 +164,7 @@
           #   Set current pointer if requested
           #
 
-          $self->client( $uuid )->{messageid} = $message->{messageid}
+          $self->client( $uuid )->{messageid} = $messageid
             if $set_message_id;
 
           #
@@ -206,7 +206,7 @@
 
 
           my $message_id =
-            ( $res->{matched} eq 'messageid' ? 0 : $message->{messageid} )
+            ( $res->{matched} eq 'messageid' ? 0 : $messageid )
             . ' ' . $message->{headers}->{'Message-ID'};
 
           my $status_response =
@@ -434,14 +434,14 @@
       elsif( $id =~ /^<(\d+)@([^>]+)>$/ )
       {
         #
-        #   the message-id (by post id)
+        #   the message-id (new, w/o group id)
         #
 
         $res->{groupid} = $self->client( $uuid )->{groupid};
         $res->{id}      = $1;
         $res->{gateid}  = $2;
 
-        $res->{matched} = 'postid';
+        $res->{matched} = 'messageid';
       }
       elsif( $id =~ /^(\d+)$/ )
       {
