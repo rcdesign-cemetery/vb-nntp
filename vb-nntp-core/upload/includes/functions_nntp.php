@@ -74,11 +74,12 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
   $nntpgroupslist = implode( ',', $availablegroups );
 
 ////////////
-  $access_level   = nntp_get_access_level( $usergroupid, $membergroupids );
-  $template       = nntp_get_eval( fetch_template( 'nntp_message_template' ) );
-  $css            = nntp_get_eval( fetch_template( 'nntp_message_css'      ) );
-  $menu           = nntp_get_eval( fetch_template( 'nntp_message_menu'     ) );
-  $demotext       = nntp_get_demo();
+  $access_level = nntp_get_access_level( $usergroupid, $membergroupids );
+  $template     = vB_Template::create('nntp_message_template')->render();
+  $css          = vB_Template::create('nntp_message_css')->render();
+  $menu         = vB_Template::create('nntp_message_menu')->render();
+
+  $demotext     = nntp_get_demo();
 
 
   // update/insert data into db cache
@@ -98,31 +99,16 @@ function nntp_update_groupaccess_cache_item ( $usergroupslist = '' )
 
 
 /*
- *  Returns evaled text
- */
-
-function nntp_get_eval ( $text = '' )
-{
-  global $vbulletin, $db, $globaltemplates, $vbphrase;
-
-  $str = '';
-
-  eval('$str = "' . $text . '";');
-
-  return $str;
-}
-
-/*
  *  Demo message
  */
 
 function nntp_get_demo ()
 {
-  global $vbulletin;
-  $nntp_demo_text = $vbulletin->options['nntp_demo_text'];
-  $demomessage = '';
-  eval('$demomessage = "' . fetch_template('nntp_demo_text') . '";');
-  return $demomessage;
+    global $vbulletin;
+    $templater = vB_Template::create('nntp_demo_text');
+    $templater->register_page_templates();
+    $templater->register('nntp_demo_text', $vbulletin->options['nntp_demo_text']);
+    return $templater->render();
 }
 
 

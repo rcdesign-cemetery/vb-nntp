@@ -38,14 +38,23 @@ require_once(DIR . '/includes/adminfunctions.php'); // required for can_administ
 // ######################## START MAIN SCRIPT ############################
 // #######################################################################
 
-$bbcode_parser =& new vB_BbCodeParser($vbulletin, fetch_tag_list());
+$bbcode_parser = new vB_BbCodeParser($vbulletin, fetch_tag_list());
 $anouncemessage = $bbcode_parser->parse($vbulletin->options['nntp_adv_text']);
 
 // initialize some template bits
-$navbits[''] = $vbphrase['nntp_gate_menu_title'];
+
+$navbits = array('' => $vbphrase['nntp_gate_menu_title']);
 
 $navbits = construct_navbits($navbits);
-eval('$navbar = "' . fetch_template('navbar') . '";');
-eval('print_output("' . fetch_template('nntp_anounce') . '");');
+
+$navbar = render_navbar_template($navbits);
+
+$templater = vB_Template::create('nntp_anounce');
+$templater->register_page_templates();
+$templater->register('anouncemessage', $anouncemessage);
+$templater->register('pagetitle', $vbphrase['nntp_anounce_pagetitle']);
+
+$templater->register('navbar', $navbar);
+print_output($templater->render());
 
 ?>

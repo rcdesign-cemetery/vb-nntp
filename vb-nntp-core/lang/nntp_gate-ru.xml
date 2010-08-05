@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<language name="Russian (RU)" vbversion="4.0.4" product="nntp_gate" type="custom">
+	<settings>
+		<options><![CDATA[1]]></options>
+		<languagecode><![CDATA[ru]]></languagecode>
+		<charset><![CDATA[UTF-8]]></charset>
+		<imagesoverride />
+		<dateoverride><![CDATA[d.m.Y]]></dateoverride>
+		<timeoverride><![CDATA[H:i]]></timeoverride>
+		<registereddateoverride><![CDATA[d.m.Y]]></registereddateoverride>
+		<calformat1override><![CDATA[d.m.Y]]></calformat1override>
+		<calformat2override><![CDATA[d.m]]></calformat2override>
+		<logdateoverride><![CDATA[H:i, d.m.Y]]></logdateoverride>
+		<locale />
+		<decimalsep><![CDATA[.]]></decimalsep>
+		<thousandsep><![CDATA[,]]></thousandsep>
+	</settings>
+	<phrasetype name="User Tools (global)" fieldname="user">
+		<phrase name="nntp_anounce_pagetitle" date="1280928022" username="varnak"><![CDATA[Чтение форума через NNTP]]></phrase>
+		<phrase name="nntp_service_description" date="1280995769" username="varnak"><![CDATA[Описание cервиса]]></phrase>
+	</phrasetype>
+</language>

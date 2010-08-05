@@ -3,69 +3,114 @@
 <product productid="nntp_plugin_topics" active="1">
 	<title>NNTP Gate Plugin: Forum Topics</title>
 	<description />
-	<version>1.6</version>
+	<version>1.7</version>
 	<url />
 	<versioncheckurl />
+	<apm_releasedate></apm_releasedate>
+	<apm_author></apm_author>
+	<apm_relatedurl></apm_relatedurl>
+	<apm_extrainfo></apm_extrainfo>
+	<apm_extraedit></apm_extraedit>
 	<dependencies>
 	</dependencies>
-	<codes>
-		<code version="1.0">
-			<installcode><![CDATA[$db->hide_errors();
-
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups_forums` (
-    `forumid` smallint(5) unsigned NOT NULL,
-    `groupid` int(10) unsigned NOT NULL,
-    PRIMARY KEY  (`forumid`),
-    KEY `groupid` (`groupid`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-");
-
-$db->show_errors();]]></installcode>
-			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
-		</code>
-		<code version="1.6">
-			<installcode><![CDATA[$db->hide_errors();
-$db->query("
-  ALTER TABLE `" . TABLE_PREFIX . "nntp_index` CHANGE `refid` `parentid` INT( 10 ) UNSIGNED NOT NULL 
-");
-$db->query("
-  UPDATE
-            `" . TABLE_PREFIX . "nntp_groups` AS ng, `" . TABLE_PREFIX . "nntp_groups_forums` AS ngf
-        SET
-            ng.map_id = ngf.forumid
-        WHERE
-            ng.id = ngf.groupid
-");
-$db->show_errors();]]></installcode>
-			<uninstallcode><![CDATA[$db->query( "DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups_forums`;" );]]></uninstallcode>
-		</code>
-	</codes>
+	<codes></codes>
 	<templates>
-		<template name="postbit_nntp" templatetype="template" date="1258983509" username="e.shkuropat" version=""><![CDATA[<div>$post[message]</div>
+		<template name="postbit_nntp" templatetype="template" date="1280929721" username="varnak" version="1.7"><![CDATA[<div>{vb:raw post.message}</div>
 
-<if condition="$show['attachments']">
-	<br />
+<!-- attachments -->
 
-	<if condition="$show['thumbnailattachment']">
-		$post[thumbnailattachments]
-	</if>
+	<vb:if condition="$show['attachments']">
 
-	<if condition="$show['imageattachment']">
-			$post[imageattachments]
-	</if>
+	<div class="attachments">
 
-	<if condition="$show['imageattachmentlink']">
-			$post[imageattachmentlinks]
-	</if>
+		<vb:if condition="$show['thumbnailattachment']">
 
-	<if condition="$show['otherattachment']">
-			$post[otherattachments]
-	</if>
+			<fieldset class="blockrow" class="postattachlist">
 
-</if>
-        ]]></template>
+				<legend><img src="{vb:stylevar imgdir_misc}/paperclip.png" class="inlineimg" /> {vb:rawphrase attached_thumbnails}</legend>
+
+				{vb:raw post.thumbnailattachments}
+
+			</fieldset>
+
+		</vb:if>
+
+
+
+		<vb:if condition="$show['imageattachment']">
+
+			<fieldset class="blockrow" class="postattachlist">
+
+				<legend><img src="{vb:stylevar imgdir_misc}/paperclip.png" class="inlineimg" /> {vb:rawphrase attached_images}</legend>
+
+				{vb:raw post.imageattachments}
+
+			</fieldset>
+
+		</vb:if>
+
+
+
+		<vb:if condition="$show['imageattachmentlink']">
+
+			<fieldset class="blockrow" class="postattachlist">
+
+				<legend><img src="{vb:stylevar imgdir_misc}/paperclip.png" class="inlineimg" /> {vb:rawphrase attached_images}</legend>
+
+				<ul>
+
+					{vb:raw post.imageattachmentlinks}
+
+				</ul>
+
+			</fieldset>
+
+		</vb:if>
+
+
+
+		<vb:if condition="$show['otherattachment']">
+
+			<fieldset class="blockrow" class="postattachlist">
+
+				<legend><img src="{vb:stylevar imgdir_misc}/paperclip.png" class="inlineimg" /> {vb:rawphrase attached_files}</legend>
+
+				<ul>
+
+					{vb:raw post.otherattachments}
+
+				</ul>
+
+			</fieldset>
+
+		</vb:if>
+
+
+
+		<vb:if condition="$show['moderatedattachment']">
+
+			<fieldset class="blockrow" class="postattachlist">
+
+				<legend><img src="{vb:stylevar imgdir_misc}/paperclip.png" class="inlineimg" /> {vb:rawphrase attachments_pending_approval}</legend>
+
+				<ul>
+
+					{vb:raw post.moderatedattachments}
+
+				</ul>
+
+			</fieldset>
+
+		</vb:if>
+
+	</div>
+
+	</vb:if>]]></template>
 	</templates>
+	<stylevardfns>
+	</stylevardfns>
+	<stylevars>
+	</stylevars>
 	<plugins>
 		<plugin active="1" executionorder="99">
 			<title>edit post/thread</title>
@@ -189,6 +234,7 @@ print_table_footer( 2 );]]></phpcode>
     $nntp_forum_group = new NNTPGate_Forum_Group();
 
     $group_list = $nntp_forum_group->get_groups_list();
+    $gated_forum_list = array();
     foreach ($group_list as $group)
     {
         $gated_forum_list[$group['map_id']] = true;
@@ -240,6 +286,16 @@ print_table_footer( 2 );]]></phpcode>
 			<phpcode><![CDATA[$plugins['forum'] = 'forum topics';]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
+			<title>Add post_nntp to postbit factory</title>
+			<hookname>postbit_factory</hookname>
+			<phpcode><![CDATA[if ('post_nntp' == $postbit_type)
+{
+    require_once(DIR . '/includes/class_postbit_post_nntp.php');
+    $out = new vB_Postbit_Post_Nntp();
+    $handled_type = true;
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
 			<title>delete post</title>
 			<hookname>postdata_delete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
@@ -286,4 +342,6 @@ $index->delete_message_by_parent_id();]]></phpcode>
 	</cronentries>
 	<faqentries>
 	</faqentries>
+	<templateedits>
+	</templateedits>
 </product>

@@ -3,232 +3,211 @@
 <product productid="nntp_gate" active="1">
 	<title>NNTP Gate</title>
 	<description />
-	<version>1.7</version>
+	<version>1.8</version>
 	<url />
 	<versioncheckurl />
+	<apm_releasedate></apm_releasedate>
+	<apm_author></apm_author>
+	<apm_relatedurl></apm_relatedurl>
+	<apm_extrainfo></apm_extrainfo>
+	<apm_extraedit></apm_extraedit>
 	<dependencies>
 	</dependencies>
 	<codes>
-		<code version="1.0">
+		<code version="1.8">
 			<installcode><![CDATA[$db->hide_errors();
+" . TABLE_PREFIX . ";
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_cache_messages (
+  `groupid` int(10) unsigned NOT NULL,
+  `messageid` int(10) unsigned NOT NULL,
+  `body` text NOT NULL,
+  PRIMARY KEY  (`groupid`,`messageid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='NNTP messages cache'");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_auth_cache` (
-    `username` varchar(100) NOT NULL,
-    `authkey` char(32) NOT NULL,
-    `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-    `groupslist` text NOT NULL,
-    `css` text NOT NULL,
-    `menu` text NOT NULL,
-    `demotext` text NOT NULL,
-    `userid` int(10) unsigned NOT NULL,
-    `access` enum('full','demo','none') NOT NULL,
-    PRIMARY KEY  (`username`,`authkey`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-");
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache (
+  `usergroupslist` char(100) NOT NULL,
+  `nntpgroupslist` varchar(7000) NOT NULL,
+  `access_level` enum('full','demo','none') NOT NULL,
+  `template` varchar(2000) NOT NULL,
+  `css` varchar(5000) NOT NULL,
+  `menu` varchar(2000) NOT NULL,
+  `demotext` varchar(5000) NOT NULL,
+  PRIMARY KEY  (`usergroupslist`)
+) ENGINE=MEMORY DEFAULT CHARSET=utf8");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_cache_messages` (
-    `groupid` int(10) unsigned NOT NULL,
-    `messageid` int(10) unsigned NOT NULL,
-    `body` text NOT NULL,
-    PRIMARY KEY  (`groupid`,`messageid`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='NNTP messages cache';
-");
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groups (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `plugin_id` char(20) NOT NULL,
+  `group_name` char(50) NOT NULL,
+  `is_active` enum('yes','no') NOT NULL default 'no',
+  `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
+  `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`),
+  KEY `map_id` (`map_id`),
+  KEY `group_name` (`group_name`),
+  KEY `date_create` (`date_create`),
+  KEY `ActivePlugin` (`plugin_id`,`is_active`),
+  KEY `Active` (`is_active`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groups` (
-    `id` int(10) unsigned NOT NULL auto_increment,
-    `plugin_id` char(20) NOT NULL,
-    `group_name` char(50) NOT NULL,
-    `is_active` enum('yes','no') NOT NULL default 'no',
-    `settings` text NOT NULL,
-    `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
-    `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-    PRIMARY KEY  (`id`),
-    KEY `map_id` (`map_id`),
-    KEY `group_name` (`group_name`),
-    KEY `date_create` (`date_create`)
-  ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=90 ;
-");
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_index (
+  `groupid` int(10) unsigned NOT NULL,
+  `messageid` int(10) unsigned NOT NULL auto_increment,
+  `parentid` int(10) unsigned NOT NULL,
+  `title` char(255) NOT NULL,
+  `datetime` datetime NOT NULL,
+  `userid` int(10) unsigned NOT NULL,
+  `deleted` enum('no','yes') NOT NULL,
+  `messagetype` enum('forum','blog') NOT NULL,
+  `postid` int(10) unsigned NOT NULL,
+  PRIMARY KEY  (`groupid`,`messageid`),
+  UNIQUE KEY `GroupListHelper` (`groupid`,`deleted`,`messageid`),
+  KEY `Post` (`messagetype`,`postid`,`deleted`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_index` (
-    `groupid` int(10) unsigned NOT NULL,
-    `messageid` int(10) unsigned NOT NULL auto_increment,
-    `refid` int(10) unsigned NOT NULL,
-    `title` char(255) NOT NULL,
-    `datetime` datetime NOT NULL,
-    `userid` int(10) unsigned NOT NULL,
-    `deleted` enum('no','yes') NOT NULL,
-    `messagetype` enum('forum','blog') NOT NULL,
-    `postid` int(10) unsigned NOT NULL,
-    PRIMARY KEY  (`groupid`,`messageid`),
-    UNIQUE KEY `GroupListHelper` (`groupid`,`deleted`,`messageid`),
-    KEY `Post` (`messagetype`,`postid`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-");
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_stats (
+  `userid` int(10) unsigned NOT NULL,
+  `date` date NOT NULL,
+  PRIMARY KEY  (`userid`,`date`),
+  KEY `date` (`date`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_stats` (
-    `userid` int(10) unsigned NOT NULL,
-    `date` date NOT NULL,
-    PRIMARY KEY  (`userid`,`date`),
-    KEY `date` (`date`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-");
+$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_userauth_cache (
+  `username` varchar(100) NOT NULL,
+  `authhash` char(32) NOT NULL,
+  `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  `usergroupslist` varchar(100) NOT NULL,
+  `userid` int(10) unsigned NOT NULL,
+  `access_granted` enum('yes','no') NOT NULL default 'no' COMMENT 'Have user any access to nntp-gate?',
+  `sessionkey` int(10) unsigned NOT NULL,
+  PRIMARY KEY  (`username`,`authhash`),
+  UNIQUE KEY `sessionkey` (`sessionkey`),
+  KEY `usergroupslist` (`usergroupslist`)
+) ENGINE=MEMORY DEFAULT CHARSET=utf8");
 
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_user_settings` (
-    `userid` int(10) unsigned NOT NULL,
-    `nntp_password` char(32) NOT NULL,
-    `use_nntp_password` enum('yes','no') NOT NULL default 'yes',
-    PRIMARY KEY  (`userid`)
-  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-");
 
 $db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->hide_errors();
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_auth_cache`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_cache_messages");
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_cache_messages`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache");
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groups`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_groups");
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_index`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_index");
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_stats`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_stats");
 
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
-
-$db->show_errors();]]></uninstallcode>
-		</code>
-		<code version="1.4">
-			<installcode><![CDATA[$db->hide_errors();
-
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_groupaccess_cache` (
-    `usergroupslist` char(100) NOT NULL,
-    `nntpgroupslist` varchar(7000) NOT NULL,
-    `access_level` enum('full','demo','none') NOT NULL,
-    `template` varchar(2000) NOT NULL,
-    `css` varchar(5000) NOT NULL,
-    `menu` varchar(2000) NOT NULL,
-    `demotext` varchar(5000) NOT NULL,
-    PRIMARY KEY  (`usergroupslist`)
-  ) ENGINE=MEMORY DEFAULT CHARSET=utf8;
-");
-
-$db->query("
-  CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "nntp_userauth_cache` (
-    `username` varchar(100) NOT NULL,
-    `authhash` char(32) NOT NULL,
-    `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-    `usergroupslist` varchar(100) NOT NULL,
-    `userid` int(10) unsigned NOT NULL,
-    `access_granted` enum('yes','no') NOT NULL default 'no' COMMENT 'Have user any access to nntp-gate?',
-    `sessionkey` int(10) unsigned NOT NULL,
-    PRIMARY KEY  (`username`,`authhash`),
-    UNIQUE KEY `sessionkey` (`sessionkey`),
-    KEY `usergroupslist` (`usergroupslist`)
-  ) ENGINE=MEMORY DEFAULT CHARSET=utf8;
-");
-
-$db->query("
-  DROP TABLE `" . TABLE_PREFIX . "nntp_auth_cache`;
-");
-
-$db->show_errors();]]></installcode>
-			<uninstallcode><![CDATA[$db->hide_errors();
-
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_groupaccess_cache`");
-
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_userauth_cache`");
+$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_userauth_cache");
 
 $db->show_errors();]]></uninstallcode>
-		</code>
-		<code version="1.5">
-			<installcode><![CDATA[$db->hide_errors();
-
-$db->query("DROP TABLE IF EXISTS `" . TABLE_PREFIX . "nntp_user_settings`");
-
-$db->show_errors();]]></installcode>
-			<uninstallcode />
-		</code>
-		<code version="1.7">
-			<installcode><![CDATA[$db->hide_errors();
-
-$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_index` ADD INDEX `Parent` ( `groupid` , `parentid` ) ");
-$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_index` DROP INDEX `Post` ,
-ADD INDEX `Post` ( `messagetype` , `postid` , `deleted` ) ");
-$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_groups` ADD INDEX `ActivePlugin` ( `plugin_id` , `is_active` )");
-$db->query("ALTER TABLE `" . TABLE_PREFIX . "nntp_groups` ADD INDEX `Active` ( `is_active` ) ");
-
-$db->show_errors();]]></installcode>
-			<uninstallcode />
 		</code>
 	</codes>
 	<templates>
-		<template name="nntp_anounce" templatetype="template" date="1258983509" username="Dimit" version=""><![CDATA[$stylevar[htmldoctype]
-<html xmlns="http://www.w3.org/1999/xhtml" dir="$stylevar[textdirection]" lang="$stylevar[languagecode]">
-<head>
-$headinclude
-<title>$vboptions[bbtitle] - $vbphrase[nntp_gate_menu_title]</title>
-</head>
-<body>
-$header
+		<template name="nntp_anounce" templatetype="template" date="1280995936" username="varnak" version="1.8"><![CDATA[{vb:stylevar htmldoctype}
+<html xmlns="http://www.w3.org/1999/xhtml" dir="{vb:stylevar textdirection}" lang="{vb:stylevar languagecode}" id="vbulletin_html">
+    <head>
+	{vb:raw headinclude}
+        <title>{vb:raw vboptions.bbtitle} - {vb:rawphrase nntp_gate_menu_title}</title>
+        {vb:raw headinclude_bottom}
+    </head>
+    <body>
+        {vb:raw header}
+        {vb:raw navbar}
 
-$navbar
+        <div id="pagetitle">
 
-<table class="tborder" cellpadding="$stylevar[cellpadding]" cellspacing="$stylevar[cellspacing]" border="0" width="100%" align="center">
-<thead>
-<tr>
-	<td class="thead">
-		<a style="float:$stylevar[right]" href="#top" onclick="return toggle_collapse('nntp_anounce')"><img id="collapseimg_nntp_anounce" src="$stylevar[imgdir_button]/collapse_thead$vbcollapse[collapseimg_nntp_anounce].gif" alt="" border="0" /></a>
-		$vbphrase[nntp_gate_menu_title]
-	</td>
-</tr>
-</thead>
-<tbody id="collapseobj_nntp_anounce" style="$vbcollapse[collapseobj_nntp_anounce]">
+            <h1>{vb:raw pagetitle}</h1>
 
-<tr>
-	<td class="alt1" align="$stylevar[left]">
-		<span class="smallfont">$anouncemessage</span>
-	</td>
-</tr>
-</tbody>
-</table>
+        </div>
 
-<br />
+        <h2 class="blockhead">{vb:rawphrase nntp_service_description}</h2>
+        <div class="blockbody">
+            <div class="blockrow restore">
+			{vb:raw anouncemessage}
+            </div>
+        </div>
 
-$footer
-</body>
+        {vb:raw footer}
+    </body>
 </html>]]></template>
-		<template name="nntp_demo_text" templatetype="template" date="1249904316" username="varnak" version=""><![CDATA[<div class="demo">$nntp_demo_text</div>]]></template>
-		<template name="nntp_message_css" templatetype="template" date="1260813965" username="Vitaly" version="1.7"><![CDATA[<style type="text/css">
+		<template name="nntp_demo_text" templatetype="template" date="1249904316" username="varnak" version=""><![CDATA[<div class="demo">{vb:raw nntp_demo_text}</div>]]></template>
+		<template name="nntp_message_css" templatetype="template" date="1280996182" username="varnak" version="1.8"><![CDATA[<style type="text/css">
 <!--
-body { background: #FFFFFF; color: #000000; font: 10pt Tahoma, Verdana, Geneva, sans-serif; margin: 5px 10px 10px 10px; padding: 0px; }
+body {
+background: #FFFFFF;
+color: #000000;
+font: 13px Tahoma,Calibri,Verdana,Geneva,sans-serif; margin: 5px 10px 10px 10px; padding: 0px;
+}
+
+fieldset, img { border:0 none; }
+img.inlineimg { position:relative; top:2px; }
+
 a:link { color: #22229C; }
 a:visited { color: #22229C; }
 a:hover, a:active { color: #FF4400; }
-td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
-.alt2 { background: #E4E4E4; color: #000000; }
-.smallfont { font: 11px Tahoma, Verdana, Geneva, sans-serif; }
-.inlineimg { vertical-align: middle; }
+
+.bbcode_container { display:block; margin:5px 20px 20px; }
+
+div.bbcode_quote {
+-moz-border-radius:5px 5px 5px 5px;
+background: #F6F6F6;
+border:1px solid #606060;
+font-style:italic;
+margin:0 10px 10px;
+position:relative;
+top:0;
+}
+
+div.quote_container { padding:5px 10px; }
+
+.bbcode_postedby { font-size:12px; font-style: normal; }
+.bbcode_postedby img {
+position:relative;
+top:1px;
+}
+
+div.message { padding:8px 0; }
+
+pre.bbcode_code, div.bbcode_code {
+background: #F6F6F6;
+border:1px inset;
+direction:ltr;
+margin:0;
+overflow:scroll;
+padding:6px;
+text-align:left;
+}
+
+pre, code {
+font-family:monospace;
+line-height:100%;
+}
+
+.attachments {
+-moz-border-radius:5px 5px 5px 5px;
+background: #ECECEC;
+border:1px solid #CECECE;
+font-size:12px;
+margin:20px 30px;
+padding:5px 10px;
+}
+
 .demo, .demo a { font-size: 11px; color: #808080; padding-top: 10px;}
 -->
-</style>]]></template>
+</style>
+]]></template>
 		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
-<a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">$vbphrase[original_post]</a>
+<a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">{vb:rawphrase original_post}</a>
 &nbsp;&nbsp;
-<a href="/newreply.php?do=newreply&noquote=1&p=<% POST ID %>">$vbphrase[submit_reply]</a>
+<a href="/newreply.php?do=newreply&noquote=1&p=<% POST ID %>">{vb:rawphrase submit_reply}</a>
 &nbsp;&nbsp;
-<a href="/newreply.php?do=newreply&p=<% POST ID %>">$vbphrase[quote]</a>
+<a href="/newreply.php?do=newreply&p=<% POST ID %>">{vb:rawphrase quote}</a>
 &nbsp;]]></template>
 		<template name="nntp_message_template" templatetype="template" date="1249904316" username="Dimit" version=""><![CDATA[<html><head>
 <% CSS %>
-<base href="$vboptions[bburl]">
+<base href="{vb:raw vboptions.bburl}">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
@@ -237,22 +216,21 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 <div><% MESSAGE BODY %></div>
 </body>
 </html>]]></template>
-		<template name="nntp_navbar_link" templatetype="template" date="1258960166" username="Vitaly" version=""><![CDATA[<td class="vbmenu_option"><a href="nntp_gate.php$session[sessionurl_q]">$vbphrase[nntp_gate_menu_title]</a></td>]]></template>
+		<template name="nntp_navbar_link" templatetype="template" date="1280915025" username="varnak" version="1.8"><![CDATA[<li><a href="nntp_gate.php?{vb:raw session.sessionurl_q}">{vb:rawphrase nntp_gate_menu_title}</a></li>]]></template>
 	</templates>
+	<stylevardfns>
+	</stylevardfns>
+	<stylevars>
+	</stylevars>
 	<plugins>
 		<plugin active="1" executionorder="5">
 			<title>Startup: Merge NNTP Templates into $globaltemplates</title>
 			<hookname>cache_templates</hookname>
-			<phpcode><![CDATA[$globaltemplates[] = 'nntp_navbar_link';]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="5">
-			<title>NNTP Link in menu</title>
-			<hookname>global_setup_complete</hookname>
-			<phpcode><![CDATA[eval('$template_hook[navbar_quick_links_menu_pos4] .= "' . fetch_template('nntp_navbar_link') . '";');]]></phpcode>
+			<phpcode><![CDATA[$cache[] = 'nntp_navbar_link';]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Turn on forum for backend.php</title>
-			<hookname>global_start</hookname>
+			<hookname>global_bootstrap_init_start</hookname>
 			<phpcode><![CDATA[if( ! $vbulletin->options['bbactive'] AND defined( 'NNTP_BACKEND' ) )
 {
   $vbulletin->options['bbactive'] = true;
@@ -266,6 +244,12 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
   global $phrasegroups;
   array_unshift( $phrasegroups, 'posting' );
 }]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>NNTP Link in menu</title>
+			<hookname>process_templates_complete</hookname>
+			<phpcode><![CDATA[$templater = vB_Template::create('nntp_navbar_link');
+$template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Admin: Add Template Group for NNTP Gate</title>
@@ -315,6 +299,10 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 		<phrasetype name="Style Tools" fieldname="style">
 			<phrase name="group_nntp_gate" date="1229022407" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
 		</phrasetype>
+		<phrasetype name="User Tools (global)" fieldname="user">
+			<phrase name="nntp_anounce_pagetitle" date="1280928022" username="varnak" version=""><![CDATA[Reading forum via NNTP]]></phrase>
+			<phrase name="nntp_service_description" date="1280995769" username="varnak" version=""><![CDATA[Service description]]></phrase>
+		</phrasetype>
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
@@ -363,13 +351,13 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
 			</setting>
-			<setting varname="nntp_groups" displayorder="80">
-				<datatype>free</datatype>
-				<optioncode>usergroup:5</optioncode>
-			</setting>
 			<setting varname="nntp_demo_text" displayorder="80">
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
+			</setting>
+			<setting varname="nntp_groups" displayorder="80">
+				<datatype>free</datatype>
+				<optioncode>usergroup:5</optioncode>
 			</setting>
 			<setting varname="nntp_demo_groups" displayorder="90">
 				<datatype>free</datatype>
@@ -429,4 +417,6 @@ td, th, p, li {	font: 10pt Tahoma, Verdana, Geneva, sans-serif; }
 	</cronentries>
 	<faqentries>
 	</faqentries>
+	<templateedits>
+	</templateedits>
 </product>
