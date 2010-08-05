@@ -19,7 +19,7 @@ class vB_Postbit_Post_Nntp extends vB_Postbit_Post
 	function construct_postbit(&$post)
 	{
         $this->post = &$post;
-        global $show, $vbphrase, $stylevar;
+        global $show, $vbphrase, $stylevar, $template_hook;
         $tmp_show = $show;
         $tmp_stylevar = $stylevar;
         $tmp_vbcms = $this->registry->products['vbcms'];

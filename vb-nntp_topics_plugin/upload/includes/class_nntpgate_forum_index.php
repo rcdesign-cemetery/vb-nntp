@@ -77,7 +77,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         $post['pagetext'] = $this->_post['message'];
         $post['allowsmilie'] = $post['enablesmilies'];
 
-        // get for attachments
+        // get attachments
         require_once(DIR . '/packages/vbattach/attach.php');
 		$attach = new vB_Attach_Display_Content($vbulletin, 'vBForum_Post');
 		$postattach = $attach->fetch_postattach(0, $this->_post_id);
