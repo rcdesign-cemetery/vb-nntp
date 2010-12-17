@@ -52,8 +52,9 @@ Installation:
 	libdbd-mysql-perl \
 	libjson-perl \
 	libtime-hires-perl \
-	libmime-base64-perl
-		
+	libmime-base64-perl \
+    libwww-perl \
+    libdigest-crc-perl		
 
 После установки необходимо выполнить
 
