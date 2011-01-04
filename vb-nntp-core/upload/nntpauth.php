@@ -54,7 +54,7 @@ while ($row = $vbulletin->db->fetch_array($users))
         $userinfo = fetch_userinfo($userid);
         $key = nntp_update_groupaccess_cache($userinfo);
 
-        // update user record
+        // Update user record
         $sql = "UPDATE
                     " . TABLE_PREFIX . "nntp_userauth_cache
                 SET
@@ -64,6 +64,14 @@ while ($row = $vbulletin->db->fetch_array($users))
                 WHERE
                     `username`          = '" . $vbulletin->db->escape_string( $row['username'] ) . "'
                     AND `authhash`      = '" . $vbulletin->db->escape_string( $row['authhash'] ) . "'";
+
+        $vbulletin->db->query_write($sql);
+
+        // Update statistics
+        // We don't need update on each login, when cache is used, so this place is ok.
+        $sql = "INSERT DELAYED IGNORE
+                    INTO " . TABLE_PREFIX . "nntp_stats  (userid, date)
+                VALUES (". $userid .",'". date('Y-m-d') . "')";
 
         $vbulletin->db->query_write($sql);
     } 
