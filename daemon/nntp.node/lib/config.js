@@ -122,6 +122,9 @@ exports.load = function() {
     if (!!cfg.DaemonSslPort && !cfg.PemFile) {
         throw Error('You have to define PEM-container with certificate & key, prior to use SSL.');
     }
+    if (cfg.PemFile && !fs.statSync(cfg.PemFile).isFile()) {
+        throw Error('Can\'t read certificate');
+    }
 
     // Set defaults
     cfg.MaxClients      = cfg.MaxClients || 50;

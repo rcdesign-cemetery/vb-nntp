@@ -114,9 +114,15 @@ var nntpDaemon = [];
 if (cfg.DaemonPort) {
     var server = net.createServer(conListener);
     server.maxConnections = cfg.MaxClients;
-    server.listen(cfg.DaemonPort, cfg.DaemonHost);
+    try {
+        server.listen(cfg.DaemonPort, cfg.DaemonHost);
+    } catch (e) {
+        console.log('Failed to bind port - already in use.');
+        process.exit(2);
+    }
     nntpDaemon.push(server);
 }
+
 if (cfg.DaemonSslPort) {
     var options = {
         key: fs.readFileSync(cfg.PemFile),
@@ -125,8 +131,13 @@ if (cfg.DaemonSslPort) {
 
     var ssl_server = tls.createServer(options, conListener);
     ssl_server.maxConnections = cfg.MaxClients;
-    ssl_server.listen(cfg.DaemonSslPort, cfg.DaemonHost);
-    nntpDaemon.push(ssl_server);    
+    try {
+        ssl_server.listen(cfg.DaemonSslPort, cfg.DaemonHost);
+    } catch (e) {
+        console.log('Failed to bind port - already in use.');
+        process.exit(2);
+    }
+    nntpDaemon.push(ssl_server);
 }
 
 logger.write('info', 'vb NNTP daemon started');
