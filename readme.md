@@ -5,10 +5,22 @@ NNTP daemon for vbulletin server.
 
 Directory content:
 
-    vb-nntp-core - core nntp addon for vbulletin (administration, authentication & maintenance)
-    vb-nntp_topics_plugin - map forums to nntp groups
-    daemon - nntp daemon, written on node.js
+  - vb-nntp-core - core nntp addon for vbulletin (administration, authentication & maintenance)
+  - vb-nntp_topics_plugin - map forums to nntp groups
+  - daemon - nntp daemon, written on node.js
 
+Requirements
+============
+
+Forum MUST use UTF-8 codepage.
+
+Known Issues
+============
+
+ 1. NNTP clients can't normally use non-latin symbols in login & passwords. If you have such:
+    - use email instead of login
+    - change password to one with latin chars only
+ 2. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commants, that are really used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
 
 Installation
 ============
@@ -66,14 +78,14 @@ This software is distributed under [Creative Commons BY-CC-ND][1] licence (Nonco
 Contacts
 ========
 
-Licencing & setup: [vitaly@rcdesign.ru][2]
+Licensing & setup: [vitaly@rcdesign.ru][2]
 
-additional licences:
-
+  - using on non-commercial site: Free
   - using on commercial site: 49$
-  - copyright removal in your site: 99$
-  - both licences + setup help: 299$
+  - copyright removal at your site and messages: 99$
+  - commercial + (c) removal + setup help: 299$
 
+If you make commits - ask fo free licences.
 
   [1]: http://creativecommons.org/licenses/by-nc-nd/3.0/
   [2]: vitaly@rcdesign.ru
