@@ -61,12 +61,12 @@ RUN
 Licence
 =======
 
-This software is distributed under Creative Commons BY-CC-ND licence (Noncommercial, No Deriative Works). If you wish to use it on commercial site, or remove copyright messages - you have to buy additional licence from author.
+This software is distributed under [Creative Commons BY-CC-ND][1] licence (Noncommercial, No Deriative Works). If you wish to use it on commercial site, or remove copyright messages - you have to buy additional licence from author.
 
 Contacts
 ========
 
-Licencing & setup: [vitaly@rcdesign.ru][1]
+Licencing & setup: [vitaly@rcdesign.ru][2]
 
 additional licences:
 
@@ -74,4 +74,6 @@ additional licences:
   - copyright removal in your site: 99$
   - both licences + setup help: 299$
 
-  [1]: vitaly@rcdesign.ru
+
+  [1]: http://creativecommons.org/licenses/by-nc-nd/3.0/
+  [2]: vitaly@rcdesign.ru
