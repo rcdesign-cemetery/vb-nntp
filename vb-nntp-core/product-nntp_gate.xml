@@ -313,34 +313,30 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
-			<phrase name="setting_nntp_demo_delay_desc" date="1259057057" username="Dimit" version="1.5"><![CDATA[For how many hours delay messages in demo mode]]></phrase>
-			<phrase name="setting_nntp_demo_delay_title" date="1259057057" username="Dimit" version="1.5"><![CDATA[Messages delay in demo mode]]></phrase>
-			<phrase name="setting_nntp_demo_groups_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_demo_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in demo mode]]></phrase>
-			<phrase name="setting_nntp_demo_text_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_demo_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Text of demo mode message]]></phrase>
-			<phrase name="setting_nntp_from_address_desc" date="1249563421" username="Dimit" version="1.3" />
-			<phrase name="setting_nntp_from_address_title" date="1249563421" username="Dimit" version="1.3"><![CDATA[From email address]]></phrase>
-			<phrase name="setting_nntp_groups_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in full mode]]></phrase>
-			<phrase name="setting_nntp_max_messages_in_group_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_max_messages_in_group_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum messages number in group]]></phrase>
-			<phrase name="setting_nntp_message_id_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_message_id_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message ID suffix after '@']]></phrase>
-			<phrase name="setting_nntp_message_in_list_timeout_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_message_in_list_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum days number to store a message in list]]></phrase>
-			<phrase name="setting_nntp_stats_show_last_days_desc" date="1249563005" username="Dimit" version="1.3" />
-			<phrase name="setting_nntp_stats_show_last_days_title" date="1249563005" username="Dimit" version="1.3"><![CDATA[Show statistics for last N days]]></phrase>
+			<phrase name="setting_nntp_demo_delay_desc" date="1294187146" username="Vitaly" version="1.8"><![CDATA[All messages for last XX hours will be hidded in demo mode.]]></phrase>
+			<phrase name="setting_nntp_demo_delay_title" date="1294187146" username="Vitaly" version="1.8"><![CDATA[Messages delay in demo mode]]></phrase>
+			<phrase name="setting_nntp_demo_groups_desc" date="1294187104" username="Vitaly" version="1.8"><![CDATA[This groups will have 'demo' NNTP access. They will not see messages for last XX hours.]]></phrase>
+			<phrase name="setting_nntp_demo_groups_title" date="1294187104" username="Vitaly" version="1.8"><![CDATA[Groups in demo mode]]></phrase>
+			<phrase name="setting_nntp_demo_text_desc" date="1294187025" username="Vitaly" version="1.8"><![CDATA[This text will be added for messages in 'demo' mode]]></phrase>
+			<phrase name="setting_nntp_demo_text_title" date="1294187025" username="Vitaly" version="1.8"><![CDATA[Text of demo mode message]]></phrase>
+			<phrase name="setting_nntp_from_address_desc" date="1294186856" username="Vitaly" version="1.8"><![CDATA[Used to generate message headers. Not used in this gate, but required by standard. All messages will be 'sent' from this address. Write your "no reply" email address.]]></phrase>
+			<phrase name="setting_nntp_from_address_title" date="1294186856" username="Vitaly" version="1.8"><![CDATA['From' email address]]></phrase>
+			<phrase name="setting_nntp_groups_desc" date="1294186946" username="Vitaly" version="1.8"><![CDATA[This groups will have 'full' access to NNTP, without delay.]]></phrase>
+			<phrase name="setting_nntp_groups_title" date="1294186946" username="Vitaly" version="1.8"><![CDATA[Groups in full mode]]></phrase>
+			<phrase name="setting_nntp_max_messages_in_group_desc" date="1294186484" username="Vitaly" version="1.8"><![CDATA[If message count in group exceeds limit, older mesages will be removed. Used to keep index smart and fast. Don't set too high.]]></phrase>
+			<phrase name="setting_nntp_max_messages_in_group_title" date="1294186484" username="Vitaly" version="1.8"><![CDATA[Maximum messages count in each group]]></phrase>
+			<phrase name="setting_nntp_message_id_desc" date="1294186590" username="Vitaly" version="1.8"><![CDATA[Used to generate message headers. Only latin chars and dots can be used. No needs to change.]]></phrase>
+			<phrase name="setting_nntp_message_id_title" date="1294186590" username="Vitaly" version="1.8"><![CDATA[Message ID suffix after '@']]></phrase>
+			<phrase name="setting_nntp_message_in_list_timeout_desc" date="1294186304" username="Vitaly" version="1.8"><![CDATA[After XX days messages will be removed from index. Big number can slow down your server. Usually 30 days is enougth.]]></phrase>
+			<phrase name="setting_nntp_message_in_list_timeout_title" date="1294186304" username="Vitaly" version="1.8"><![CDATA[Messages expire days]]></phrase>
+			<phrase name="setting_nntp_stats_show_last_days_desc" date="1294186664" username="Vitaly" version="1.8"><![CDATA[Cut off time for usage statistics. Don't set too big. Usually 30 days is enougth.]]></phrase>
+			<phrase name="setting_nntp_stats_show_last_days_title" date="1294186664" username="Vitaly" version="1.8"><![CDATA[Show statistics for last XX days]]></phrase>
 			<phrase name="settinggroup_nntp_server" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server Settings]]></phrase>
 		</phrasetype>
 	</phrases>
 	<options>
 		<settinggroup name="nntp_server" displayorder="65535">
 			<setting varname="nntp_adv_text" displayorder="70">
-				<datatype>free</datatype>
-				<optioncode>textarea</optioncode>
-			</setting>
-			<setting varname="nntp_demo_text" displayorder="80">
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
 			</setting>
@@ -355,6 +351,10 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<setting varname="nntp_demo_delay" displayorder="100">
 				<datatype>number</datatype>
 				<defaultvalue>6</defaultvalue>
+			</setting>
+			<setting varname="nntp_demo_text" displayorder="120">
+				<datatype>free</datatype>
+				<optioncode>textarea</optioncode>
 			</setting>
 			<setting varname="nntp_message_in_list_timeout" displayorder="150">
 				<datatype>number</datatype>
