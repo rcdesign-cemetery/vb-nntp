@@ -23,87 +23,71 @@ if (!is_object($vbulletin->db))
 
 $db =& $vbulletin->db;
 
-$dayslimit  = $vbulletin->options['nntp_message_in_list_timeout'];
-$maxrowsnum = $vbulletin->options['nntp_max_messages_in_group'] - 1;
+$min_date  = TIMENOW - (int)$vbulletin->options['nntp_message_in_list_timeout']*24*60*60;
+$limit = (int)$vbulletin->options['nntp_max_messages_in_group'];
 
 
 /*
  *  Delete excess records (depends on group id)
- *  При удаление необходимо учитывать, что должно остоваться хотя бы одна запись
- *  на группу.
  */
 
 $groups = $db->query_read("
   SELECT
-    G.id,
-    ( SELECT
-        MAX( `messageid` )
-      FROM
-        `" . TABLE_PREFIX . "nntp_index` AS I
-      WHERE
-        I.`groupid` = G.`id`
-    ) AS 'maxmessageid'
+    G.id
   FROM
     `" . TABLE_PREFIX . "nntp_groups` AS G
 ");
 
+// Note: after cleaning, each group must have at least one record
 while( $group = $db->fetch_array( $groups ) )
 {
-  // check messages count limit in group
-  $countlimit = $db->query_first( "
-    SELECT
-      `messageid`
-    FROM
-      `" . TABLE_PREFIX . "nntp_index`
-    WHERE
-      `groupid` = " . $group['id'] . "
-    ORDER BY
-      `messageid` DESC
-    LIMIT
-      " . intval( $maxrowsnum ) . ", 1
-  ");
+  $group_id = (int)$group['id'];
 
-  $countlimit = $minmessageid = intval( $countlimit['messageid'] );
+  // Select min message id to clear below
+  // Note: that message range calculated with ORDER and LIMIT
+  $sql = "SELECT
+            IFNULL( MIN(`messageid`), 0) as min_id
+          FROM
+            `" . TABLE_PREFIX . "nntp_index`
+          WHERE
+            `groupid`    = " . $group_id  . " AND
+            `deleted` = 'no' AND 
+            `datetime`  > FROM_UNIXTIME(" . $min_date . ")
+          ORDER by
+            `messageid` DESC
+          LIMIT
+          " . ($limit);
+  $messages_stat = $db->query_first($sql); 
 
-  // check date limit in group
-  $datelimit = $db->query_first( "
-    SELECT
-      `messageid`
-    FROM
-      `" . TABLE_PREFIX . "nntp_index`
-    WHERE
-          `groupid`    = " . $group['id']  . "
-      AND `messageid` >= " . $minmessageid . "
-      AND `datetime`  <  DATE_SUB( NOW(), INTERVAL " . intval( $dayslimit ) . " DAY )
-  ");
+  $min_id = (int)$messages_stat['min_id'];
 
-  $datelimit = intval( $datelimit['messageid'] );
-
-  // get maximum limit
-  $minmessageid = $datelimit > $countlimit
-    ? $datelimit
-    : $countlimit;
-
-  // check this limit less than maximum message id in group
-  $minmessageid = $minmessageid < $group['maxmessageid']
-    ? $minmessageid
-    : $group['maxmessageid'];
-
-  $db->query_write("
-    DELETE FROM
-      `" . TABLE_PREFIX . "nntp_index`
-    WHERE
-          `groupid`   = " . intval($group['id'] ) . "
-      AND `messageid` < " . intval($minmessageid) . "
-  ");
+  if ($min_id  > 0)
+  {
+    $sql = "DELETE FROM
+              `" . TABLE_PREFIX . "nntp_index`
+            WHERE
+              `groupid`   = " . $group_id . " AND 
+              `messageid` < " . $min_id;
+    $db->query_write($sql);
+  }
 }
-
 $db->free_result($groups);
+
+
+/**
+ * Clean stat
+ */
+$stats_days = (int)$vbulletin->options['nntp_stats_show_last_days'];
+$sql = "DELETE FROM
+          `" . TABLE_PREFIX . "nntp_stats`
+        WHERE
+        `date` < FROM_UNIXTIME(" . (TIMENOW - $stats_days*24*60*60) . ")";
+$db->query_write($sql);
 
 
 /*
  *  Clean messages cache
- *  Про записи помеченные как удаленные, не забыли(результат оптимизации)
+ *  We not forgot about records marked as "deleted"(this is part of optimization)
  */
 
 $db->query_write("
