@@ -4,9 +4,8 @@
 
 var crypto = require('crypto');
 var http = require('http');
+
 var config = require('./config.js');
-
-
 var cache = require('./cache.js'); 
 var db = require('./db.js'); 
 
@@ -16,20 +15,29 @@ var TablePrefix = '';
     HTTP Request groups (call backend via HTTP request)
 */
 var kickBackend = function(callback) {
-
-// !!! TODO Fix TCP timeouts. How ???
-
     var cfg = config.vars;
     
     var http_client = http.createClient(cfg.authPort, cfg.authHost);
+    
+    // handle connection problems
+    http_client.on('error', function(err) {
+        callback(Error('Backend connection problem'));
+    });
+    
     var request = http_client.request('GET', '/nntpauth.php',
                                         { 'host': cfg.authHost }
     );
 
+    // handle backend reply
     request.on('response', function (response) {
         response.setEncoding('utf8');
         response.on('data', function (chunk) {
-            callback(null, chunk);
+            console.log(chunk);
+            if (chunk == 'Ok') {
+                callback(null);
+            } else {
+                callback(Error('Bad response from backend'));
+            }
         });
     });
 
@@ -383,8 +391,12 @@ exports.checkAuth = function(session, callback) {
                 return;
             }
             
-            kickBackend(function(err, status) {
-// ?? TODO Add check if forum is offline & user have permission to access
+            kickBackend(function(err) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
+
                 loadUser(session, function(err) {
                     if (err) {
                         cache.blacklistAdd(session);

@@ -82,6 +82,7 @@ var conListener = function (stream) {
     Global events
 */
 process.on('uncaughtException', function(err) {
+    logger.write('error', '!! Unhandled exception !!');
     logger.write('error', err);
 });
 

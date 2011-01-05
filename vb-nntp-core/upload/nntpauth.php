@@ -15,7 +15,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 // Define constants for proper initialisation
 define('SKIP_SESSIONCREATE', 1);
 define('NOCOOKIES', 1);
-define('THIS_SCRIPT', 'nntp_auth');
+define('THIS_SCRIPT', 'nntpauth');
 //define('CSRF_PROTECTION', true)
 
 // Define phrase groups, needed for templates
@@ -47,7 +47,7 @@ while ($row = $vbulletin->db->fetch_array($users))
 
     // If auth ok, build permissions, else - delete record
     
-    // !!! We always work with pair (user,passowd). Without it session
+    // We always work with pair (user,passowd). Without it session
     // will be kicked by parallel brute force login attempts. 
     if ($userid)
     {

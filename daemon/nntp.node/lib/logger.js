@@ -55,7 +55,6 @@ exports.close = function() {
         try {
             fs.closeSync(log_handle);
         } catch (e) {
-            // ToDo save to system log
         }
     }
     return;
@@ -158,7 +157,6 @@ exports.write = function(log_type, msg, session) {
     try {
         fs.writeSync(log_handle, timestamp() + ' ' + message + '\n', null, 'utf8');
     } catch (e) {
-        // ToDo save to system log
     }
 
     return;
