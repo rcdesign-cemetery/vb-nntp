@@ -131,12 +131,14 @@ $db->show_errors();]]></uninstallcode>
     </body>
 </html>]]></template>
 		<template name="nntp_demo_text" templatetype="template" date="1249904316" username="varnak" version=""><![CDATA[<div class="demo">{vb:raw nntp_demo_text}</div>]]></template>
-		<template name="nntp_message_css" templatetype="template" date="1281015204" username="varnak" version="1.8"><![CDATA[<style type="text/css">
+		<template name="nntp_message_css" templatetype="template" date="1294253658" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
 <!--
 body {
 background: #FFFFFF;
 color: #000000;
-font: 13px Tahoma,Calibri,Verdana,Geneva,sans-serif; margin: 5px 10px 10px 10px; padding: 0px;
+font: 14px Verdana,sans-serif;
+line-height: 1.5em;
+margin: 5px 10px 10px 10px; padding: 0px;
 }
 
 fieldset, img { border:0 none; }
@@ -145,6 +147,11 @@ img.inlineimg { position:relative; top:2px; }
 a:link { color: #22229C; }
 a:visited { color: #22229C; }
 a:hover, a:active { color: #FF4400; }
+
+#menu a { font-size:13px; margin-left: 0.9em; color: #808080; }
+#menu { margin-bottom: 0.5em; }
+
+img { max-width:500px; }
 
 .bbcode_container { display:block; margin:5px 20px 20px; }
 
@@ -158,15 +165,10 @@ position:relative;
 top:0;
 }
 
-div.quote_container { padding:5px 10px; }
+div.quote_container { padding:5px 10px; font-size: 13px; }
 
 .bbcode_postedby { font-size:12px; font-style: normal; }
-.bbcode_postedby img {
-position:relative;
-top:1px;
-}
-
-div.message { padding:8px 0; }
+.bbcode_postedby img { position:relative; top:1px; }
 
 pre.bbcode_code, div.bbcode_code {
 background: #F6F6F6;
@@ -195,22 +197,17 @@ padding:5px 10px;
 .demo, .demo a { font-size: 11px; color: #808080; padding-top: 10px;}
 -->
 </style>]]></template>
-		<template name="nntp_message_menu" templatetype="template" date="1249572077" username="Dimit" version=""><![CDATA[&nbsp;
-<a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">{vb:rawphrase original_post}</a>
-&nbsp;&nbsp;
+		<template name="nntp_message_menu" templatetype="template" date="1294250465" username="Vitaly" version="1.8"><![CDATA[<div id='menu'><a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">{vb:rawphrase original_post}</a>
 <a href="/newreply.php?do=newreply&noquote=1&p=<% POST ID %>">{vb:rawphrase submit_reply}</a>
-&nbsp;&nbsp;
-<a href="/newreply.php?do=newreply&p=<% POST ID %>">{vb:rawphrase quote}</a>
-&nbsp;]]></template>
-		<template name="nntp_message_template" templatetype="template" date="1249904316" username="Dimit" version=""><![CDATA[<html><head>
+<a href="/newreply.php?do=newreply&p=<% POST ID %>">{vb:rawphrase quote}</a></div>]]></template>
+		<template name="nntp_message_template" templatetype="template" date="1294251954" username="Vitaly" version="1.8"><![CDATA[<html><head>
 <% CSS %>
 <base href="{vb:raw vboptions.bburl}">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
-<div><% USER MENU %></div>
-<br />
-<div><% MESSAGE BODY %></div>
+<% USER MENU %>
+<% MESSAGE BODY %>
 </body>
 </html>]]></template>
 		<template name="nntp_navbar_link" templatetype="template" date="1280915025" username="varnak" version="1.8"><![CDATA[<li><a href="nntp_gate.php?{vb:raw session.sessionurl_q}">{vb:rawphrase nntp_gate_menu_title}</a></li>]]></template>
