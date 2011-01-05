@@ -4,7 +4,6 @@
 
 var fs = require('fs');
 
-var sprintf = require('./sprintf.js').init;
 var config = require('./config.js');
 
 var default_types = ['info', 'error'];
@@ -19,6 +18,24 @@ var enabled_types = {
 
 var log_handle;
 var log_file_name = '';
+
+
+function pad(n) {
+    return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+                'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+    var d = new Date();
+    var time = [pad(d.getHours()),
+                pad(d.getMinutes()),
+                pad(d.getSeconds())].join(':');
+    return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
 
 /*
  * Open log file
@@ -63,8 +80,11 @@ exports.reopen = function() {
 exports.init = function() {
     // set enabled events
     var types;
-    if (typeof(config.vars.LogLevel) !== 'undefined') {
-        types = config.get_list(config.vars.LogLevel);
+
+    var cfg = config.vars;
+
+    if (typeof(cfg.LogLevel) !== 'undefined') {
+        types = config.get_list(cfg.LogLevel);
     } else {
         types = default_types;
     }
@@ -83,9 +103,9 @@ exports.init = function() {
     }
 
     // Log file
-    if (typeof(config.vars.LogFile) !== 'undefined') {
-        if (0 !== config.vars.LogFile.length ) {
-            log_file_name = config.vars.LogFile.toString();
+    if (typeof(cfg.LogFile) !== 'undefined') {
+        if (0 !== cfg.LogFile.length ) {
+            log_file_name = cfg.LogFile.toString();
             open();
         }
     }
@@ -117,13 +137,7 @@ exports.write = function(log_type, msg, session) {
         return;
     }
 
-    var now = new Date();
-
-    var message = sprintf('%02d.%02d.%d %s ',
-        now.getDate(),
-        now.getMonth()+1,
-        now.getFullYear(),
-        now.toLocaleTimeString());
+    var message = '';
 
     // Check if log type reply and we have string or array of strings
     if (('reply' === log_type) &&  Array.isArray(msg)) {
@@ -142,7 +156,7 @@ exports.write = function(log_type, msg, session) {
     }
 
     try {
-        fs.writeSync(log_handle, message + '\n', null, 'utf8');
+        fs.writeSync(log_handle, timestamp() + ' ' + message + '\n', null, 'utf8');
     } catch (e) {
         // ToDo save to system log
     }

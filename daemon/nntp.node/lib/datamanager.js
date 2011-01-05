@@ -4,7 +4,7 @@
 
 var crypto = require('crypto');
 var http = require('http');
-var cfg = require('./config.js').vars;
+var config = require('./config.js');
 
 
 var cache = require('./cache.js'); 
@@ -19,6 +19,8 @@ var kickBackend = function(callback) {
 
 // !!! TODO Fix TCP timeouts. How ???
 
+    var cfg = config.vars;
+    
     var http_client = http.createClient(cfg.authPort, cfg.authHost);
     var request = http_client.request('GET', '/nntpauth.php',
                                         { 'host': cfg.authHost }
@@ -82,7 +84,7 @@ var getGroupsStat = function(session, ids, callback) {
     }
 
     if (session.accesstype == 'demo') {
-        var timelimit = parseInt(Date.now() / 1000, 10) - cfg.DemoDelay*60*60;
+        var timelimit = parseInt(Date.now() / 1000, 10) - config.vars.DemoDelay*60*60;
         sqlWhere =  " AND `Index`.`datetime` <= FROM_UNIXTIME(" + timelimit + ") ";
     }
     var sql =   "SELECT" +

@@ -3,16 +3,15 @@
 */
 
 var dm = require('./datamanager.js');
-var sprintf = require('./sprintf.js').init;
 var cfg = require('./config.js').vars;
 
 var nntpCode = {
     _100_help_follows       : '100 help text follows',
-    _111_date               : "111 %d%02d%02d%02d%02d%02d",
+    _111_date               : '111 ',
     _200_srv_ready_rw       : '200 server ready - posting allowed',
     _201_srv_ready_ro       : '201 server ready - no posting allowed',
     _205_goodbye            : '205 closing connection - goodbye!',
-    _211_group_selected     : '211 %d %d %d %s',
+    _211_group_selected     : '211 ',
     _215_info_follows       : '215 information follows',
     _220_article_follows    : '220 ',
     _221_head_follows       : '221 ',
@@ -186,11 +185,20 @@ var cmdQuit = function(cmd, session, callback) {
         111 yyyymmddhhmmss
 */
 var cmdDate = function(cmd, session, callback) {
+    function pad(n) {
+        return n < 10 ? '0' + n.toString(10) : n.toString(10);
+    }
+    
     var now = new Date();    
 
-    callback(null, sprintf(nntpCode._111_date,
-        now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDay(),
-        now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds())); 
+    callback(null, nntpCode._111_date +
+        now.getUTCFullYear() +
+        pad(now.getUTCMonth()+1) +
+        pad(now.getUTCDay()) +
+        pad(now.getUTCHours()) +
+        pad(now.getUTCMinutes()) +
+        pad(now.getUTCSeconds())
+    ); 
 };
 
 /* ------------------------------------------------------------------
@@ -401,12 +409,12 @@ var cmdGroup = function(cmd, session, callback) {
 
         if (session.groups[cmd.params]) {
             session.currentgroup = cmd.params;
-            callback(null, sprintf(nntpCode._211_group_selected,
-                        session.groups[cmd.params].count,
-                        session.groups[cmd.params].first,
-                        session.groups[cmd.params].last,
+            callback(null, nntpCode._211_group_selected +
+                        session.groups[cmd.params].count + ' ' +
+                        session.groups[cmd.params].first + ' ' +
+                        session.groups[cmd.params].last + ' ' +
                         session.currentgroup
-            ));
+            );
         }
         else {
             callback(null, nntpCode._411_newsgroup_notfound);
