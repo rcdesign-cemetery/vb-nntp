@@ -313,16 +313,12 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
-			<phrase name="setting_nntp_debug_users_desc" date="1259148645" username="Dimit" version="1.5"><![CDATA[Users IDs separated with comma]]></phrase>
-			<phrase name="setting_nntp_debug_users_title" date="1259148645" username="Dimit" version="1.5"><![CDATA[Turn on debug log level for this users]]></phrase>
 			<phrase name="setting_nntp_demo_delay_desc" date="1259057057" username="Dimit" version="1.5"><![CDATA[For how many hours delay messages in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_delay_title" date="1259057057" username="Dimit" version="1.5"><![CDATA[Messages delay in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_groups_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_demo_groups_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Groups in demo mode]]></phrase>
 			<phrase name="setting_nntp_demo_text_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_demo_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Text of demo mode message]]></phrase>
-			<phrase name="setting_nntp_forum_charset_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_forum_charset_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Forum's charset]]></phrase>
 			<phrase name="setting_nntp_from_address_desc" date="1249563421" username="Dimit" version="1.3" />
 			<phrase name="setting_nntp_from_address_title" date="1249563421" username="Dimit" version="1.3"><![CDATA[From email address]]></phrase>
 			<phrase name="setting_nntp_groups_desc" date="1229020203" username="Wildev" version="1.0" />
@@ -333,12 +329,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<phrase name="setting_nntp_message_id_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Message ID suffix after '@']]></phrase>
 			<phrase name="setting_nntp_message_in_list_timeout_desc" date="1229020203" username="Wildev" version="1.0" />
 			<phrase name="setting_nntp_message_in_list_timeout_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Maximum days number to store a message in list]]></phrase>
-			<phrase name="setting_nntp_port_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[Port to listen on for incoming connections.]]></phrase>
-			<phrase name="setting_nntp_port_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server's Port]]></phrase>
-			<phrase name="setting_nntp_server_addr_desc" date="1229020203" username="Wildev" version="1.0" />
-			<phrase name="setting_nntp_server_addr_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP server domain/ip]]></phrase>
-			<phrase name="setting_nntp_stats_rows_per_page_desc" date="1249562915" username="Dimit" version="1.3" />
-			<phrase name="setting_nntp_stats_rows_per_page_title" date="1249562915" username="Dimit" version="1.3"><![CDATA[Rows per page in statistics]]></phrase>
 			<phrase name="setting_nntp_stats_show_last_days_desc" date="1249563005" username="Dimit" version="1.3" />
 			<phrase name="setting_nntp_stats_show_last_days_title" date="1249563005" username="Dimit" version="1.3"><![CDATA[Show statistics for last N days]]></phrase>
 			<phrase name="settinggroup_nntp_server" date="1229020203" username="Wildev" version="1.0"><![CDATA[NNTP Server Settings]]></phrase>
@@ -346,14 +336,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 	</phrases>
 	<options>
 		<settinggroup name="nntp_server" displayorder="65535">
-			<setting varname="nntp_port" displayorder="20">
-				<datatype>number</datatype>
-				<defaultvalue>119</defaultvalue>
-			</setting>
-			<setting varname="nntp_server_addr" displayorder="30">
-				<datatype>free</datatype>
-				<defaultvalue>0.0.0.0</defaultvalue>
-			</setting>
 			<setting varname="nntp_adv_text" displayorder="70">
 				<datatype>free</datatype>
 				<optioncode>textarea</optioncode>
@@ -382,10 +364,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 				<datatype>number</datatype>
 				<defaultvalue>1000</defaultvalue>
 			</setting>
-			<setting varname="nntp_stats_rows_per_page" displayorder="170">
-				<datatype>number</datatype>
-				<defaultvalue>30</defaultvalue>
-			</setting>
 			<setting varname="nntp_message_id" displayorder="200">
 				<datatype>free</datatype>
 				<defaultvalue>rcd.nntpgate</defaultvalue>
@@ -394,14 +372,7 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 				<datatype>number</datatype>
 				<defaultvalue>30</defaultvalue>
 			</setting>
-			<setting varname="nntp_forum_charset" displayorder="220">
-				<datatype>free</datatype>
-				<defaultvalue>UTF-8</defaultvalue>
-			</setting>
 			<setting varname="nntp_from_address" displayorder="230">
-				<datatype>free</datatype>
-			</setting>
-			<setting varname="nntp_debug_users" displayorder="240">
 				<datatype>free</datatype>
 			</setting>
 		</settinggroup>
