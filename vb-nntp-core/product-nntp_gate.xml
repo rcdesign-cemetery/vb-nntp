@@ -78,11 +78,9 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `usergroupslist` varchar(100) NOT NULL,
   `userid` int(10) unsigned NOT NULL,
-  `access_granted` enum('yes','no') NOT NULL default 'no' COMMENT 'Have user any access to nntp-gate?',
-  `sessionkey` int(10) unsigned NOT NULL,
-  PRIMARY KEY  (`username`,`authhash`),
-  UNIQUE KEY `sessionkey` (`sessionkey`),
-  KEY `usergroupslist` (`usergroupslist`)
+  `access_granted` enum('yes','no') NOT NULL default 'no',
+  PRIMARY KEY (`username`,`authhash`),
+  KEY `access_granted` (`access_granted`) USING BTREE
 ) ENGINE=MEMORY DEFAULT CHARSET=utf8");
 
 
