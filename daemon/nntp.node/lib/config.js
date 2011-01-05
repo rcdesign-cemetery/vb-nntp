@@ -73,8 +73,7 @@ var mergeVbulletinSettings = function(cfg) {
             nntp_message_id : 'GateId',
             nntp_from_address : 'FromAddress',
             bburl : 'ForumUrl',
-            bbactive : 'Active',
-            nntp_debug_users : 'DebugUsers'
+            bbactive : 'Active'
     };
     
     var settings_str = '';

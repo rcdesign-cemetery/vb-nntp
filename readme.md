@@ -36,7 +36,7 @@ Download and install node.js
     wget http://nodejs.org/dist/node-v0.3.3.tar.gz
     gunzip node-v0.3.3.tar.gz
     tar -xf node-v0.3.3.tar
-    cd node-v0.3.3.tar
+    cd node-v0.3.3
     ./configure
     make
     make install
