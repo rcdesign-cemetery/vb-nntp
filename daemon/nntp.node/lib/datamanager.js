@@ -32,7 +32,6 @@ var kickBackend = function(callback) {
     request.on('response', function (response) {
         response.setEncoding('utf8');
         response.on('data', function (chunk) {
-            console.log(chunk);
             if (chunk == 'Ok') {
                 callback(null);
             } else {

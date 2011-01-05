@@ -19,6 +19,7 @@ DaemonPort=119
 ; 15 seconds by default. Don't set too large, or uncrease MaxClients too.
 ;InactiveTimeout=15
 
+
 [log]
 
 ; Log file. Comment to disable
@@ -29,7 +30,7 @@ LogFile=/var/log/vbnntp.log
 ; cmd - incoming commands
 ; reply - server reply, only first string (to keep log compact)
 ; mutistring - all server reply, even if multiple strings
-; info - start / stop / restart
+; info - start / stop / restart, etc
 ; error - fatal errors
 ;
 ; Set all for for debug, info & errors for production
@@ -37,9 +38,6 @@ LogFile=/var/log/vbnntp.log
 ;LogLevel = cmd, reply, multistring, info, error
 LogLevel = info, error
 
-; For debug (not implemented yet)
-;LogUserIPs = 127.0.0.1
-;LogUserIDs = 1, 2, 333
 
 [db]
 
