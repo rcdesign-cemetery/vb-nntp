@@ -6,11 +6,11 @@
 	<version>1.8</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate></apm_releasedate>
-	<apm_author></apm_author>
-	<apm_relatedurl></apm_relatedurl>
-	<apm_extrainfo></apm_extrainfo>
-	<apm_extraedit></apm_extraedit>
+	<apm_releasedate>0</apm_releasedate>
+	<apm_author />
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -274,7 +274,9 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<phrase name="nntp_plugin" date="1216934725" username="Wildev" version=""><![CDATA[Plugin to use]]></phrase>
 			<phrase name="nntp_set_group" date="1217340579" username="Wildev" version=""><![CDATA[Group Settings]]></phrase>
 			<phrase name="nntp_settings" date="1216934203" username="Wildev" version=""><![CDATA[Main Settings]]></phrase>
-			<phrase name="nntp_stats_login_number" date="1218458302" username="Wildev" version=""><![CDATA[Login Number]]></phrase>
+			<phrase name="nntp_stats_head" date="1294183532" username="Vitaly" version=""><![CDATA[Statistics for last {1} days]]></phrase>
+			<phrase name="nntp_stats_last_used" date="1294183901" username="Vitaly" version=""><![CDATA[Last used]]></phrase>
+			<phrase name="nntp_stats_login_number" date="1294183743" username="Vitaly" version=""><![CDATA[Days used]]></phrase>
 		</phrasetype>
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
 			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />

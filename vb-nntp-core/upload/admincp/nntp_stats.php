@@ -57,7 +57,7 @@ $vbulletin->input->clean_array_gpc( 'r', array(
 
 if ($vbulletin->GPC['perpage'] < 1)
 {
-	$vbulletin->GPC['perpage'] = $vbulletin->options['nntp_stats_rows_per_page'];
+	$vbulletin->GPC['perpage'] = 100;
 }
 
 if ( $vbulletin->GPC['pagenumber'] < 1 )
@@ -88,7 +88,7 @@ $stats = $db->query_read("
 	  G.`opentag`                       AS 'opentag' ,
 	  G.`closetag`                      AS 'closetag',
 	  COUNT( S.`date` )                 AS 'number'  ,
-	  UNIX_TIMESTAMP( MAX( S.`date` ) ) AS 'date'
+	  UNIX_TIMESTAMP(MAX( S.`date` ))   AS 'date'
 	FROM
 	            `" . TABLE_PREFIX . "nntp_stats` AS S
 	  LEFT JOIN `" . TABLE_PREFIX . "user`           AS U USING( `userid` )
@@ -98,7 +98,7 @@ $stats = $db->query_read("
 	GROUP BY
 	  S.`userid`
 	ORDER BY
-	  S.`userid`
+	  `number`
 	LIMIT
 	  " . ( ( $vbulletin->GPC['pagenumber'] - 1 ) * $vbulletin->GPC['perpage'] ) . ", " . $vbulletin->GPC['perpage']
 );
@@ -107,13 +107,16 @@ print_form_header( $this_script, '' );
 construct_hidden_code( "pagenumber", $vbulletin->GPC['pagenumber'] );
 construct_hidden_code( "perpage", $vbulletin->GPC['perpage'] );
 
-print_table_header( $vbphrase['statistics'], 3 );
+print_table_header(
+    construct_phrase($vbphrase['nntp_stats_head'],
+            $vbulletin->options['nntp_stats_show_last_days']),
+    3 );
 
 // table header
 $header = array();
 $header[] = $vbphrase['username'];
 $header[] = $vbphrase['nntp_stats_login_number'];
-$header[] = $vbphrase['date'];
+$header[] = $vbphrase['nntp_stats_last_used'];
 
 print_cells_row( $header, true, false );
 
@@ -139,7 +142,7 @@ while ( $row = $db->fetch_array( $stats ) )
 	print_cells_row( array(
 	  $usercell,
     $row['number'],
-    vbdate( $vbulletin->options['logdateformat'], $row['date'] )
+    vbdate( $vbulletin->options['dateformat'], $row['date'] )
  	));
 }
 
