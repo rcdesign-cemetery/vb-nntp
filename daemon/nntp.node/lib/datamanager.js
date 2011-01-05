@@ -4,12 +4,13 @@
 
 var crypto = require('crypto');
 var http = require('http');
+var cfg = require('./config.js').vars;
+
 
 var cache = require('./cache.js'); 
 var db = require('./db.js'); 
 
 var TablePrefix = '';
-var cfg;
 
 /* ----------------------------------------------------------------------------
     HTTP Request groups (call backend via HTTP request)
@@ -395,7 +396,6 @@ exports.checkAuth = function(session, callback) {
     });
 };
 
-exports.init = function(config) {
-    cfg = config;
-    db.connect(cfg);
+exports.init = function() {
+    db.connect();
 };

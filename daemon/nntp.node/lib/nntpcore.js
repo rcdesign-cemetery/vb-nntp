@@ -4,6 +4,7 @@
 
 var dm = require('./datamanager.js');
 var sprintf = require('./sprintf.js').init;
+var cfg = require('./config.js').vars;
 
 var nntpCode = {
     _100_help_follows       : '100 help text follows',
@@ -33,8 +34,6 @@ var nntpCode = {
     _502_cmd_unavailable    : '502 Command unavailable',
     _503_program_fault      : '503 program fault - command not performed'
 };
-
-var config = {};
 
 /*
  * Make report - exception with session details
@@ -78,7 +77,7 @@ var unescapeHTML = function(str) {
         ref_id - int
 */
 var msgReferers = function(refererId) {
-    return refererId + '.ref@' + config.GateId;
+    return refererId + '.ref@' + cfg.GateId;
 };
 
 /* ----------------------------------------------------------------------------
@@ -89,7 +88,7 @@ var msgReferers = function(refererId) {
         msgId - int
 */
 var msgIdString = function(msgId) {
-    return msgId + '@' + config.GateId;
+    return msgId + '@' + cfg.GateId;
 };
 
 /* ----------------------------------------------------------------------------
@@ -147,7 +146,7 @@ var msgHeaders = function(article, session) {
     headers.push("Content-Type: text/html; charset=utf-8");
     headers.push("Content-Transfer-Encoding: base64");
     headers.push("Charset: utf-8");
-    headers.push("Xref: " + config.ForumUrl + " " + session.currentgroup + ":" + article.messageid);       
+    headers.push("Xref: " + cfg.ForumUrl + " " + session.currentgroup + ":" + article.messageid);       
     
     return headers;
 };
@@ -593,6 +592,6 @@ exports.executeCommand = function(command, session, callback) {
 
 /* ----------------------------------------------------------------------------
 */
-exports.init = function(cfg) {
-    dm.init(cfg);
+exports.init = function() {
+    dm.init();
 };

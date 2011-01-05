@@ -5,6 +5,10 @@ var db = require('./db.js');
 
 var cfg_path = "config.ini";
 
+/*
+ * Config variables, accessible to all modules
+ */
+exports.vars = {};
 
 /*
  * Parse INI file
@@ -138,9 +142,9 @@ exports.load = function() {
             cfg.Host + '. Check config settings.');
     }
 
-    db.connect(cfg);
-    cfg = mergeVbulletinSettings(cfg);
-
-    return cfg;        
+    // setup config vars & apply vb settings
+    this.vars = cfg;
+    db.connect();
+    this.vars = mergeVbulletinSettings(cfg);
 };
 

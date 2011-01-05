@@ -5,7 +5,7 @@
 var fs = require('fs');
 
 var sprintf = require('./sprintf.js').init;
-var cfg = require('./config.js');
+var config = require('./config.js');
 
 var default_types = ['info', 'error'];
 
@@ -60,13 +60,11 @@ exports.reopen = function() {
  *  Input
  *      config - array of settings, see Log section in config.ini.example 
  */
-exports.init = function(config) {
-    config = config || {};
-    
+exports.init = function() {
     // set enabled events
     var types;
-    if (typeof(config.LogLevel) !== 'undefined') {
-        types = cfg.get_list(config.LogLevel);
+    if (typeof(config.vars.LogLevel) !== 'undefined') {
+        types = config.get_list(config.vars.LogLevel);
     } else {
         types = default_types;
     }
@@ -85,10 +83,9 @@ exports.init = function(config) {
     }
 
     // Log file
-    if (typeof(config.LogFile) !== 'undefined') {
-
-        if (0 !== config.LogFile.length ) {
-            log_file_name = config.LogFile.toString();
+    if (typeof(config.vars.LogFile) !== 'undefined') {
+        if (0 !== config.vars.LogFile.length ) {
+            log_file_name = config.vars.LogFile.toString();
             open();
         }
     }

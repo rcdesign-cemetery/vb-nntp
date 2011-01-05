@@ -6,8 +6,6 @@ var mysql = require('mysql/mysql-libmysqlclient');
 
 var conn = mysql.createConnectionSync();
 
-var cfg;
-
 /*
  * Escape string for mysql
  */
@@ -22,21 +20,20 @@ exports.escapeStr = function(str) {
  * 
  *  store config in global var on success
  */
-exports.connect = function(config) {
-    var c = config || cfg;
-
+exports.connect = function() {
     // prior to reconnect we should close current resource
     if (!!conn && conn.connectedSync()) {
         conn.closeSync();
     }
-
-    conn.connectSync(c.Host, 
-                    c.Username, 
-                    c.Password, 
-                    c.DataSource,
-                    c.Port);
+    
+    var cfg = require('./config.js').vars;
+    
+    conn.connectSync(cfg.Host, 
+                    cfg.Username, 
+                    cfg.Password, 
+                    cfg.DataSource,
+                    cfg.Port);
     if (conn.connectedSync() && conn.pingSync()) {
-        cfg = c;
         conn.querySync("SET NAMES UTF8" );
         return true;
     }

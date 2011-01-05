@@ -10,12 +10,10 @@ var config = require('./lib/config.js');
 var nntpCore = require('./lib/nntpcore.js'); 
 var logger = require('./lib/logger.js');
 
-var cfg;
-
 var conListener = function (stream) {
 
     stream.setNoDelay();
-    stream.setTimeout(cfg.InactiveTimeout*1000);
+    stream.setTimeout(config.vars.InactiveTimeout*1000);
 
     // User info and config
     stream.session = {};
@@ -101,16 +99,18 @@ process.on('SIGHUP', function () {
  * Global init & start listening
  */
 try {
-    cfg = config.load();
+    config.load();
 } catch (e) {
     console.log(e.message);
     process.exit(1);
 }
 
-logger.init(cfg);
-nntpCore.init(cfg);
+logger.init();
+nntpCore.init();
 
 var nntpDaemon = [];
+
+var cfg = config.vars;
 
 if (cfg.DaemonPort) {
     var server = net.createServer(conListener);
