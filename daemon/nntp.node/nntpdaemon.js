@@ -4,6 +4,7 @@
 
 var net = require('net');
 var tls = require('tls');
+var fs = require('fs');
 
 var config = require('./lib/config.js'); 
 var nntpCore = require('./lib/nntpcore.js'); 
