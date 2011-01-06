@@ -26,7 +26,6 @@ $specialtemplates = array();
 // ############## REQUIRE BACK-END #######################################
 require_once('./global.php');
 require_once(DIR . '/includes/adminfunctions_template.php');
-require_once(DIR . '/includes/functions_nntp.php');
 
 // ############################# LOG ACTION ##############################
 $vbulletin->input->clean_array_gpc('r', array(
