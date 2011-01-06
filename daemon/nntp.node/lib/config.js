@@ -145,7 +145,6 @@ exports.load = function() {
 
     // setup config vars & apply vb settings
     this.vars = cfg;
-    db.connect();
     this.vars = mergeVbulletinSettings(cfg);
 };
 

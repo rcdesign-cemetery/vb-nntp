@@ -714,9 +714,3 @@ exports.executeCommand = function(command, session, callback) {
             nntpCode._500_cmd_unknow);
     }
 };
-
-/* ----------------------------------------------------------------------------
-*/
-exports.init = function() {
-    dm.init();
-};

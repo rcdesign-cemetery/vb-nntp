@@ -408,7 +408,3 @@ exports.checkAuth = function(session, callback) {
         });
     });
 };
-
-exports.init = function() {
-    db.connect();
-};

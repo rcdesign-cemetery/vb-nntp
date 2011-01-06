@@ -107,7 +107,6 @@ try {
 }
 
 logger.init();
-nntpCore.init();
 
 var nntpDaemon = [];
 

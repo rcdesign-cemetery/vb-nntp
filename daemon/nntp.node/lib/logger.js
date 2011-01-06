@@ -50,7 +50,7 @@ var open = function() {
 /*
  *  Close log file
  */
-exports.close = function() {
+var close = function() {
     if (!!log_handle) {
         try {
             fs.closeSync(log_handle);
@@ -60,11 +60,13 @@ exports.close = function() {
     return;
 };
 
+exports.close = close;
+
 /*
  *  Reopen log file (for log rotation)
  */
 exports.reopen = function() {
-    this.close();
+    close();
     open();
     return;
 };

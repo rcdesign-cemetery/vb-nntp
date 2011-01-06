@@ -4,6 +4,8 @@
 
 var mysql = require('mysql/mysql-libmysqlclient');
 
+var logger = require('./logger.js');
+
 var conn = mysql.createConnectionSync();
 
 /*
@@ -20,12 +22,12 @@ exports.escapeStr = function(str) {
  * 
  *  store config in global var on success
  */
-exports.connect = function() {
+var connect = function() {
     // prior to reconnect we should close current resource
-    if (!!conn && conn.connectedSync()) {
+    if (!!conn.connectedSync && conn.connectedSync()) {
         conn.closeSync();
     }
-    
+
     var cfg = require('./config.js').vars;
     
     conn.connectSync(cfg.Host, 
@@ -66,9 +68,8 @@ exports.test = function(config) {
  * and automatically free result.
  */
 exports.queryRead = function(sql, callback) {
-
     if (!conn.connectedSync()) {
-        if (!this.connect()) {
+        if (!connect()) {
             callback(Error('Db connection lost'));
             return;
         }
@@ -77,7 +78,8 @@ exports.queryRead = function(sql, callback) {
         if (err) {
             // check if connection failed & try to reconnect
             if (!conn.pingSync()) {
-                this.connect();
+                logger.write('error', Error('Db connection lost, reconnecting...'));
+                connect();
             }
             callback(err);
         } else {
@@ -111,7 +113,7 @@ exports.queryRead = function(sql, callback) {
  */
 exports.queryWrite = function(sql, callback) {
     if (!conn.connectedSync()) {
-        if (!this.connect()) {
+        if (!connect()) {
             callback(Error('Db connection lost'));
             return;
         }
@@ -119,7 +121,8 @@ exports.queryWrite = function(sql, callback) {
     conn.query(sql, function(err, res) {
         // check if connection failed & try to reconnect
         if (!conn.pingSync()) {
-            this.connect();
+            logger.write('error', Error('Db connection lost, reconnecting...'));
+            connect();
         }
         callback(err);
     });
@@ -131,14 +134,16 @@ exports.queryWrite = function(sql, callback) {
  */
 exports.querySync = function(sql) {
     if (!conn.connectedSync()) {
-        if (!this.connect()) {
+        if (!connect()) {
             return null;
         }
     }
+
     var result = conn.querySync(sql);
     
     if (!result && !conn.pingSync()) {
-        this.connect();
+        logger.write('error', Error('Db connection lost, reconnecting...'));
+        connect();
     }
     return result;
 };
