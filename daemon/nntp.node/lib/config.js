@@ -135,6 +135,7 @@ exports.load = function() {
     cfg.Host            = cfg.Host || 'localhost';
     cfg.Port            = cfg.Port || 3306;
     cfg.TablePrefix     = cfg.TablePrefix || '';
+    cfg.DaemonTitle     = cfg.DaemonTitle || 'vbnntp';
     
     // check db connection
     if (!db.test(cfg)) {

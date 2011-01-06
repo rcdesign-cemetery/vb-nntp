@@ -113,6 +113,8 @@ var nntpDaemon = [];
 
 var cfg = config.vars;
 
+process.title = cfg.DaemonTitle;
+
 if (cfg.DaemonPort) {
     var server = net.createServer(conListener);
     server.maxConnections = cfg.MaxClients;

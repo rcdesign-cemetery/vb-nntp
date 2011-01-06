@@ -19,6 +19,8 @@ DaemonPort=119
 ; 15 seconds by default. Don't set too large, or uncrease MaxClients too.
 ;InactiveTimeout=15
 
+; Process title for 'ps'. 'vbnntp' by default
+;DaemonTitle=vbnntp
 
 [log]
 
