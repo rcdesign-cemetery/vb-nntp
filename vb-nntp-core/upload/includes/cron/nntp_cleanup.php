@@ -31,17 +31,21 @@ $limit = (int)$vbulletin->options['nntp_max_messages_in_group'];
  *  Delete excess records (depends on group id)
  */
 
-$groups = $db->query_read("
-  SELECT
-    G.id
-  FROM
-    `" . TABLE_PREFIX . "nntp_groups` AS G
-");
+// Get all groups except empty.
+$sql = "SELECT 
+          `groupid` , MAX( `messageid` ) as max_id
+        FROM 
+          " . TABLE_PREFIX . "nntp_index
+        GROUP BY 
+            `groupid`";
+
+$groups = $db->query_read($sql);
 
 // Note: after cleaning, each group must have at least one record
 while( $group = $db->fetch_array( $groups ) )
 {
-  $group_id = (int)$group['id'];
+  $delete_below_id = 0;
+  $group_id = (int)$group['groupid'];
 
   // Select min message id to clear below
   // Note: that message range calculated with ORDER and LIMIT
@@ -59,25 +63,30 @@ while( $group = $db->fetch_array( $groups ) )
           " . ($limit);
   $messages_stat = $db->query_first($sql); 
 
-  $min_id = (int)$messages_stat['min_id'];
+  $delete_below_id = (int)$messages_stat['min_id'];
 
-  if ($min_id  > 0)
+  // if all group messages are too old (no new), delete all, except latest one
+  if (0 == $delete_below_id )
+  {
+    $delete_below_id = (int)$group['max_id'];
+  }
+  if (0 < $delete_below_id)
   {
     $sql = "DELETE FROM
               `" . TABLE_PREFIX . "nntp_index`
             WHERE
               `groupid`   = " . $group_id . " AND 
-              `messageid` < " . $min_id;
+              `messageid` < " . $delete_below_id;
     $db->query_write($sql);
   }
 }
 $db->free_result($groups);
 
-
 /**
  * Clean stat
  */
 $stats_days = (int)$vbulletin->options['nntp_stats_show_last_days'];
+
 $sql = "DELETE FROM
           `" . TABLE_PREFIX . "nntp_stats`
         WHERE
