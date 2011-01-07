@@ -622,11 +622,9 @@ var cmdXhdr = function(cmd, session, callback) {
  *      (!) we implement ONLY digital id. It can also be
  *      empty or string, according to rfc.
  */      
-var cmdArticle = function(cmd, session, callback, requestType) {
+var cmdArticle = function(cmd, session, callback) {
     var reply = [];
  
-    requestType = requestType || 'all';
-
     if (session.currentgroup === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
         return;   
@@ -654,13 +652,13 @@ var cmdArticle = function(cmd, session, callback, requestType) {
 
         var reply_code;
 
-        if (requestType == 'all') {
+        if (cmd.code == 'ARTICLE') {
             reply_code = nntpCode._220_article_follows;
         }  
-        if (requestType == 'head') {
+        if (cmd.code == 'HEAD') {
             reply_code = nntpCode._221_head_follows;
         }  
-        if (requestType == 'body') {
+        if (cmd.code == 'BODY') {
             reply_code = nntpCode._222_body_follows;
         }
                 
@@ -668,13 +666,13 @@ var cmdArticle = function(cmd, session, callback, requestType) {
             msgIdString(article.postid) + '>');
 
         // Add headers
-        if (requestType == 'all' || requestType == 'head') {
+        if (cmd.code == 'ARTICLE' || cmd.code == 'HEAD') {
             reply = reply.concat(msgHeaders(article, session));
         }
 
         // Add message body
-        if (requestType == 'all' || requestType == 'body') {
-            if(requestType == 'all') {
+        if (cmd.code == 'ARTICLE' || cmd.code == 'BODY') {
+            if(cmd.code == 'ARTICLE') {
                 reply.push('');     // empty string between headers & body
             }
             reply = reply.concat(msgBody(article, session));
@@ -682,22 +680,6 @@ var cmdArticle = function(cmd, session, callback, requestType) {
         reply.push('.');  
         callback(null, reply);
     });
-};
-
-/* ------------------------------------------------------------------
-    HEAD
-        Call cmdArticle
-*/          
-var cmdHead = function(cmd, session, callback) {   
-    cmdArticle(cmd.params, session, callback, 'head');
-};
-
-/* ------------------------------------------------------------------
-    BODY
-        Call cmdArticle
-*/          
-var cmdBody = function(cmd, session, callback) {
-    cmdArticle(cmd.params, session, callback, 'body');
 };
 
 /**
@@ -719,8 +701,8 @@ exports.executeCommand = function(command, session, callback) {
         XOVER : cmdXover,
         XHDR  : cmdXhdr,
         ARTICLE : cmdArticle,
-        HEAD : cmdHead,
-        BODY : cmdBody    
+        HEAD : cmdArticle,
+        BODY : cmdArticle    
     };
 
     var cmd = {};
