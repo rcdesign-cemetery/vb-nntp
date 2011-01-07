@@ -38,7 +38,7 @@ var nntpCode = {
     _480_auth_required      : '480 Authentication required',
     _481_auth_rejected      : '481 Authentication rejected',
     _482_auth_out_of_sequence   : '482 Authentication commands issued out of sequence',
-    _500_cmd_unknow         : '500 command not recognized',
+    _500_cmd_unknown        : '500 command not recognized',
     _501_syntax_error       : '501 command syntax error',
     _502_cmd_unavailable    : '502 Command unavailable',
     _503_program_fault      : '503 program fault - command not performed'
@@ -722,6 +722,6 @@ exports.executeCommand = function(command, session, callback) {
         nntpNoAuth[cmd.code](cmd, session, callback);
     } else {
         callback(makeReport('unknown command: ' + cmd.all, session),
-            nntpCode._500_cmd_unknow);
+            nntpCode._500_cmd_unknown);
     }
 };
