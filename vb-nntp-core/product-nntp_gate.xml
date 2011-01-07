@@ -22,7 +22,7 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `messageid` int(10) unsigned NOT NULL,
   `body` text NOT NULL,
   PRIMARY KEY  (`groupid`,`messageid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='NNTP messages cache'");
+) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache (
   `usergroupslist` char(100) NOT NULL,
@@ -33,14 +33,14 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `menu` varchar(2000) NOT NULL,
   `demotext` varchar(5000) NOT NULL,
   PRIMARY KEY  (`usergroupslist`)
-) ENGINE=MEMORY DEFAULT CHARSET=utf8");
+) ENGINE=MEMORY");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groups (
   `id` int(10) unsigned NOT NULL auto_increment,
   `plugin_id` char(20) NOT NULL,
   `group_name` char(50) NOT NULL,
   `is_active` enum('yes','no') NOT NULL default 'no',
-  `map_id` int(10) unsigned NOT NULL default '0' COMMENT 'Map to an existing group id',
+  `map_id` int(10) unsigned NOT NULL default '0',
   `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`),
   KEY `map_id` (`map_id`),
@@ -48,7 +48,7 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   KEY `date_create` (`date_create`),
   KEY `ActivePlugin` (`plugin_id`,`is_active`),
   KEY `Active` (`is_active`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8");
+) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_index (
   `groupid` int(10) unsigned NOT NULL,
@@ -63,14 +63,14 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   PRIMARY KEY  (`groupid`,`messageid`),
   UNIQUE KEY `GroupListHelper` (`groupid`,`deleted`,`messageid`),
   KEY `Post` (`messagetype`,`postid`,`deleted`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8");
+) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_stats (
   `userid` int(10) unsigned NOT NULL,
   `date` date NOT NULL,
   PRIMARY KEY  (`userid`,`date`),
   KEY `date` (`date`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8");
+) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_userauth_cache (
   `username` varchar(100) NOT NULL,
@@ -81,7 +81,7 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `access_granted` enum('yes','no') NOT NULL default 'no',
   PRIMARY KEY (`username`,`authhash`),
   KEY `access_granted` (`access_granted`) USING BTREE
-) ENGINE=MEMORY DEFAULT CHARSET=utf8");
+) ENGINE=MEMORY");
 
 
 $db->show_errors();]]></installcode>
