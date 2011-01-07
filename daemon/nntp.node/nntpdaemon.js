@@ -1,5 +1,14 @@
-/* ----------------------------------------------------------------------------
-    NNTP daemon main file
+/**
+ * NNTP daemon main file
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
 */
 
 var net = require('net');
@@ -78,9 +87,9 @@ var conListener = function (stream) {
     });
 };
 
-/* ----------------------------------------------------------------------------
-    Global events
-*/
+
+// Global events handlers
+
 process.on('uncaughtException', function(err) {
     logger.write('error', '!! Unhandled exception !!');
     logger.write('error', err);
@@ -96,9 +105,8 @@ process.on('SIGHUP', function () {
 });
 
 
-/*
- * Global init & start listening
- */
+// Init & start listening
+
 try {
     config.load();
 } catch (e) {
@@ -125,7 +133,8 @@ if (cfg.DaemonPort) {
     }
     nntpDaemon.push(server);
 }
-
+// this not yet work with new ssl framework
+// use stunnel4 now.
 if (cfg.DaemonSslPort) {
     var options = {
         key: fs.readFileSync(cfg.PemFile),

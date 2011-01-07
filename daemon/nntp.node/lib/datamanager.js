@@ -1,5 +1,14 @@
-/* ----------------------------------------------------------------------------
-    NNTP low level data io 
+/**
+ * NNTP low level IO
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
 */
 
 var crypto = require('crypto');
@@ -11,9 +20,11 @@ var db = require('./db.js');
 
 var TablePrefix = '';
 
-/* ----------------------------------------------------------------------------
-    HTTP Request groups (call backend via HTTP request)
-*/
+
+/**
+ * HTTP request to php backend.
+ * If all ok, auth table updated after reply
+ */
 var kickBackend = function(callback) {
     var cfg = config.vars;
     
@@ -43,8 +54,10 @@ var kickBackend = function(callback) {
     request.end();
 };
 
-// helper - load all available user groups (without counters) as hash
-// hash is used to keep groups order
+/**
+ * Internal. Load all available user groups (without counters) as hash.
+ * Hash is used to keep groups order
+ */
 var getGroups = function(session, callback) {
     // Try to load from cache first
     var groups = cache.groupsLoad(session.group_ids_str);
@@ -80,7 +93,12 @@ var getGroups = function(session, callback) {
     });
 };
 
-// helper - load groups stat from DB
+
+/**
+ * Internal. Loads groups stat from DB
+ * 
+ * @param {Array} id    Array of group ids to scan
+ */
 var getGroupsStat = function(session, ids, callback) {
     var sqlWhere = '';
 
@@ -111,7 +129,7 @@ var getGroupsStat = function(session, ids, callback) {
 };
 
 
-/*
+/**
  * Fill "groups" object in user session
  */
 exports.fillGroupsList = function(session, callback) {
@@ -187,8 +205,14 @@ exports.fillGroupsList = function(session, callback) {
 };
 
 
-/*
- * nntp XOVER
+/**
+ * Load all headers info. Used in XOVER & XHDR
+ * 
+ * @param {int} group_id    Group id to load from
+ * @param {int} rande_min   min message id
+ * @param {int} group_max   max message id
+ * 
+ * @return {Object} 
  */
 exports.getXover = function(group_id, range_min, range_max, callback) {
     var sql =   "SELECT " +
@@ -222,7 +246,7 @@ exports.getXover = function(group_id, range_min, range_max, callback) {
 };
 
 
-/*
+/**
  * Get new groups list
  */
 exports.getNewGroups = function(session, time, callback) {
@@ -252,7 +276,7 @@ exports.getNewGroups = function(session, time, callback) {
 };
 
 
-/*
+/**
  * Load ARTICLE / HEAD / BODY data
  */
 exports.getArticle = function(group_id, article_id, callback) {
@@ -295,7 +319,7 @@ exports.getArticle = function(group_id, article_id, callback) {
 };
 
 
-/*
+/**
  * AUTH Check
  * 
  * Check user login (nick|email) & password from session

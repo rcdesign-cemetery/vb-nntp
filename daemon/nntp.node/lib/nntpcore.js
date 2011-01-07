@@ -1,5 +1,14 @@
-/* ----------------------------------------------------------------------------
-     NNTP command preprocessor
+/**
+ * NNTP commands parcer
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
 */
 
 var dm = require('./datamanager.js');
@@ -35,11 +44,14 @@ var nntpCode = {
     _503_program_fault      : '503 program fault - command not performed'
 };
 
-/*
+
+/**
  * Make report - exception with session details
  * 
- * err - text string or Exception
- * session - user session
+ * @param {String|Error} err    Text string or Exception
+ * @param {Object} session      User session
+ * 
+ * @return {Object} Error with session details
  */
 var makeReport = function(err, session) {
     if (!err) {
@@ -57,7 +69,8 @@ var makeReport = function(err, session) {
     return result;
 };
 
-/*
+
+/**
  * Replace HTML special char
  */
 var unescapeHTML = function(str) {
@@ -69,46 +82,44 @@ var unescapeHTML = function(str) {
             .replace(/&lt;/g,'<').replace(/&quot;/g,'"');
 };
 
-/* ----------------------------------------------------------------------------
-   Build reference id string as "<referenceid>.ref@<gateid>"
-   Example: "120.ref@example.com"
-
-   Input parameters:
-        ref_id - int
-*/
+/**
+ * Build reference id string as "<referenceid>.ref@<gateid>"
+ * Example: "120.ref@example.com"
+ */
 var msgReferers = function(refererId) {
     return refererId + '.ref@' + config.vars.GateId;
 };
 
-/* ----------------------------------------------------------------------------
-    Build message id string as "<messageid>@<gateid>"
-    Example: "5902@example.com"
 
-    Input
-        msgId - int
-*/
+/**
+ * Build message id string as "<messageid>@<gateid>"
+ * Example: "5902@example.com"
+ */
 var msgIdString = function(msgId) {
     return msgId + '@' + config.vars.GateId;
 };
 
-/* ----------------------------------------------------------------------------
-    Build message field "From" (UTF-8, Base64 encoding)
-*/          
+
+/**
+ * Build message field "From" (UTF-8, Base64 encoding)
+ */          
 var msgFrom = function(username) {
     return '=?UTF-8?B?' + (new Buffer(unescapeHTML(username), 'utf8')).toString('base64') + '?=' +
             ' <no_reply@rcdesign.ru>';
 };
 
-/* ----------------------------------------------------------------------------
-    Build message "Subject" (UTF-8, Base64 encoding)
-*/      
+
+/**
+ * Build message "Subject" (UTF-8, Base64 encoding)
+ */      
 var msgSubject = function(subject) {
     return '=?UTF-8?B?' + (new Buffer(unescapeHTML(subject), 'utf8')).toString('base64') + '?=';
 };
 
-/* ----------------------------------------------------------------------------
-    Build body for ARTICLE & BODY commands
-*/
+
+/**
+ * Build body for ARTICLE & BODY commands
+ */
 var msgBody = function(article, session) {
     var body = [];
 
@@ -131,9 +142,10 @@ var msgBody = function(article, session) {
     return body;
 };
 
-/* ----------------------------------------------------------------------------
-    Build headers for ARTICLE & HEAD commands
-*/
+
+/**
+ * Build headers for ARTICLE & HEAD commands
+ */
 var msgHeaders = function(article, session) {
     var headers = [];
 
@@ -151,13 +163,12 @@ var msgHeaders = function(article, session) {
     return headers;
 };
 
-/* ------------------------------------------------------------------
-    HELP
 
-    RETURN
-
-        100 help text
-*/      
+/**
+ * nntp HELP command
+ * 
+ * reply: 100 help text
+ */      
 var cmdHelp = function(cmd, session, callback) {
     var reply = [];
 
@@ -167,24 +178,24 @@ var cmdHelp = function(cmd, session, callback) {
     callback(null, reply);
 };
 
-/* ------------------------------------------------------------------
-    QUIT
-    
-    RETURN
 
-         205 closing connection - goodbye! 
-*/         
+/**
+ * nntp QUIT command
+ * 
+ *  reply: 205 closing connection - goodbye! 
+ */         
 var cmdQuit = function(cmd, session, callback) {
     callback(null, nntpCode._205_goodbye, true); 
 };
 
-/* ------------------------------------------------------------------
-    DATE
-    
-    RETURN server date and time (UTC).
 
-        111 yyyymmddhhmmss
-*/
+/**
+ * DATE
+ * 
+ * reply: server date and time (UTC).
+ * 
+ *      111 yyyymmddhhmmss
+ */
 var cmdDate = function(cmd, session, callback) {
     function pad(n) {
         return n < 10 ? '0' + n.toString(10) : n.toString(10);
@@ -202,18 +213,21 @@ var cmdDate = function(cmd, session, callback) {
     ); 
 };
 
-/* ------------------------------------------------------------------
-    AUTHINFO
 
-        USER userlogin
-        PASS userpassword
-
-    RETURN
-
-        381 More authentication information required
-        281 Authenticaion accepted
-        382 Authenticaion rejected
-*/      
+/**
+ * nntp AUTHINFO command
+ * 
+ * additional params:
+ * 
+ *      USER userlogin
+ *      PASS userpassword
+ * 
+ * replies:
+ * 
+ *      381 More authentication information required
+ *      281 Authenticaion accepted
+ *      382 Authenticaion rejected
+ */      
 var cmdAuthinfo = function(cmd, session, callback) {
     var parced;
     
@@ -259,14 +273,19 @@ var cmdAuthinfo = function(cmd, session, callback) {
     }
 };
 
-/* ------------------------------------------------------------------
-    MODE READER
-     
-    RETURN
 
-        200 - Posting allowed
-        201 - Posting prohibited
-*/          
+/**
+ * nntp MODE command
+ * 
+ * additional param (the only possible, must present):
+ * 
+ *      READER
+ * 
+ * replies:
+ * 
+ *      200 - Posting allowed
+ *      201 - Posting prohibited
+ */          
 var cmdMode = function(cmd, session, callback) {
     if (cmd.params.match(/^reader$/i)) {
         callback(null, nntpCode._201_srv_ready_ro);
@@ -276,38 +295,24 @@ var cmdMode = function(cmd, session, callback) {
     } 
 };
 
-/* ------------------------------------------------------------------
-    LIST
 
-        No input parameters.
-
-     Returns groups list with little info (one group per line):
-
-         group last first p
-
-     where
-       <group>   is the name of the newsgroup
-       <last>    is the number of the last known article currently
-                 in that newsgroup
-       <first>   is the number of the first article currently
-                 in the newsgroup
-       <p>       is either 'y' or 'n' indicating whether posting to this
-                 newsgroup is allowed ('y') or prohibited ('n').
-
-     Responses:
-
-       215 list of newsgroups follows
- [keyword [wildmart|argument]]
-      keyword
-          ACTIVE
-          HEADERS
-          NEWSGROUPS
-          OVERVIEW.FMT
-
-    RETURN
-
-        215 Information follows (multiline)
-*/
+/**
+ * nntp LIST command
+ * 
+ * No input parameters. CAN'T have any, in this implementation.
+ * 
+ * replies:
+ * 
+ *      215 list of newsgroups follows
+ *      group1.name <last> <first> <permission>
+ *      group2.name <last> <first> p
+ *      ......
+ *      groupN.name <last> <first> p
+ *      .
+ * 
+ * 
+ * <permission> is always 'n' in our case (no posting allowed)
+ */
 var cmdList = function(cmd, session, callback) {
     var reply = [];
 
@@ -335,21 +340,26 @@ var cmdList = function(cmd, session, callback) {
     });
 };
 
-/* ------------------------------------------------------------------
-    NEWGROUPS <date> <time> [GMT]
 
-        List of newsgroups created since <date and time>. The same
-        format as for LIST command.
-
-        <date> 6/8 digits,  format yymmdd / yyyymmdd
-        <time> 6 digits,    format hhmmss
-
-        [GMT] - optional. If not set - then time is server local.
-
-    RETURN
-
-        231 list of new newsgroups follows
-*/
+/**
+ * nntp NEWGROUPS command. Old bullshit, but Opera likes it.
+ * 
+ * additional params:
+ * 
+ *      <date> <time> [GMT]
+ *
+ *      <date> - 6/8 digits, (yymmdd|yyyymmdd)
+ *      <time> - 6 digits, hhmmss
+ *      GMT    - optional, we ignore it
+ * 
+ * List of newsgroups created since <date and time>. The same
+ * format as for LIST command.
+ * 
+ * reply:
+ * 
+ *      231 list of new newsgroups follows
+ *      .... (multiline)
+ */
 var cmdNewGroups = function(cmd, session, callback) {
     var reply = [];
     
@@ -392,14 +402,19 @@ var cmdNewGroups = function(cmd, session, callback) {
     }
 };
 
-/* ------------------------------------------------------------------
-    GROUP <groupname>
 
-    RETURN
-
-        211 count first-id last-id groupname    (group selected)   
-        411 No such newsgroup
-*/            
+/**
+ * nntp GROUP command
+ * 
+ * additional params:
+ * 
+ *      <groupname>
+ * 
+ * reply (single string):
+ * 
+ *      211 count first-id last-id groupname
+ *      411 No such newsgroup
+ */            
 var cmdGroup = function(cmd, session, callback) {
     
     dm.fillGroupsList(session, function(err) {
@@ -423,12 +438,23 @@ var cmdGroup = function(cmd, session, callback) {
     });
 };
 
-/*
- * XOVER <range>
+
+/**
+ * nntp XOVER commant
+ * 
+ * additional params:
+ * 
+ *      <range>
  * 
  *      XX-YY   - from XX to YY
  *      XX-     - from XX to end
  *      XX      - only XX
+ * 
+ *      (!) text message id can be used, but not implemented
+ * 
+ * replies:
+ * 
+ *      see rfc :)
  */          
 var cmdXover = function(cmd, session, callback) {
     var reply = [];
@@ -491,16 +517,15 @@ var cmdXover = function(cmd, session, callback) {
 };
 
 
-/*
- * XHRD <head> <range>
+/**
+ * nntp XHRD command.
  * 
- *  <header>    - subject, from, date, references, etc
+ * Similar to XOVER, but returns only one header, instead of all.
+ * Also have additional param, defining header type.
  * 
- *  <range>
+ * additional params:
  * 
- *      XX-YY   - from XX to YY
- *      XX-     - from XX to end
- *      XX      - only XX
+ *      <head> <range>
  */          
 var cmdXhdr = function(cmd, session, callback) {
     var reply = [];
@@ -587,13 +612,16 @@ var cmdXhdr = function(cmd, session, callback) {
 };
 
 
-/* ------------------------------------------------------------------
-    ARTICLE, BODY, HEAD, and STAT commands
-
-    ARTICLE [empty|int-id|string-id]
-
-!!! in our case - <post-id@GateId> !!! Fixit (blogs,... probably, should add group id)
-*/      
+/**
+ * nntp ARTICLE, BODY, HEAD commands
+ * 
+ * additional params:
+ * 
+ *      <article id>
+ * 
+ *      (!) we implement ONLY digital id. It can also be
+ *      empty or string, according to rfc.
+ */      
 var cmdArticle = function(cmd, session, callback, requestType) {
     var reply = [];
  
@@ -672,8 +700,9 @@ var cmdBody = function(cmd, session, callback) {
     cmdArticle(cmd.params, session, callback, 'body');
 };
 
-/* ----------------------------------------------------------------------------
-*/
+/**
+ * Main call to process all commands 
+ */
 exports.executeCommand = function(command, session, callback) { 
     var nntpNoAuth = {
         HELP : cmdHelp,

@@ -1,6 +1,15 @@
-/*
- * Mysql wrapper
- */
+/**
+ * Simple mysql wrapper
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
+*/
 
 var mysql = require('mysql/mysql-libmysqlclient');
 
@@ -8,8 +17,10 @@ var logger = require('./logger.js');
 
 var conn = mysql.createConnectionSync();
 
-/*
- * Escape string for mysql
+
+/**
+ * Escape string for mysql. Don't use native function,
+ * because it doesn't work without connect.
  */
 exports.escapeStr = function(str) {
     return str.replace(/[\\"']/g, "\\$&").replace(/[\n]/g, "\\n")
@@ -17,10 +28,9 @@ exports.escapeStr = function(str) {
 };
 
 
-/*
- * DataBase connect & reconnect
- * 
- *  store config in global var on success
+/**
+ * DataBase connect & reconnect. Parameters taket from
+ * external config module.
  */
 var connect = function() {
     // prior to reconnect we should close current resource
@@ -43,8 +53,11 @@ var connect = function() {
     return false;
 };
 
-/*
+
+/**
  * Test db connection
+ * 
+ * @param {Object}  config Daemon config, with db params 
  */
 exports.test = function(config) {
     var test_conn = mysql.createConnectionSync();
@@ -63,9 +76,9 @@ exports.test = function(config) {
 };
 
 
-/*
- * Run Async read query with connection check
- * and automatically free result.
+/**
+ * Run async read query with connection check
+ * and automatica free result.
  */
 exports.queryRead = function(sql, callback) {
     if (!conn.connectedSync()) {
@@ -107,9 +120,9 @@ exports.queryRead = function(sql, callback) {
 };
 
 
-/*
- * Run Async write query with connection check
- * and automatically free result.
+/**
+ * Run async write query with connection check
+ * and automatic free result.
  */
 exports.queryWrite = function(sql, callback) {
     if (!conn.connectedSync()) {
@@ -129,8 +142,8 @@ exports.queryWrite = function(sql, callback) {
 };
 
 
-/*
- * Sync query wrapped with connection check
+/**
+ * Sync query (read/write), wrapped with connection check
  */
 exports.querySync = function(sql) {
     if (!conn.connectedSync()) {

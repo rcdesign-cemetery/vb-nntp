@@ -1,6 +1,15 @@
-/** -----------------------------------------------------------------
- *    Easy logger module:
- */
+/**
+ * Logger module
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
+*/
 
 var fs = require('fs');
 
@@ -15,15 +24,14 @@ var enabled_types = {
     reply : false,
     multistring : false
 };
-
 var log_handle;
+
 var log_file_name = '';
 
-
+// 7 -> 07
 function pad(n) {
     return n < 10 ? '0' + n.toString(10) : n.toString(10);
 }
-
 
 var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
                 'Oct', 'Nov', 'Dec'];
@@ -37,7 +45,8 @@ function timestamp() {
     return [d.getDate(), months[d.getMonth()], time].join(' ');
 }
 
-/*
+
+/**
  * Open log file
  */
 var open = function() {
@@ -47,8 +56,9 @@ var open = function() {
     return;
 };
 
-/*
- *  Close log file
+
+/**
+ * Close log file
  */
 var close = function() {
     if (!!log_handle) {
@@ -62,8 +72,9 @@ var close = function() {
 
 exports.close = close;
 
-/*
- *  Reopen log file (for log rotation)
+
+/**
+ * Reopen log file (for log rotation)
  */
 exports.reopen = function() {
     close();
@@ -71,12 +82,9 @@ exports.reopen = function() {
     return;
 };
 
-/*
- *  Init logger.
- *  Prepare settings and open log file(if need)
- *
- *  Input
- *      config - array of settings, see Log section in config.ini.example 
+
+/**
+ * Init logger. Prepare settings and open log file (if need)
  */
 exports.init = function() {
     // set enabled events
@@ -115,19 +123,20 @@ exports.init = function() {
 };
 
 
-/*
- *  Write message to file
+/**
+ * Write message to file
  *
- *  Input
- *       log_type:
- *           'info'  - server start|stop 
- *           'cmd'   - nntp commands
- *           'reply' - server replies
- *           'error' - shit happened
+ * @param {String} log_type    Event type
+ * 
+ *      'info'  - server start|stop etc
+ *      'cmd'   - nntp commands
+ *      'reply' - server reply, only first string
+ *      'multistring' - server reply, all
+ *      'error' - error
  *        
- *       msg - string / exception / array of string
+ * @param {Object} msg     String / Exception / Array of strings
  *
- *       session[optional]
+ * @param {Obkect} [session]   Session info (IP, username, user id)
  */
 exports.write = function(log_type, msg, session) {
 

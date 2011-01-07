@@ -1,3 +1,17 @@
+/**
+ * Config module.
+ * 
+ * Loads configuration from file & adds vB settings from db 
+ * 
+ * @link https://github.com/rcdesign/vb-nntp_gate
+ * 
+ * @license http://creativecommons.org/licenses/by-nc-nd/3.0/ Creative Commons BY-CC-ND
+ *  
+ * @author Vitaly Puzrin <vitaly@rcdesign.ru>
+ * @author Evgeny Shluropat <vitaly@rcdesign.ru>
+ * 
+ * @copyright RC Design, Vitaly Puzrin
+*/
 var fs = require('fs');
 var url = require('url');
 
@@ -5,13 +19,16 @@ var db = require('./db.js');
 
 var cfg_path = "config.ini";
 
-/*
+
+/**
  * Config variables, accessible to all modules
  */
 exports.vars = {};
 
-/*
+
+/**
  * Parse INI file
+ *
  *      [section]
  *      key=param
  *      ; comment
@@ -47,11 +64,14 @@ var parseIniFile = function (iniFilename) {
 };
 
 
-/*
+/**
  *  Parse list string
  *
- *  Input
- *      str - LogLevel|LogUserIPs|LogUserIDs 
+ *  @param {String} str Multiple params, separated by comma
+ * 
+ *      error, info, multistring
+ * 
+ *  @return {Array}
  */
 exports.get_list = function(str) {
     var result = [];
@@ -68,8 +88,10 @@ exports.get_list = function(str) {
 };
 
 
-/*
+/**
  * Join vBulletin settings from db to config
+ * 
+ * @param {Object} cfg  Hash with config vars
  */
 var mergeVbulletinSettings = function(cfg) {
     var settings_map = { 
@@ -105,8 +127,8 @@ var mergeVbulletinSettings = function(cfg) {
 };
 
 
-/*
- * Returns all config variables (from file + db)
+/**
+ * Load all config variables (from file + db)
  * Throws exception on error
  */
 exports.load = function() {
