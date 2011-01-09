@@ -268,8 +268,9 @@ var cmdAuthinfo = function(cmd, session, callback) {
             }
         });
     } else {
-        callback(makeReport('Syntax error: ' + cmd.all, session),
-            nntpCode._501_syntax_error);
+        // don't report error, no need to see messages in log,
+        // that AUTHINFO GENERIC etc not implemented
+        callback(null, nntpCode._501_syntax_error);
     }
 };
 
