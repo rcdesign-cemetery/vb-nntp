@@ -118,12 +118,15 @@ $db->query_write("
  *  Optimize tables
  */
 
+/*
+// Since we can use innodb, myisam user should run
+// optimize globally, with other tables.
 $db->query_write("
   OPTIMIZE TABLE
     `" . TABLE_PREFIX . "nntp_cache_messages`,
     `" . TABLE_PREFIX . "nntp_index`  
 ");
-
+*/
 
 //log_cron_action('Messages cache cleaned', $nextitem, 1);
 
