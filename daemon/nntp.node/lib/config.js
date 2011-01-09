@@ -152,8 +152,8 @@ exports.load = function() {
     }
 
     // Set defaults
-    cfg.MaxClients      = cfg.MaxClients || 50;
-    cfg.InactiveTimeout = cfg.InactiveTimeout || 15;
+    cfg.MaxClients      = cfg.MaxClients || 500;
+    cfg.InactiveTimeout = cfg.InactiveTimeout || 60;
     cfg.Host            = cfg.Host || 'localhost';
     cfg.Port            = cfg.Port || 3306;
     cfg.TablePrefix     = cfg.TablePrefix || '';

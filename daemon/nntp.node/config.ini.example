@@ -13,11 +13,11 @@ DaemonPort=119
 ;PemFile = /your/ssl/file.pem
 
 ; Max. simultanious connections to daemon. 50 by default.
-;MaxClients=50
+;MaxClients=500
 
 ; Inactivity timeout (in seconds), to close idle connections.
 ; 15 seconds by default. Don't set too large, or uncrease MaxClients too.
-;InactiveTimeout=15
+;InactiveTimeout=60
 
 ; Process title for 'ps'. 'vbnntp' by default
 ;DaemonTitle=vbnntp
