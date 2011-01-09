@@ -148,7 +148,7 @@ class NNTPGate_Group_Base extends NNTPGate_Object
         $existing_group = $this->get_group_id_by_map_id($this->_map_id, true);
         if ( 0 < $existing_group)
         {
-            //возможно это апдейт старой
+            // check, that we don't try to override existing groups
             if ($existing_group != $this->_group_id)
             {
                 return false;
@@ -174,8 +174,7 @@ class NNTPGate_Group_Base extends NNTPGate_Object
 
     /**
      * Delete record from nntp_groups
-     * Если значение group_id не передается в качестве параметра, то будет взято
-     * из self::_group_id
+     * If $group_id not set, then $self::_group_id used
      *
      * @param int $group_id
      * @return bool
@@ -205,9 +204,8 @@ class NNTPGate_Group_Base extends NNTPGate_Object
 
     /**
      * Get group id by map.
-     * Если значение map_id не передается в качестве параметра, то будет взято
-     * из self::_map_id
-     * От флага $external зависит будет ли результат записан в self::_group_id
+     * If $map_id not set, then $self::_map_id used
+     * $external defines, if result will be duplicated to $self::_group_id
      *
      * @param int $map_id
      * @param bool $external
@@ -290,9 +288,8 @@ class NNTPGate_Group_Base extends NNTPGate_Object
     }
 
     /**
-     * Очищает таблицу nntp_index для выбранной группы
-     * Если значение group_id не передается в качестве параметра, то будет взято
-     * из self::_group_id
+     * Clear nntp_index for selected groups
+     * If $group_id not set, then $self::_group_id used
      *
      * @param int $group_id
      * @return bool
@@ -319,9 +316,8 @@ class NNTPGate_Group_Base extends NNTPGate_Object
     }
 
     /**
-     * Инициализирует объект по group_id
-     * Если значение group_id не передается в качестве параметра, то будет взято
-     * из self::_group_id
+     * Load group info from db by group_id
+     * If $group_id not set, then $self::_group_id used
      *
      * @param int $group_id
      * @return bool
@@ -361,9 +357,9 @@ class NNTPGate_Group_Base extends NNTPGate_Object
     }
 
     /**
-     * Получить список доступных для группы пользователей
-     * Метод должен быть спецефецирован в потомке
-     *
+     * Get available nntp groups for specified forum groups
+     * Must be defined in child
+     * 
      * @param array $member_group_id_list
      * @return array
      */

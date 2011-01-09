@@ -9,7 +9,9 @@ abstract class NNTPGate_Object {
     protected $_db;
 
     /**
-     * Конструктор
+     * Consctuctor
+     * 
+     * We keep $db here, because $vbulletin is very heavy
      *
      * @global vB_Registry $vbulletin
      * @param vB_Database $db
@@ -29,10 +31,9 @@ abstract class NNTPGate_Object {
     }
 
     /**
-     * Используется при отладке, вместо var_dump/var_export, так как не выводит
-     * состояние $_db
-     * в $_db екземпляр класса vB_Database, а там много лишнего
-     *
+     * Used for debug, instead var_dump/var_export,
+     * because we need to show $_db.
+     * 
      * @return string
      */
     public function  __toString()

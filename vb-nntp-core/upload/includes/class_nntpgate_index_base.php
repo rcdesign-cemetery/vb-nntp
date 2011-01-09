@@ -57,8 +57,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     protected $_map_id = null;
 
     /**
-     * Получить пост по его post_id
-     * Поля которые необходимо получать задаются через параметр
+     * Get message by forum source (post_id)
+     * Received fields defined by $field param
      *
      * @param array $fields
      * @param int $post_id
@@ -113,7 +113,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Сохраняет новое сообщение в системе nntpgate
+     * Save/Update message in NNTP storage
      *
      * @return bool
      */
@@ -160,7 +160,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Сохраняет сообщения в кэш-таблицы nntp_cache_messages
+     * Save message body (it's in separate table, for better speed)
      *
      * @return bool
      */
@@ -189,7 +189,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Формирует(но не сохраняет) тело сообщения для кэш-таблицы nntp_cache_messages
+     * Build HTML message body for future store.
      *
      * @return string
      */
@@ -197,12 +197,12 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
 
     /**
      * Get group id by map.
-     * Если значение map_id не передается в качестве параметра, то будет взято
-     * из self::_map_id
-     * От флага $external зависит будет ли результат записан в self::_group_id
+     * 
+     * If $map_id messed, then $self::_map_id used
+     * $external defines, if result will be duplicated to $self::_group_id
      *
-     * @todo такой же метод есть в NNTPGate_Group_Base, так что или делегировать
-     * или выделить в отдельный метод
+     * @todo the same method exists in NNTPGate_Group_Base.
+     * May be we should, delegate or move to separate methos.
      *
      * @param int $map_id
      * @param bool $external
@@ -244,8 +244,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
 
 
     /**
-     * Должен быть специфицирован в каждом потомке так как php до версии 5.3
-     * не поддерживает конструкции типа get_class($this)::MESSAGE_TYPE
+     * Must be specified in each child, because php before 5.3 doesn't
+     * support constructions like get_class($this)::MESSAGE_TYPE
      *
      * @return string
      */
@@ -299,7 +299,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Удалить посты по общему предку
+     * Delete all messages by parent id (for example, by topic id)
      *
      * @param int $parent_id
      * @return bool
@@ -327,7 +327,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Удалить посты по списку
+     * Delete posts by src ids list (for example, by forum posd ids)
      *
      * @param array $post_id_list
      * @return bool
@@ -340,7 +340,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         }
 
         $post_id_list = array_map('intval', $post_id_list);
-        // mark messages in index as delete
+        // mark messages in index as deleted
         $sql = "UPDATE
                     `" . TABLE_PREFIX . "nntp_index`
                 SET
@@ -353,7 +353,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Удалить один пост по self::_post_id
+     * Delete single post by self::_post_id
      *
      * @access public
      * @return bool
@@ -365,8 +365,9 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Перемещение группы индексов по общему предку
-     * Копирование не поддерживается
+     * Move messages by parent id
+     * 
+     * @todo (!) thread copy not supported
      *
      * @param int $target_group_id
      * @param int $parent_id
@@ -383,12 +384,14 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
             return false;
         }
         $this->_parent_id = $parent_id;
-
+        
+        // if target has no nntp group, then just delete
         if ( (!$target_group_id))
         {
             return $this->delete_message_by_parent_id();
         }
 
+        // Select all messages and move one-by-one
         $sql = "SELECT
                     `messageid`,
 					`postid`
@@ -407,8 +410,9 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Перемещение группы индексов по списку
-     * Копирование не поддерживается
+     * Move messages by src ids list (for example, by forum post ids)
+     * 
+     * @todo (!) Copy not supported
      *
      * @param int $target_group_id
      * @param array $post_id_list
@@ -424,6 +428,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             return false;
         }
+        
+        // if target has no nntp group, then just delete
         if ((!$target_group_id))
         {
             return $this->delete_messages_by_post_id_list($post_id_list);
@@ -449,9 +455,10 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     }
 
     /**
-     * Перемещение одного поста.
-     * Копирование не поддерживается
-     *
+     * Move single message
+     * 
+     * @todo (!) Copy not supported
+     * 
      * @param int $target_group_id
      * @param int $message_id
      * @return bool
@@ -462,6 +469,8 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         {
             return false;
         }
+        
+        // move only 'active' messages, skip deleted
         $sql = "SELECT
 					*
                 FROM

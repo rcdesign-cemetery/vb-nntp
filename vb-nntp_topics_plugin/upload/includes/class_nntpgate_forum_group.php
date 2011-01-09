@@ -7,7 +7,7 @@ require_once DIR . '/includes/class_nntpgate_forum_group.php';
 class NNTPGate_Forum_Group extends NNTPGate_Group_Base
 {
     /**
-     * тип сообщения
+     * Message type (similar to Content Type)
      */
     const PLUGIN_ID = 'forum';
 
@@ -23,7 +23,7 @@ class NNTPGate_Forum_Group extends NNTPGate_Group_Base
     }
 
     /**
-     * Получить список доступных для группы пользователей
+     * Get available groups
      *
      * @global vB_Registry $vbulletin
      * @param array $member_group_id_list
