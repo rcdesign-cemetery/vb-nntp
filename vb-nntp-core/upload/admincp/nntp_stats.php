@@ -71,8 +71,6 @@ $counter = $db->query_first("
 	  COUNT( `userid` ) AS 'count'
 	FROM
 	  " . TABLE_PREFIX . "nntp_stats AS STATS
-	WHERE
-	  `date` >= DATE_SUB( CURDATE(), INTERVAL " . $vbulletin->options['nntp_stats_show_last_days'] . " DAY )
 	GROUP BY
 	  `userid`
 ");
@@ -93,12 +91,10 @@ $stats = $db->query_read("
 	            `" . TABLE_PREFIX . "nntp_stats` AS S
 	  LEFT JOIN `" . TABLE_PREFIX . "user`           AS U USING( `userid` )
     LEFT JOIN `" . TABLE_PREFIX . "usergroup`      AS G USING( `usergroupid` )
-	WHERE
-	  S.`date` >= DATE_SUB( CURDATE(), INTERVAL " . $vbulletin->options['nntp_stats_show_last_days'] . " DAY )
 	GROUP BY
 	  S.`userid`
 	ORDER BY
-	  `number`
+	  `number` DESC
 	LIMIT
 	  " . ( ( $vbulletin->GPC['pagenumber'] - 1 ) * $vbulletin->GPC['perpage'] ) . ", " . $vbulletin->GPC['perpage']
 );
