@@ -44,10 +44,8 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`),
   KEY `map_id` (`map_id`),
-  KEY `group_name` (`group_name`),
   KEY `date_create` (`date_create`),
-  KEY `ActivePlugin` (`plugin_id`,`is_active`),
-  KEY `Active` (`is_active`)
+  KEY `plugin_active` (`plugin_id`,`is_active`)
 ) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_index (
@@ -61,8 +59,9 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `messagetype` enum('forum','blog') NOT NULL,
   `postid` int(10) unsigned NOT NULL,
   PRIMARY KEY  (`groupid`,`messageid`),
-  UNIQUE KEY `GroupListHelper` (`groupid`,`deleted`,`messageid`),
-  KEY `Post` (`messagetype`,`postid`,`deleted`)
+  KEY `src` (`postid`,`messagetype`,`deleted`,`groupid`,`messageid`),
+  KEY `parent` (`parentid`,`messagetype`,`groupid`,`postid`),
+  KEY `daemon` (`groupid`,`deleted`,`datetime`,`messageid`)
 ) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_stats (
