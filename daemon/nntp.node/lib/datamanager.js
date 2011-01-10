@@ -100,18 +100,12 @@ var getGroups = function(session, callback) {
  * @param {Array} id    Array of group ids to scan
  */
 var getGroupsStat = function(session, ids, callback) {
-    var sqlWhere = '';
-
     // if nothing to load - return empty result
     if (!ids.length) {
         callback(null, []);
         return;
     }
 
-    if (session.accesstype == 'demo') {
-        var timelimit = parseInt(Date.now() / 1000, 10) - config.vars.DemoDelay*60*60;
-        sqlWhere =  " AND `Index`.`datetime` <= FROM_UNIXTIME(" + timelimit + ") ";
-    }
     var sql =   "SELECT" +
                 "   `Index`.`groupid`   , " +
                 "   MAX( `Index`.`messageid` ) AS 'max'  , " +
@@ -120,7 +114,7 @@ var getGroupsStat = function(session, ids, callback) {
                 "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "WHERE " +
                 "   `Index`.`groupid` IN(" + ids.join(',') + ") " +
-                "   AND `Index`.`deleted` = 'no' " + sqlWhere +
+                "   AND `Index`.`deleted` = 'no' " + 
                 "GROUP BY `Index`.`groupid` ";
 
     db.queryRead(sql, function(err, rows) {
@@ -340,8 +334,7 @@ exports.checkAuth = function(session, callback) {
                 "   `G`.`access_level`, " +
                 "   `G`.`template`, " +
                 "   `G`.`css`, " +
-                "   `G`.`menu`, " +
-                "   `G`.`demotext` " +
+                "   `G`.`menu` " +
                 "FROM `" + TablePrefix + "nntp_userauth_cache` AS U " +
                 "LEFT JOIN `" + TablePrefix + "nntp_groupaccess_cache` AS `G` " +
                 "   ON( `U`.`usergroupslist` = `G`.`usergroupslist` ) " +
@@ -367,7 +360,6 @@ exports.checkAuth = function(session, callback) {
                 session.accesstype = rows[0].access_level;
                 session.css = rows[0].css;
                 session.menu = rows[0].menu;
-                session.demotext = rows[0].demotext;
                 session.template = rows[0].template;
                 session.group_ids_str = rows[0].nntpgroupslist;
 

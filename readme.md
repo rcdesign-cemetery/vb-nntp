@@ -13,7 +13,7 @@ Requirements
 ============
 
   - Forum must use UTF-8 codepage.
-  - db engine must support innodb
+  - innodb recommended
   - db user must have permission to create triggers
 
 Known Issues
@@ -22,8 +22,11 @@ Known Issues
  1. NNTP clients can't normally use non-latin symbols in login & passwords. If you have such:
     - use email instead of login
     - change password to one with latin chars only
- 2. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commants, that are really used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
- 3. Daemon works in single process and uses single SQL connection to db. That's increase latency for huge setups. NNTP can be extended by sql connections pool & multinode on demand.
+ 2. Daemon works in single process and uses single SQL connection to db. That's increase latency for huge setups. NNTP can be extended by sql connections pool & multinode on demand.
+ 3. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commants, that are really used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
+    - ARTICLE accept only digital id
+    - STAT, NEXT, LAST, NEWNEWS - not implemented
+    - LIST NEWSGROUPS - not implemented
 
 Installation
 ============

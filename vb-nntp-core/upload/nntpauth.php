@@ -165,12 +165,6 @@ function nntp_update_groupaccess_cache($userinfo)
     $css          = vB_Template::create('nntp_message_css')->render();
     $menu         = vB_Template::create('nntp_message_menu')->render();
 
-    $tmpl = vB_Template::create('nntp_demo_text');
-    $tmpl->register_page_templates();
-    $tmpl->register('nntp_demo_text', $vbulletin->options['nntp_demo_text']);
-
-    $demotext = $tmpl->render();
-
     $key = implode(',', $membergroupids);
 
     // update/insert data into db cache
@@ -182,8 +176,7 @@ function nntp_update_groupaccess_cache($userinfo)
             `access_level`   = '" . $vbulletin->db->escape_string( $access_level   ) . "',
             `template`       = '" . $vbulletin->db->escape_string( $template       ) . "',
             `css`            = '" . $vbulletin->db->escape_string( $css            ) . "',
-            `menu`           = '" . $vbulletin->db->escape_string( $menu           ) . "',
-            `demotext`       = '" . $vbulletin->db->escape_string( $demotext       ) . "'
+            `menu`           = '" . $vbulletin->db->escape_string( $menu           ) . "'
     ");
     
     return $key;
@@ -201,12 +194,6 @@ function nntp_get_access_level($userinfo)
     if (is_member_of( $userinfo, $fullaccessgroups ))
     {
         return 'full';
-    }
-
-    $demoaccessgroups = unserialize( $vbulletin->options['nntp_demo_groups'] );
-    if (is_member_of( $userinfo, $demoaccessgroups ))
-    {
-        return 'demo';
     }
 
     // default value

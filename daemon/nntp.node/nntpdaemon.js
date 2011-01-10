@@ -34,7 +34,6 @@ var conListener = function (stream) {
     stream.session.accesstype = 'none';     // (none|demo|full)
     stream.session.css = '';
     stream.session.menu = '';
-    stream.session.demotext = '';
     stream.session.template = '';  
     // User accessible groups
     // [name] -> (id, count, first, last, permissions)

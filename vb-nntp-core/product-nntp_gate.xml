@@ -305,12 +305,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
 			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
 			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
-			<phrase name="setting_nntp_demo_delay_desc" date="1294187146" username="Vitaly" version="1.8"><![CDATA[All messages for last XX hours will be hidded in demo mode.]]></phrase>
-			<phrase name="setting_nntp_demo_delay_title" date="1294187146" username="Vitaly" version="1.8"><![CDATA[Messages delay in demo mode]]></phrase>
-			<phrase name="setting_nntp_demo_groups_desc" date="1294187104" username="Vitaly" version="1.8"><![CDATA[This groups will have 'demo' NNTP access. They will not see messages for last XX hours.]]></phrase>
-			<phrase name="setting_nntp_demo_groups_title" date="1294187104" username="Vitaly" version="1.8"><![CDATA[Groups in demo mode]]></phrase>
-			<phrase name="setting_nntp_demo_text_desc" date="1294187025" username="Vitaly" version="1.8"><![CDATA[This text will be added for messages in 'demo' mode]]></phrase>
-			<phrase name="setting_nntp_demo_text_title" date="1294187025" username="Vitaly" version="1.8"><![CDATA[Text of demo mode message]]></phrase>
 			<phrase name="setting_nntp_from_address_desc" date="1294186856" username="Vitaly" version="1.8"><![CDATA[Used to generate message headers. Not used in this gate, but required by standard. All messages will be 'sent' from this address. Write your "no reply" email address.]]></phrase>
 			<phrase name="setting_nntp_from_address_title" date="1294186856" username="Vitaly" version="1.8"><![CDATA['From' email address]]></phrase>
 			<phrase name="setting_nntp_groups_desc" date="1294186946" username="Vitaly" version="1.8"><![CDATA[This groups will have 'full' access to NNTP, without delay.]]></phrase>
@@ -335,18 +329,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<setting varname="nntp_groups" displayorder="80">
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
-			</setting>
-			<setting varname="nntp_demo_groups" displayorder="90">
-				<datatype>free</datatype>
-				<optioncode>usergroup:5</optioncode>
-			</setting>
-			<setting varname="nntp_demo_delay" displayorder="100">
-				<datatype>number</datatype>
-				<defaultvalue>6</defaultvalue>
-			</setting>
-			<setting varname="nntp_demo_text" displayorder="120">
-				<datatype>free</datatype>
-				<optioncode>textarea</optioncode>
 			</setting>
 			<setting varname="nntp_message_in_list_timeout" displayorder="150">
 				<datatype>number</datatype>
