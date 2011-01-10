@@ -67,8 +67,8 @@ while( $group = $db->fetch_array( $groups ) )
               FROM
                 `" . TABLE_PREFIX . "nntp_index`
               WHERE
-                `datetime`  >= FROM_UNIXTIME(" . $min_date . ") AND
-                `groupid`    = " . $group_id  . "
+                `groupid`    = " . $group_id  . " AND
+                `datetime`  <= FROM_UNIXTIME(" . $min_date . ")
           )) AS delete_below_id";
   $min = $db->query_first($sql); 
   $delete_below_id = (int)$min['delete_below_id'];
