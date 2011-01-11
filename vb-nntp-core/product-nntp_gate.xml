@@ -102,35 +102,7 @@ $db->show_errors();]]></uninstallcode>
 		</code>
 	</codes>
 	<templates>
-		<template name="nntp_anounce" templatetype="template" date="1280995936" username="varnak" version="1.8"><![CDATA[{vb:stylevar htmldoctype}
-<html xmlns="http://www.w3.org/1999/xhtml" dir="{vb:stylevar textdirection}" lang="{vb:stylevar languagecode}" id="vbulletin_html">
-    <head>
-	{vb:raw headinclude}
-        <title>{vb:raw vboptions.bbtitle} - {vb:rawphrase nntp_gate_menu_title}</title>
-        {vb:raw headinclude_bottom}
-    </head>
-    <body>
-        {vb:raw header}
-        {vb:raw navbar}
-
-        <div id="pagetitle">
-
-            <h1>{vb:raw pagetitle}</h1>
-
-        </div>
-
-        <h2 class="blockhead">{vb:rawphrase nntp_service_description}</h2>
-        <div class="blockbody">
-            <div class="blockrow restore">
-			{vb:raw anouncemessage}
-            </div>
-        </div>
-
-        {vb:raw footer}
-    </body>
-</html>]]></template>
-		<template name="nntp_demo_text" templatetype="template" date="1249904316" username="varnak" version=""><![CDATA[<div class="demo">{vb:raw nntp_demo_text}</div>]]></template>
-		<template name="nntp_message_css" templatetype="template" date="1294253658" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
+		<template name="nntp_message_css" templatetype="template" date="1294715537" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
 <!--
 body {
 background: #FFFFFF;
@@ -193,7 +165,7 @@ margin:20px 30px;
 padding:5px 10px;
 }
 
-.demo, .demo a { font-size: 11px; color: #808080; padding-top: 10px;}
+.copyright, .copyright a { font-size: 10px; color: #808080; padding-top: 10px;}
 -->
 </style>]]></template>
 		<template name="nntp_message_menu" templatetype="template" date="1294250465" username="Vitaly" version="1.8"><![CDATA[<div id='menu'><a href="/showthread.php?p=<% POST ID %>#post<% POST ID %>">{vb:rawphrase original_post}</a>
@@ -209,7 +181,7 @@ padding:5px 10px;
 <% MESSAGE BODY %>
 </body>
 </html>]]></template>
-		<template name="nntp_navbar_link" templatetype="template" date="1280915025" username="varnak" version="1.8"><![CDATA[<li><a href="nntp_gate.php?{vb:raw session.sessionurl_q}">{vb:rawphrase nntp_gate_menu_title}</a></li>]]></template>
+		<template name="nntp_navbar_link" templatetype="template" date="1294713159" username="Vitaly" version="1.8"><![CDATA[<li><a href="faq.php?{vb:raw session.sessionurl_q}faq=nntp_faq">{vb:rawphrase nntp_gate_menu_title}</a></li>]]></template>
 	</templates>
 	<stylevardfns>
 	</stylevardfns>
@@ -220,8 +192,6 @@ padding:5px 10px;
 			<title>Cache templates</title>
 			<hookname>cache_templates</hookname>
 			<phpcode><![CDATA[// Always cache templates, to avoid complex dependencies with child product
-$cache[] = 'nntp_anounce';
-$cache[] = 'nntp_demo_text';
 $cache[] = 'nntp_message_css';
 $cache[] = 'nntp_message_menu';
 $cache[] = 'nntp_message_template';
@@ -291,6 +261,56 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<phrase name="saved_nntp_group_settings_defeated" date="1260785779" username="varnak" version="1.7"><![CDATA[Group settings can not be changed]]></phrase>
 			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
 		</phrasetype>
+		<phrasetype name="FAQ Text" fieldname="faqtext">
+			<phrase name="nntp_faq" date="1294705410" username="Vitaly" version="1.8"><![CDATA[NNTP-gate allows to read $vboptions[bbtitle] in very quick way. That can be done with common software for news-confereces, like Mozilla Thunderbird, Micrisoft Outlook Express, Opera. You'll be able to mass-load all messages, spending minimal traffic.]]></phrase>
+			<phrase name="nntp_setup" date="1294712933" username="Vitaly" version="1.8"><![CDATA[<p>NNTP-гейт поможет вам быстро читать RC Форум. Это делается программами для работы с новостными конференциями, такими как Mozilla Thunderbigd, Microsoft Outlook Express, Opera. Вы сможете массово загружать сообщения, затрачивая миниму траффика.</p>
+
+<p>NNTP-гейт представляет собой news-сервер (сервер конференций), группы и сообщения которого полностью соответствует содержимому форума. Там хранится по $vboptions[nntp_max_messages_in_group] последних сообщений из каждого раздела (но не более чем за $vboptions[nntp_message_in_list_timeout] дней).</p>
+
+<p>Для работы с NNTP-сервером требуется авторизация. Ниже указаны параметры, которые нужно использовать в настройках учетной записи вашей программы.</p>
+<ul>
+<li><i>Адрес сервера</i> - такой же как адрес сайта с форумом. Используйте доменное имя, даже если форум находится в "подкаталоге".</li>
+<li><i>Логин</i> - ваш ник на форуме. Если в нике есть не латинские символы или пробелы - используйте в качестве логина ваш email.</li>
+<li><i>Пароль</i> - ваш пароль на форуме. Если в пароле есть не латинские символы или пробелы - сначала смените его.</li>
+<li><i>Порт</i> - попробуйте сначала защищенное соединение (SSL на порт 563). Если не заработает - используйте обычное соединение, на 119 порт.</li>
+</ul>]]></phrase>
+			<phrase name="nntp_thunderbird" date="1294712397" username="Vitaly" version="1.8"><![CDATA[<p>Пример настройки <a href="http://www.mozillamessaging.com/thunderbird/">Mozilla Thunderbird</a>.</p>
+
+<p><b>Создаем новую учетную запись</b></p>
+<ul>
+<li>File -> New -> Other accounts -> Newsgroups account.</li>
+<li>Указываем как вас зовут, и ваш email.</li>
+<li>Указываем адрес сервера (сайт форума).</li>
+<li>Указываем название учетной записи.</li>
+<li>Первая часть готова!</li>
+</ul></p>
+
+<p><b>Донастраиваем учетную запись</b></p>
+
+<ul>
+<li>Щелкаем правой кнопкой мыши на аккаунте и выбираем "Settings".</li>
+<li><i>Server settings -> Security Settings</i>. Попробуйте установить SSL/TLS. Если не заработает - верните обратно None.</li>
+<li><i>Synchronization & Storage</i>. Выберите "Delete messages more than 30 days old"</li>
+</ul>
+
+<p>Теперь можно подписаться на news-шруппы. Щелкаем правой кнопкой на аккаунте, и выбираем "Subscribe". Отмечаем галочками те группы, на которые мы хотим подписаться. Когда будут спрашивать логин и пароль, не забудьте поставить галочку "запомнить". Не забывайте про <a href="./faq.php?faq=nntp_faq#faq_nntp_setup">требования к логину и паролю</a>.</p>
+
+<p><b>Донастраиваем параметры синхронизации</b></p>
+
+<ul>
+<li>Щелкаем правой кнопкой мыши на аккаунте и выбираем "Settings".</li>
+<li><i>Synchronization & Storage -> Select newsgroups for offline use</i>. Выбираем группы, где хотим скачивать сообщения целиком.</li>
+</ul>
+
+<p>Итак, теперь в нашем распоряжение содержимое форума, и после синхронизации мы увидим новые темы. На этом - все. Теперь форум можно читать быстро, а браузер использовать только для ответов.</p>
+
+<p>* Кстати, чтобы автоматически перескакивать между новыми сообщениями, очень удобно использовать клавишy N.</p>]]></phrase>
+		</phrasetype>
+		<phrasetype name="FAQ Title" fieldname="faqtitle">
+			<phrase name="nntp_faq" date="1294705410" username="Vitaly" version="1.8"><![CDATA[NNTP-gate]]></phrase>
+			<phrase name="nntp_setup" date="1294712933" username="Vitaly" version="1.8"><![CDATA[Setup Account]]></phrase>
+			<phrase name="nntp_thunderbird" date="1294712397" username="Vitaly" version="1.8"><![CDATA[Thunderbird setup example]]></phrase>
+		</phrasetype>
 		<phrasetype name="GLOBAL" fieldname="global">
 			<phrase name="nntp_gate" date="1216126747" username="Wildev" version=""><![CDATA[NNTP Gate]]></phrase>
 			<phrase name="nntp_gate_menu_title" date="1218115053" username="Wildev" version=""><![CDATA[NNTP]]></phrase>
@@ -303,8 +323,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<phrase name="nntp_service_description" date="1280995769" username="varnak" version=""><![CDATA[Service description]]></phrase>
 		</phrasetype>
 		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
-			<phrase name="setting_nntp_adv_text_desc" date="1229020203" username="Wildev" version="1.0"><![CDATA[This text will be shown at the main forum page after clicking NNTP link.]]></phrase>
-			<phrase name="setting_nntp_adv_text_title" date="1229020203" username="Wildev" version="1.0"><![CDATA[Newsgate advertisment text]]></phrase>
 			<phrase name="setting_nntp_from_address_desc" date="1294186856" username="Vitaly" version="1.8"><![CDATA[Used to generate message headers. Not used in this gate, but required by standard. All messages will be 'sent' from this address. Write your "no reply" email address.]]></phrase>
 			<phrase name="setting_nntp_from_address_title" date="1294186856" username="Vitaly" version="1.8"><![CDATA['From' email address]]></phrase>
 			<phrase name="setting_nntp_groups_desc" date="1294186946" username="Vitaly" version="1.8"><![CDATA[This groups will have 'full' access to NNTP, without delay.]]></phrase>
@@ -322,10 +340,6 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 	</phrases>
 	<options>
 		<settinggroup name="nntp_server" displayorder="65535">
-			<setting varname="nntp_adv_text" displayorder="70">
-				<datatype>free</datatype>
-				<optioncode>textarea</optioncode>
-			</setting>
 			<setting varname="nntp_groups" displayorder="80">
 				<datatype>free</datatype>
 				<optioncode>usergroup:5</optioncode>
@@ -364,6 +378,9 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 		</cron>
 	</cronentries>
 	<faqentries>
+		<faq faqname="nntp_faq" faqparent="faqroot" displayorder="10000" />
+		<faq faqname="nntp_setup" faqparent="nntp_faq" displayorder="10" />
+		<faq faqname="nntp_thunderbird" faqparent="nntp_faq" displayorder="20" />
 	</faqentries>
 	<templateedits>
 	</templateedits>

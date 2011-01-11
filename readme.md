@@ -27,6 +27,7 @@ Known Issues
     - ARTICLE accept only digital id
     - STAT, NEXT, LAST, NEWNEWS - not implemented
     - LIST NEWSGROUPS - not implemented
+ 4. No built-in SSL yet. Use stunnel4 now.
 
 Installation
 ============
