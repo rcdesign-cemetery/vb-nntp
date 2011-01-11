@@ -277,8 +277,8 @@ exports.getArticle = function(group_id, article_id, callback) {
     var sql;
    
     sql =       "SELECT " +
-                "   `CM`.`groupid`     AS `groupid`  , " +
-                "   `CM`.`messageid`   AS `messageid`, " +
+                "   `Index`.`groupid`     AS `groupid`  , " +
+                "   `Index`.`messageid`   AS `messageid`, " +
                 "   `CM`.`body`        AS `body`     , " +
                 "   `User`.`username`  AS `username` , " +
                 "   `Index`.`postid`   AS `postid`   , " +
@@ -292,15 +292,15 @@ exports.getArticle = function(group_id, article_id, callback) {
                 "              ), " +
                 "              '%a, %d %b %Y %T +00:00' " +
                 "    )  AS `gmdate` " +
-                "FROM `" + TablePrefix + "nntp_cache_messages` AS `CM` " +
-                "LEFT JOIN `" + TablePrefix + "nntp_index` AS `Index` " +
-                "   ON( `CM`.`groupid` = `Index`.`groupid` AND `CM`.`messageid` = `Index`.`messageid` ) " +
+                "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
+                "JOIN `" + TablePrefix + "nntp_cache_messages` AS `CM` " +
+                "   USING( `groupid`, `messageid` ) " +
                 "LEFT JOIN `user` AS `User` " +
-                "   ON( `Index`.`userid` = `User`.`userid` ) " +
+                "   USING ( `userid` ) " +
                 "WHERE " +
-                "   `CM`.`groupid` = " + group_id +
+                "   `Index`.`groupid` = " + group_id +
 
-                "   AND `CM`.`messageid`  = " + article_id +
+                "   AND `Index`.`messageid`  = " + article_id +
                 "   AND `Index`.`deleted` = 'no' ";
 
     db.queryRead(sql, function(err, rows) {

@@ -5,9 +5,9 @@ NNTP daemon for vbulletin server.
 
 Directory content:
 
-  - ./vb-nntp-core - core nntp addon for vbulletin (administration, authentication & maintenance)
-  - ./vb-nntp_topics_plugin - map forums to nntp groups
-  - ./daemon - nntp daemon, written on node.js
+    **./vb-nntp-core** - core nntp addon for vbulletin (administration, authentication & maintenance)
+    **./vb-nntp_topics_plugin** - map forums to nntp groups
+    **./daemon** - nntp daemon, written on node.js
 
 Requirements
 ============
@@ -23,7 +23,7 @@ Known Issues
     - use email instead of login
     - change password to one with latin chars only
  2. Daemon works in single process and uses single SQL connection to db. That's increase latency for huge setups. NNTP can be extended by sql connections pool & multinode on demand.
- 3. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commants, that are really used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
+ 3. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commands, used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
     - ARTICLE accept only digital id
     - STAT, NEXT, LAST, NEWNEWS - not implemented
     - LIST NEWSGROUPS - not implemented
