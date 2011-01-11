@@ -28,6 +28,8 @@ var log_handle;
 
 var log_file_name = '';
 
+var initialized = false;
+
 // 7 -> 07
 function pad(n) {
     return n < 10 ? '0' + n.toString(10) : n.toString(10);
@@ -88,7 +90,7 @@ exports.reopen = function() {
  */
 exports.init = function() {
     // set enabled events
-    var types;
+    var types, i;
 
     var cfg = config.vars;
 
@@ -99,7 +101,7 @@ exports.init = function() {
     }
     
     if ((0 !== types.length)) {
-        for (var i = 0; i < types.length; i++) {
+        for (i=0; i<types.length; i++) {
             if (typeof(types[i]) === 'undefined') {
                 throw Error(types[i] + ' type of logging is not supported');
             }
@@ -119,6 +121,8 @@ exports.init = function() {
         }
     }
 
+    initialized = true;
+    
     return true;
 };
 
@@ -140,10 +144,10 @@ exports.init = function() {
  */
 exports.write = function(log_type, msg, session) {
 
-    if (!log_handle) { 
-        return;
-    }
-    if (!enabled_types[log_type]) {
+    // If log module initilized, then skip disabled events,
+    // or if log completely disable in config.
+    // If not initialized - push all to console, to see startup fuckups.
+    if (initialized && (!log_handle || !enabled_types[log_type])) { 
         return;
     }
 
@@ -165,9 +169,13 @@ exports.write = function(log_type, msg, session) {
         message += msg.toString();
     }
 
-    try {
-        fs.writeSync(log_handle, timestamp() + ' ' + message + '\n', null, 'utf8');
-    } catch (e) {
+    if (!!log_handle) {
+        try {
+            fs.writeSync(log_handle, timestamp() + ' ' + message + '\n', null, 'utf8');
+        } catch (e) {
+        }
+    } else {
+        console.log(timestamp() + ' ' + message + '\n');
     }
 
     return;
