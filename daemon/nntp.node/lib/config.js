@@ -37,6 +37,7 @@ var parseIniFile = function (iniFilename) {
     var cfg = {};
     var ini_lines;
     var ini_file;
+    var i;
     
     try {
         ini_file = fs.readFileSync(iniFilename, 'utf-8');
@@ -46,7 +47,7 @@ var parseIniFile = function (iniFilename) {
 
     ini_lines = ini_file.split(/\r\n|\r|\n/);
 
-    for(var i=0; i<ini_lines.length; i++) {
+    for(i=0; i<ini_lines.length; i++) {
         var line = ini_lines[i];
         var match;
         
@@ -74,13 +75,15 @@ var parseIniFile = function (iniFilename) {
  *  @return {Array}
  */
 exports.get_list = function(str) {
+    var i;
     var result = [];
+    
     str = str.replace(/^\s+|\s+$/g, '');
     if (0 !== str.length)
     {
         result = str.split(',');
         
-        for (var i = 0; i < result.length; i++) {
+        for (i = 0; i < result.length; i++) {
             result[i] =  result[i].replace(/^\s+|\s+$/g, '');
         }
     }
@@ -95,11 +98,12 @@ exports.get_list = function(str) {
  */
 var mergeVbulletinSettings = function(cfg) {
     var settings_map = { 
-            nntp_message_id : 'GateId',
+//            nntp_message_id : 'GateId',
             nntp_from_address : 'FromAddress',
             bburl : 'ForumUrl',
             bbactive : 'Active'
     };
+    var i;
     
     var settings_str = '';
 
@@ -111,15 +115,19 @@ var mergeVbulletinSettings = function(cfg) {
     var res = db.querySync('SELECT * FROM ' + cfg.TablePrefix + 'setting WHERE varname IN(' + settings_str + ')');
 
     var rows = res.fetchAllSync();
-    for (var i=0; i<rows.length; i++) {
+    for (i=0; i<rows.length; i++) {
         var key = settings_map[rows[i].varname];
         cfg[key] = rows[i].value;
     }
 
+    if (!cfg.FromAddress || cfg.FromAddress === '') {
+        throw Error("You should set 'From' field in NNTP vBulletin settings. For example: noreply@your.forum");
+    }
+
     if (cfg.ForumUrl) {
         var URL = url.parse(cfg.ForumUrl);
-        cfg.authHost = URL.hostname;
-        cfg.authPort = URL.port || 80;
+        cfg.ForumHost = URL.hostname;
+        cfg.ForumPort = URL.port || 80;
     }
   
     return cfg;

@@ -86,8 +86,8 @@ var unescapeHTML = function(str) {
  * Build reference id string as "<referenceid>.ref@<gateid>"
  * Example: "120.ref@example.com"
  */
-var msgReferers = function(refererId) {
-    return refererId + '.ref@' + config.vars.GateId;
+var msgReferers = function(refererId, msgType) {
+    return '<' +refererId + '.' + msgType + '.ref@' + config.vars.ForumHost + '>';
 };
 
 
@@ -95,8 +95,8 @@ var msgReferers = function(refererId) {
  * Build message id string as "<messageid>@<gateid>"
  * Example: "5902@example.com"
  */
-var msgIdString = function(msgId) {
-    return msgId + '@' + config.vars.GateId;
+var msgIdString = function(msgId, msgType) {
+    return '<' + msgId + '.' + msgType + '@' + config.vars.ForumHost + '>';
 };
 
 
@@ -114,6 +114,15 @@ var msgFrom = function(username) {
  */      
 var msgSubject = function(subject) {
     return '=?UTF-8?B?' + (new Buffer(unescapeHTML(subject), 'utf8')).toString('base64') + '?=';
+};
+
+
+/**
+ * Build message field Xref
+ * Example: your.nntp.com cool.sex.binary:3748
+ */      
+var msgXref = function(group, msgId) {
+    return 'Xref: ' + config.vars.ForumHost + " " + group + ':' + msgId;
 };
 
 
@@ -153,12 +162,12 @@ var msgHeaders = function(article, session) {
     headers.push("Newsgroups: " +   session.currentgroup);
     headers.push("Subject: " +      msgSubject(article.subject));
     headers.push("Date: " +         article.gmdate);  // ??? .replace("+00:00", "+03:00")
-    headers.push("Message-ID: <" +  msgIdString(article.postid) + ">");
-    headers.push("References: <" +  msgReferers(article.refid) + ">");
+    headers.push("Message-ID: " +   msgIdString(article.postid, article.messagetype));
+    headers.push("References: " +  msgReferers(article.refid, article.messagetype));
     headers.push("Content-Type: text/html; charset=utf-8");
     headers.push("Content-Transfer-Encoding: base64");
     headers.push("Charset: utf-8");
-    headers.push("Xref: " + config.vars.ForumUrl + " " + session.currentgroup + ":" + article.messageid);       
+    headers.push(msgXref(session.currentgroup, article.messageid));       
     
     return headers;
 };
@@ -459,7 +468,7 @@ var cmdGroup = function(cmd, session, callback) {
  */          
 var cmdXover = function(cmd, session, callback) {
     var reply = [];
-    var range_min, range_max;
+    var range_min, range_max, i;
 
     if (session.currentgroup === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
@@ -499,17 +508,17 @@ var cmdXover = function(cmd, session, callback) {
 
         reply.push(nntpCode._224_overview_info_follows);
 
-        for(var i=0; i<xover.length; i++) {
+        for(i=0; i<xover.length; i++) {
             reply.push(
                 xover[i].messageid + "\t" +
                 msgSubject(xover[i].title) + "\t" +
                 msgFrom(xover[i].username) + "\t" +
                 xover[i].gmdate + "\t" +
-                "<" + msgIdString(xover[i].postid) + ">\t" +
-                msgReferers(xover[i].refid) +
-                "\t" +  "\t" + "\t"
-            );  // ?? Last 2 tabs for bytes count & lines
-                // count. Reread RFC 977 & 3977,  
+                msgIdString(xover[i].postid, xover[i].messagetype) + "\t" +
+                msgReferers(xover[i].refid, xover[i].messagetype) +
+                "\t" +  "\t" +
+                msgXref(session.currentgroup, xover[i].messageid)
+            );  // 2 empty tabs are for message size & message lines count
         }
                     
         reply.push(".");
@@ -568,6 +577,8 @@ var cmdXhdr = function(cmd, session, callback) {
     
     // use the same data, as for xover
     dm.getXover(group_id, range_min, range_max, function(err, xover) {
+        var i;
+        
         if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
@@ -581,7 +592,7 @@ var cmdXhdr = function(cmd, session, callback) {
 
         reply.push(nntpCode._221_xhdr_head_follows);
 
-        for(var i=0; i<xover.length; i++) {
+        for(i=0; i<xover.length; i++) {
             var hdr;
             
             switch (sub_cmd) {
@@ -592,10 +603,10 @@ var cmdXhdr = function(cmd, session, callback) {
                     hdr = msgSubject(xover[i].title);
                     break;
                 case 'MESSAGE-ID':
-                    hdr = '<' + msgIdString(xover[i].postid) + '>';
+                    hdr = msgIdString(xover[i].postid, xover[i].messagetype);
                     break;
                 case 'REFERENCES':
-                    hdr = msgReferers(xover[i].refid);
+                    hdr = msgReferers(xover[i].refid, xover[i].messagetype);
                     break;
                 case 'DATE':
                     hdr = xover[i].gmdate;
@@ -653,27 +664,27 @@ var cmdArticle = function(cmd, session, callback) {
 
         var reply_code;
 
-        if (cmd.code == 'ARTICLE') {
+        if (cmd.code === 'ARTICLE') {
             reply_code = nntpCode._220_article_follows;
         }  
-        if (cmd.code == 'HEAD') {
+        if (cmd.code === 'HEAD') {
             reply_code = nntpCode._221_head_follows;
         }  
-        if (cmd.code == 'BODY') {
+        if (cmd.code === 'BODY') {
             reply_code = nntpCode._222_body_follows;
         }
                 
-        reply.push(reply_code + article_id + ' <' +
-            msgIdString(article.postid) + '>');
+        reply.push(reply_code + article_id + 
+            msgIdString(article.postid, article.messagetype) + ' article');
 
         // Add headers
-        if (cmd.code == 'ARTICLE' || cmd.code == 'HEAD') {
+        if (cmd.code === 'ARTICLE' || cmd.code === 'HEAD') {
             reply = reply.concat(msgHeaders(article, session));
         }
 
         // Add message body
-        if (cmd.code == 'ARTICLE' || cmd.code == 'BODY') {
-            if(cmd.code == 'ARTICLE') {
+        if (cmd.code === 'ARTICLE' || cmd.code === 'BODY') {
+            if(cmd.code === 'ARTICLE') {
                 reply.push('');     // empty string between headers & body
             }
             reply = reply.concat(msgBody(article, session));

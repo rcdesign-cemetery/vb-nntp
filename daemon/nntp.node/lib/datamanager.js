@@ -28,7 +28,7 @@ var TablePrefix = '';
 var kickBackend = function(callback) {
     var cfg = config.vars;
     
-    var http_client = http.createClient(cfg.authPort, cfg.authHost);
+    var http_client = http.createClient(cfg.ForumPort, cfg.ForumHost);
     
     // handle connection problems
     http_client.on('error', function(err) {
@@ -36,14 +36,14 @@ var kickBackend = function(callback) {
     });
     
     var request = http_client.request('GET', '/nntpauth.php',
-                                        { 'host': cfg.authHost }
+                                        { 'host': cfg.ForumHost }
     );
 
     // handle backend reply
     request.on('response', function (response) {
         response.setEncoding('utf8');
         response.on('data', function (chunk) {
-            if (chunk == 'Ok') {
+            if (chunk === 'Ok') {
                 callback(null);
             } else {
                 callback(Error('Bad response from backend'));
@@ -59,6 +59,7 @@ var kickBackend = function(callback) {
  * Hash is used to keep groups order
  */
 var getGroups = function(session, callback) {
+    var i;
     // Try to load from cache first
     var groups = cache.groupsLoad(session.group_ids_str);
     if (groups) {
@@ -83,7 +84,7 @@ var getGroups = function(session, callback) {
         }
             
         groups = {};
-        for (var i=0; i<rows.length; i++) {
+        for (i=0; i<rows.length; i++) {
             groups[rows[i].group_name] = rows[i].id;
         }
         // remember result in cache
@@ -129,6 +130,7 @@ var getGroupsStat = function(session, ids, callback) {
 exports.fillGroupsList = function(session, callback) {
     var cached_grp_details = [];
     var uncached_ids = [];
+    var i;
 
     // Check if groups property already filled (not empty)
     if (Object.keys(session.groups).length > 0) {
@@ -171,7 +173,7 @@ exports.fillGroupsList = function(session, callback) {
 
             // extract groups stats by ids
             var grp_details = [];
-            for (var i=0; i<rows.length; i++) {
+            for (i=0; i<rows.length; i++) {
                 grp_details[rows[i].groupid] = rows[i];
             }
             
@@ -213,6 +215,7 @@ exports.getXover = function(group_id, range_min, range_max, callback) {
                 "   `Index`.`title`       AS `title`     , " +
                 "   `Index`.`groupid`     AS `groupid`   , " +
                 "   `Index`.`messageid`   AS `messageid` , " +
+                "   `Index`.`messagetype` AS `messagetype`, " +
                 "   `Index`.`parentid`    AS `refid`     , " +
                 "   `Index`.`postid`      AS `postid`    , " +
                 "   `Group`.`group_name`  AS `groupname` , " +
@@ -244,6 +247,7 @@ exports.getXover = function(group_id, range_min, range_max, callback) {
  * Get new groups list
  */
 exports.getNewGroups = function(session, time, callback) {
+    var i;
     var sql =   "SELECT " +
                 "   G.`group_name` AS `group` " +
                 "FROM `" + TablePrefix + "nntp_groups` AS G " +
@@ -258,7 +262,7 @@ exports.getNewGroups = function(session, time, callback) {
             callback(err);
         } else {
             var newgroups = {};
-            for(var i=0; i<rows.length; i++){
+            for(i=0; i<rows.length; i++){
                 // make shure that user have access
                 if (session.groups.name[rows[i].group]) {
                     newgroups[rows[i].group] = session.groups.name[rows[i].group];
@@ -279,6 +283,7 @@ exports.getArticle = function(group_id, article_id, callback) {
     sql =       "SELECT " +
                 "   `Index`.`groupid`     AS `groupid`  , " +
                 "   `Index`.`messageid`   AS `messageid`, " +
+                "   `Index`.`messagetype` AS `messagetype`, " +
                 "   `CM`.`body`        AS `body`     , " +
                 "   `User`.`username`  AS `username` , " +
                 "   `Index`.`postid`   AS `postid`   , " +
