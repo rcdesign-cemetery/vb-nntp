@@ -139,7 +139,7 @@ var msgBody = function(article, session) {
             .replace('<% USER MENU %>', menu)         
             .replace('<% MESSAGE BODY %>', article.body);
         
-    parsed = (new Buffer(parsed, 'utf8')).toString('base64');
+/*    parsed = (new Buffer(parsed, 'utf8')).toString('base64');
 
     // Cut long base64 string for short peaces
     var currentPos = 0;
@@ -147,6 +147,10 @@ var msgBody = function(article, session) {
         body.push(parsed.slice(currentPos, currentPos + 76));
         currentPos += 76;
     }
+*/
+    // Without base64
+    // Rip out \r if exists, then split by \n
+    body = parsed.replace(/\r/g,'').split('\n');
 
     return body;
 };
@@ -165,7 +169,8 @@ var msgHeaders = function(article, session) {
     headers.push("Message-ID: " +   msgIdString(article.postid, article.messagetype));
     headers.push("References: " +  msgReferers(article.refid, article.messagetype));
     headers.push("Content-Type: text/html; charset=utf-8");
-    headers.push("Content-Transfer-Encoding: base64");
+//    headers.push("Content-Transfer-Encoding: base64");
+    headers.push("Content-Transfer-Encoding: 8bit");
     headers.push("Charset: utf-8");
     headers.push(msgXref(session.currentgroup, article.messageid));       
     

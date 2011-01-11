@@ -98,7 +98,6 @@ exports.get_list = function(str) {
  */
 var mergeVbulletinSettings = function(cfg) {
     var settings_map = { 
-//            nntp_message_id : 'GateId',
             nntp_from_address : 'FromAddress',
             bburl : 'ForumUrl',
             bbactive : 'Active'
