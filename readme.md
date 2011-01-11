@@ -5,9 +5,9 @@ NNTP daemon for vbulletin server.
 
 Directory content:
 
-    **./vb-nntp-core** - core nntp addon for vbulletin (administration, authentication & maintenance)
-    **./vb-nntp_topics_plugin** - map forums to nntp groups
-    **./daemon** - nntp daemon, written on node.js
+>**./vb-nntp-core** - core nntp addon for vbulletin (administration, authentication & maintenance)
+>**./vb-nntp_topics_plugin** - map forums to nntp groups
+>**./daemon** - nntp daemon, written on node.js
 
 Requirements
 ============
