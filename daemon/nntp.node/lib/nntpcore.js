@@ -64,6 +64,9 @@ var makeReport = function(err, session) {
         result.username = session.username;
         result.user_id = session.userid;
         result.ip = session.ip;
+        if (!!session.currentgroup) {
+            result.currentgroup = session.currentgroup;
+        }
     }
 
     return result;
@@ -438,24 +441,24 @@ var cmdGroup = function(cmd, session, callback) {
             return;
         }
 
-        if (session.groups[cmd.params]) {
-            session.currentgroup = cmd.params;
-            callback(null, nntpCode._211_group_selected +
-                        session.groups[cmd.params].count + ' ' +
-                        session.groups[cmd.params].first + ' ' +
-                        session.groups[cmd.params].last + ' ' +
-                        session.currentgroup
-            );
-        }
-        else {
+        if (!session.groups[cmd.params]) {
             callback(null, nntpCode._411_newsgroup_notfound);
+            return;
         }
+            
+        session.currentgroup = cmd.params;
+        callback(null, nntpCode._211_group_selected +
+                    session.groups[cmd.params].count + ' ' +
+                    session.groups[cmd.params].first + ' ' +
+                    session.groups[cmd.params].last + ' ' +
+                    session.currentgroup
+        );
     });
 };
 
 
 /**
- * nntp XOVER commant
+ * nntp XOVER command
  * 
  * additional params:
  * 
@@ -499,13 +502,13 @@ var cmdXover = function(cmd, session, callback) {
         range_max = range_min;
     }
     
-    dm.getXover(group_id, range_min, range_max, function(err, xover) {
+    dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
         if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
         
-        if (!xover.length) {
+        if (!heads.length) {
             callback(makeReport('No such Article: ' + cmd.all, session),
                 nntpCode._423_no_article_in_group);
             return;
@@ -513,16 +516,16 @@ var cmdXover = function(cmd, session, callback) {
 
         reply.push(nntpCode._224_overview_info_follows);
 
-        for(i=0; i<xover.length; i++) {
+        for(i=0; i<heads.length; i++) {
             reply.push(
-                xover[i].messageid + "\t" +
-                msgSubject(xover[i].title) + "\t" +
-                msgFrom(xover[i].username) + "\t" +
-                xover[i].gmdate + "\t" +
-                msgIdString(xover[i].postid, xover[i].messagetype) + "\t" +
-                msgReferers(xover[i].refid, xover[i].messagetype) +
+                heads[i].messageid + "\t" +
+                msgSubject(heads[i].title) + "\t" +
+                msgFrom(heads[i].username) + "\t" +
+                heads[i].gmdate + "\t" +
+                msgIdString(heads[i].postid, heads[i].messagetype) + "\t" +
+                msgReferers(heads[i].refid, heads[i].messagetype) +
                 "\t" +  "\t" +
-                msgXref(session.currentgroup, xover[i].messageid)
+                msgXref(session.currentgroup, heads[i].messageid)
             );  // 2 empty tabs are for message size & message lines count
         }
                     
@@ -580,8 +583,7 @@ var cmdXhdr = function(cmd, session, callback) {
         range_max = range_min;
     }
     
-    // use the same data, as for xover
-    dm.getXover(group_id, range_min, range_max, function(err, xover) {
+    dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
         var i;
         
         if (err) {
@@ -589,7 +591,7 @@ var cmdXhdr = function(cmd, session, callback) {
             return;
         }
 
-        if (!xover.length) {
+        if (!heads.length) {
             callback(makeReport('No such Article: ' + cmd.all, session),
                 nntpCode._423_no_article_in_group);
             return;
@@ -597,34 +599,110 @@ var cmdXhdr = function(cmd, session, callback) {
 
         reply.push(nntpCode._221_xhdr_head_follows);
 
-        for(i=0; i<xover.length; i++) {
+        for(i=0; i<heads.length; i++) {
             var hdr;
             
             switch (sub_cmd) {
                 case 'FROM':
-                    hdr = msgFrom(xover[i].username);
+                    hdr = msgFrom(heads[i].username);
                     break;
                 case 'SUBJECT':
-                    hdr = msgSubject(xover[i].title);
+                    hdr = msgSubject(heads[i].title);
                     break;
                 case 'MESSAGE-ID':
-                    hdr = msgIdString(xover[i].postid, xover[i].messagetype);
+                    hdr = msgIdString(heads[i].postid, heads[i].messagetype);
                     break;
                 case 'REFERENCES':
-                    hdr = msgReferers(xover[i].refid, xover[i].messagetype);
+                    hdr = msgReferers(heads[i].refid, heads[i].messagetype);
                     break;
                 case 'DATE':
-                    hdr = xover[i].gmdate;
+                    hdr = heads[i].gmdate;
                     break;
                 default :
                     hdr = '';
             }
             
-            reply.push(xover[i].messageid + ' ' + hdr);
+            reply.push(heads[i].messageid + ' ' + hdr);
         }
                     
         reply.push(".");
         callback(null, reply);
+    });
+};
+
+
+/**
+ * nntp XOVER command
+ * 
+ * additional params:
+ * 
+ *      <range>
+ * 
+ *      XX-YY   - from XX to YY
+ *      XX-     - from XX to end
+ *      XX      - only XX
+ * 
+ *      (!) text message id can be used, but not implemented
+ * 
+ * replies:
+ * 
+ *      see rfc :)
+ */          
+var cmdListGroup = function(cmd, session, callback) {
+    var reply = [];
+    var range_min, range_max, i;
+
+    // Extract group name and range (if exists)
+    var group = (cmd.params.split(' ', 1)[0]);
+    var sub_params = cmd.params.slice(group.length).trimLeft();
+
+    // We don't support [range] param, report error
+    if (!!sub_params) {
+        callback(makeReport('Syntax error: ' + cmd.all, session),
+            nntpCode._501_syntax_error);
+        return;
+    }
+
+    dm.fillGroupsList(session, function(err) {
+        if (err) {
+            callback(makeReport(err, session), nntpCode._403_fuckup);
+            return;
+        }
+
+        if (!session.groups[group]) {
+            callback(null, nntpCode._411_newsgroup_notfound);
+            return;
+        }
+        
+        reply.push(nntpCode._211_group_selected +
+                    session.groups[group].count + ' ' +
+                    session.groups[group].first + ' ' +
+                    session.groups[group].last + ' ' +
+                    group + 'list follows'
+        );
+
+        range_min = session.groups[group].first;
+        range_max = session.groups[group].last;
+             
+        var group_id = session.groups[group].id;
+
+        // We can use more effective request, to get ids only. But who cares?
+        // Command is quire rare, so no need to optimize now.
+        dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
+            if (err) {
+                callback(makeReport(err, session), nntpCode._403_fuckup);
+                return;
+            }
+
+            session.currentgroup = group;
+            
+            for(i=0; i<heads.length; i++) {
+                reply.push(heads[i].messageid);
+            }
+                        
+            reply.push(".");
+            callback(null, reply);
+        });
     });
 };
 
@@ -657,8 +735,7 @@ var cmdArticle = function(cmd, session, callback) {
     var group_id = session.groups[session.currentgroup].id;
 
     dm.getArticle(group_id, article_id, function(err, article) {
-        if (err)
-        {
+        if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
@@ -715,6 +792,7 @@ exports.executeCommand = function(command, session, callback) {
         LIST : cmdList,
         NEWGROUPS : cmdNewGroups,
         GROUP : cmdGroup,
+        LISTGROUP : cmdListGroup,
         XOVER : cmdXover,
         XHDR  : cmdXhdr,
         ARTICLE : cmdArticle,

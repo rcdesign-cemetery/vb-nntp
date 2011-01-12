@@ -210,7 +210,7 @@ exports.fillGroupsList = function(session, callback) {
  * 
  * @return {Object} 
  */
-exports.getXover = function(group_id, range_min, range_max, callback) {
+exports.getHeaders = function(group_id, range_min, range_max, callback) {
     var sql =   "SELECT " +
                 "   `Index`.`title`       AS `title`     , " +
                 "   `Index`.`groupid`     AS `groupid`   , " +
