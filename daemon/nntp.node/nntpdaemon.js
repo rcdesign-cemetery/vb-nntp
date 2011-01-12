@@ -31,7 +31,6 @@ var conListener = function (stream) {
     stream.session.userid = 0;  
     stream.session.username = '';
     stream.session.password = '';
-    stream.session.accesstype = 'none';     // (none|demo|full)
     stream.session.css = '';
     stream.session.menu = '';
     stream.session.template = '';  

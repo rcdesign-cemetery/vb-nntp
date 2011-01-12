@@ -38,46 +38,54 @@ $sql =  "SELECT
         FROM
             " . TABLE_PREFIX . "nntp_userauth_cache
         WHERE
-            `access_granted` = 'no'";
+            `usergroupslist` = ''";
 $users = $vbulletin->db->query_read_slave($sql);
 
 while ($row = $vbulletin->db->fetch_array($users))
 {
     $userid = auth_user($row['username'], $row['authhash']);
 
-    // If auth ok, build permissions, else - delete record
+    $allowed = false;
     
     // We always work with pair (user,passowd). Without it session
     // will be kicked by parallel brute force login attempts. 
     if ($userid)
     {
         $userinfo = fetch_userinfo($userid);
-        $key = nntp_update_groupaccess_cache($userinfo);
+        
+        // Only users of specivied groups can access NNTP
+        if (is_member_of( $userinfo, unserialize( $vbulletin->options['nntp_groups']) ))
+        {
+            // Build permission
+            $key = nntp_update_groupaccess_cache($userinfo);
 
-        // Update user record
-        $sql = "UPDATE
-                    " . TABLE_PREFIX . "nntp_userauth_cache
-                SET
-                    `usergroupslist`    = '" . $vbulletin->db->escape_string( $key ) . "',
-                    `userid`            = " . $userid . ",
-                    `access_granted`    = 'yes'
-                WHERE
-                    `username`          = '" . $vbulletin->db->escape_string( $row['username'] ) . "'
-                    AND `authhash`      = '" . $vbulletin->db->escape_string( $row['authhash'] ) . "'";
+            // Update user record (fill user id & permissions reference)
+            $sql = "UPDATE
+                        " . TABLE_PREFIX . "nntp_userauth_cache
+                    SET
+                        `usergroupslist`    = '" . $vbulletin->db->escape_string( $key ) . "',
+                        `userid`            = " . $userid . "
+                    WHERE
+                        `username`          = '" . $vbulletin->db->escape_string( $row['username'] ) . "'
+                        AND `authhash`      = '" . $vbulletin->db->escape_string( $row['authhash'] ) . "'";
 
-        $vbulletin->db->query_write($sql);
+            $vbulletin->db->query_write($sql);
 
-        // Update statistics
-        // We don't need update on each login, when cache is used, so this place is ok.
-        $sql = "INSERT DELAYED IGNORE
-                    INTO " . TABLE_PREFIX . "nntp_stats  (userid, date)
-                VALUES (". $userid .",'". date('Y-m-d') . "')";
+            $allowed = true;
 
-        $vbulletin->db->query_write($sql);
+            // Update statistics
+            // We don't need update on each login, when cache is used, so this place is ok.
+            $sql = "INSERT DELAYED IGNORE
+                        INTO " . TABLE_PREFIX . "nntp_stats  (userid, date)
+                    VALUES (". $userid .",'". date('Y-m-d') . "')";
+
+            $vbulletin->db->query_write($sql);
+        }
     } 
-    else 
+    
+    if (!$allowed) 
     {
-        // Authorization failed - delete record
+        // Authorization failed or no permissions - delete record
         $sql = "DELETE FROM 
                     " . TABLE_PREFIX . "nntp_userauth_cache
                 WHERE
@@ -87,6 +95,7 @@ while ($row = $vbulletin->db->fetch_array($users))
     }
 }
 
+// Always return 'Ok' to show that script ok
 echo "Ok";
 
 
@@ -160,7 +169,6 @@ function nntp_update_groupaccess_cache($userinfo)
     sort($availablegroups);
     $nntpgroupslist = implode(',', $availablegroups);
 
-    $access_level = nntp_get_access_level($userinfo);
     $template     = vB_Template::create('nntp_message_template')->render();
     $css          = vB_Template::create('nntp_message_css')->render();
     $menu         = vB_Template::create('nntp_message_menu')->render();
@@ -173,31 +181,12 @@ function nntp_update_groupaccess_cache($userinfo)
         SET
             `usergroupslist` = '" . $vbulletin->db->escape_string( $key            ) . "',
             `nntpgroupslist` = '" . $vbulletin->db->escape_string( $nntpgroupslist ) . "',
-            `access_level`   = '" . $vbulletin->db->escape_string( $access_level   ) . "',
             `template`       = '" . $vbulletin->db->escape_string( $template       ) . "',
             `css`            = '" . $vbulletin->db->escape_string( $css            ) . "',
             `menu`           = '" . $vbulletin->db->escape_string( $menu           ) . "'
     ");
     
     return $key;
-}
-
-/*
- *  Get access level (full/demo/none) for user's groupslist
- */
-function nntp_get_access_level($userinfo)
-{
-    global $vbulletin;
-
-    // check group permissions
-    $fullaccessgroups = unserialize( $vbulletin->options['nntp_groups']);
-    if (is_member_of( $userinfo, $fullaccessgroups ))
-    {
-        return 'full';
-    }
-
-    // default value
-    return 'none';
 }
 
 ?>

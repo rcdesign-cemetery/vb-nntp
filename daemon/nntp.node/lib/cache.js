@@ -66,10 +66,8 @@ exports.sessionSave = function(session) {
 
     var s = {
         userid :        session.userid,
-        accesstype :    session.accesstype,
         css :           session.css,
         menu :          session.menu,
-        demotext :      session.demotext,
         template :      session.template,
         group_ids_str : session.group_ids_str
     };
@@ -113,19 +111,19 @@ exports.groupsLoad = function(group_ids_list) {
 /*
  * Save group counters - min, max, total.
  */
-exports.groupstatSave = function(group, accesstype) {
+exports.groupstatSave = function(group) {
     var gstat = {
         min :   group.first,
         max :   group.last,
         count : group.count
     }
-    set('grpstat_' + accesstype + group.id, gstat, groupStatTimeout);    
+    set('grpstat_' + group.id, gstat, groupStatTimeout);    
 };
 
 /*
  * Load groups counters - min, max, total.
  */
-exports.groupstatLoad = function(group_id, accesstype) {
-    return get('grpstat_' + accesstype + group_id);
+exports.groupstatLoad = function(group_id) {
+    return get('grpstat_' + group_id);
 };
 

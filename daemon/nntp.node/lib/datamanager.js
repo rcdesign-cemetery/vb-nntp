@@ -146,7 +146,7 @@ exports.fillGroupsList = function(session, callback) {
         
         // load counters from cache, where possible
         Object.keys(groups).forEach(function(name, index, array) {
-            var cached = cache.groupstatLoad(groups[name], session.accesstype);
+            var cached = cache.groupstatLoad(groups[name]);
             if(!!cached) {
                 cached_grp_details[groups[name]] = cached;
             } else {
@@ -191,7 +191,7 @@ exports.fillGroupsList = function(session, callback) {
                 
                 // Group is ready. If not from cache - store for future use.
                 if(!cached_grp_details[grp_id]) {
-                    cache.groupstatSave(session.groups[name], session.accesstype);
+                    cache.groupstatSave(session.groups[name]);
                 }
             });
             
@@ -317,6 +317,51 @@ exports.getArticle = function(group_id, article_id, callback) {
     });
 };
 
+/**
+ * Try to load user session from db
+ * 
+ * session.username & session.password must be filled
+ */
+var loadUser = function(session, callback) {
+    // Calculate user password hash
+    var authhash = crypto.createHash('md5').update(session.password).digest("hex");
+
+    // Both user record & grop permissions must exist
+    // JOIN guarantees that. If one absent, we should kick backend to build.
+    var sql = "SELECT " +
+            "   `U`.`usergroupslist`, " +
+            "   `U`.`userid`, " +
+            "   `G`.`nntpgroupslist`, " +
+            "   `G`.`template`, " +
+            "   `G`.`css`, " +
+            "   `G`.`menu` " +
+            "FROM `" + TablePrefix + "nntp_userauth_cache` AS U " +
+            "JOIN `" + TablePrefix + "nntp_groupaccess_cache` AS `G` " +
+            "   ON( `U`.`usergroupslist` = `G`.`usergroupslist` ) " +
+            "WHERE `U`.`username` = '" + db.escapeStr(session.username) + "' " +
+            "   AND `U`.`authhash` = '" + db.escapeStr(authhash) + "' " +
+            "   AND `U`.`usergroupslist` != '' ";
+
+    db.queryRead(sql, function(err, rows) {
+        if (err) {
+            callback(err);
+            return;
+        } 
+            
+        if (rows.length > 0) {
+            // Store user data to session & cache it
+            session.userid = rows[0].userid;
+            session.css = rows[0].css;
+            session.menu = rows[0].menu;
+            session.template = rows[0].template;
+            session.group_ids_str = rows[0].nntpgroupslist;
+
+            cache.sessionSave(session);
+        }
+        callback(null);
+    });
+};
+
 
 /**
  * AUTH Check
@@ -327,53 +372,6 @@ exports.getArticle = function(group_id, article_id, callback) {
 exports.checkAuth = function(session, callback) {
     var sql;
     
-    // User password hash
-    var authhash = crypto.createHash('md5').update(session.password).digest("hex");
-
-    var loadUser = function(session, callback) {
-        var sql = "SELECT " +
-                "   `U`.`access_granted`, " +
-                "   `U`.`usergroupslist`, " +
-                "   `U`.`userid`, " +
-                "   `G`.`nntpgroupslist`, " +
-                "   `G`.`access_level`, " +
-                "   `G`.`template`, " +
-                "   `G`.`css`, " +
-                "   `G`.`menu` " +
-                "FROM `" + TablePrefix + "nntp_userauth_cache` AS U " +
-                "LEFT JOIN `" + TablePrefix + "nntp_groupaccess_cache` AS `G` " +
-                "   ON( `U`.`usergroupslist` = `G`.`usergroupslist` ) " +
-                "WHERE `U`.`username` = '" + db.escapeStr(session.username) + "' " +
-                "   AND `U`.`authhash` = '" + db.escapeStr(authhash) + "' " +
-                "   AND `U`.`access_granted` = 'yes' ";
-
-        db.queryRead(sql, function(err, rows) {
-            if (err) {
-                callback(err);
-                return;
-            } 
-            
-            if (rows.length > 0) {
-                // kick out banned loosers
-                if (rows[0].access_level === 'none') {
-                    callback(null);
-                    return;
-                }
-                
-                // Store user data to session & cache it
-                session.userid = rows[0].userid;
-                session.accesstype = rows[0].access_level;
-                session.css = rows[0].css;
-                session.menu = rows[0].menu;
-                session.template = rows[0].template;
-                session.group_ids_str = rows[0].nntpgroupslist;
-
-                cache.sessionSave(session);
-            }
-            callback(null);
-        });
-    };
-
     // Filter brute force attempts
     if (cache.blacklistCheck(session)) {
         callback(Error('Brute force attampt. User: ' + session.username));
@@ -393,11 +391,14 @@ exports.checkAuth = function(session, callback) {
             return;
         }
         
-        if (session.userid) {    // user already exists
+        // User loaded? Great!
+        if (session.userid) {
             callback(null);
             return;
         }
-        
+
+        var authhash = crypto.createHash('md5').update(session.password).digest("hex");
+
         sql =   "REPLACE INTO `" + TablePrefix + "nntp_userauth_cache` " +
                 "   SET " +
                 "       `username`       = '" + db.escapeStr(session.username) + "', " +

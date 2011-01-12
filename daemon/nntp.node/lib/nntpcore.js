@@ -202,6 +202,10 @@ var cmdQuit = function(cmd, session, callback) {
     callback(null, nntpCode._205_goodbye, true); 
 };
 
+// 2 -> 02
+function pad(n) {
+    return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
 
 /**
  * DATE
@@ -211,10 +215,6 @@ var cmdQuit = function(cmd, session, callback) {
  *      111 yyyymmddhhmmss
  */
 var cmdDate = function(cmd, session, callback) {
-    function pad(n) {
-        return n < 10 ? '0' + n.toString(10) : n.toString(10);
-    }
-    
     var now = new Date();    
 
     callback(null, nntpCode._111_date +
