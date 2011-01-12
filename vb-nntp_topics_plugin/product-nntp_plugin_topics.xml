@@ -82,12 +82,12 @@
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-$nntp_index->set_post_id( $postinfo['postid']);
-$nntp_index->set_map_id( $foruminfo['forumid']);
-$nntp_index->set_user_id($postinfo['userid']);
-$nntp_index->set_parent_id ($threadinfo['threadid']);
+$message_info['postid'] = $postinfo['postid'];
+$message_info['forumid'] = $foruminfo['forumid'];
+$message_info['userid'] = $postinfo['userid'];
+$message_info['threadid'] = $threadinfo['threadid'];
 
-$nntp_index->save_message($edit);]]></phpcode>
+$nntp_index->save_message(array_merge($edit, $message_info));]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
 			<title>delete forum</title>
@@ -120,13 +120,11 @@ foreach ($threads_list as $target_parent_id)
 			<hookname>newpost_complete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
+$message_info['forumid'] = $foruminfo['forumid'];
+$message_info['userid'] = $vbulletin->userinfo['userid'];
+$message_info['threadid'] = $threadinfo['threadid'];
 
-$nntp_index->set_post_id( $post['postid']);
-$nntp_index->set_map_id( $foruminfo['forumid']);
-$nntp_index->set_user_id($vbulletin->userinfo['userid']);
-$nntp_index->set_parent_id ($threadinfo['threadid']);
-
-$nntp_index->save_message($post);]]></phpcode>
+$nntp_index->save_message(array_merge($post, $message_info));]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Check available groups list</title>

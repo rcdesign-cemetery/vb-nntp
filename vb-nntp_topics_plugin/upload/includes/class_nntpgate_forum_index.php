@@ -102,6 +102,12 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         {
             return false;
         }
+
+        $this->_post_id   = $post['postid'];
+        $this->_map_id    = $post['forumid'];
+        $this->_user_id   = $post['userid'];
+        $this->_parent_id = $post['threadid'];
+
         $this->_make_message_title($post['title'], $post['prefixid']);
         $this->_make_message_body($post);
         parent::save_message();
