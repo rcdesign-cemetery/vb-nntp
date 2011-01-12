@@ -6,11 +6,11 @@
 	<version>1.7</version>
 	<url />
 	<versioncheckurl />
-	<apm_releasedate></apm_releasedate>
-	<apm_author></apm_author>
-	<apm_relatedurl></apm_relatedurl>
-	<apm_extrainfo></apm_extrainfo>
-	<apm_extraedit></apm_extraedit>
+	<apm_releasedate>0</apm_releasedate>
+	<apm_author />
+	<apm_relatedurl />
+	<apm_extrainfo />
+	<apm_extraedit />
 	<dependencies>
 	</dependencies>
 	<codes>
@@ -82,16 +82,12 @@
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-$nntp_index->set_post($edit);
 $nntp_index->set_post_id( $postinfo['postid']);
 $nntp_index->set_map_id( $foruminfo['forumid']);
 $nntp_index->set_user_id($postinfo['userid']);
 $nntp_index->set_parent_id ($threadinfo['threadid']);
-$threadtitle = $threadman->fetch_field( 'title' );
-$prefix = $threadman->fetch_field( 'prefixid' );
 
-$nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
-$nntp_index->save_message();]]></phpcode>
+$nntp_index->save_message($edit);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
 			<title>delete forum</title>
@@ -113,13 +109,10 @@ foreach ($forumlist as $forum_id)
 			<hookname>inlinemod_domovethread</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-$nntp_index->set_map_id( $foruminfo['forumid']);
-$target_map_id = $destforuminfo['forumid'];
-$target_group_id = $nntp_index->get_group_id_by_map_id($target_map_id, true);
 $threads_list = array_keys($threadarray);
 foreach ($threads_list as $target_parent_id)
 {
-    $nntp_index->move_posts_by_parent_id($target_group_id, $target_parent_id);
+    $nntp_index->move_posts_by_parent_id($target_parent_id, $destforuminfo['forumid']);
 }]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
@@ -127,16 +120,13 @@ foreach ($threads_list as $target_parent_id)
 			<hookname>newpost_complete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-    $nntp_index->set_post($post);
-    $nntp_index->set_post_id( $post['postid']);
-    $nntp_index->set_map_id( $foruminfo['forumid']);
-    $nntp_index->set_user_id($vbulletin->userinfo['userid']);
-    $nntp_index->set_parent_id ($threadinfo['threadid']);
-    $threadtitle = $threadinfo['title'];
-    $prefix = $threadinfo['prefixid'];
 
-    $nntp_index->make_message_title($vbphrase, $threadtitle, $prefix);
-    $nntp_index->save_message();]]></phpcode>
+$nntp_index->set_post_id( $post['postid']);
+$nntp_index->set_map_id( $foruminfo['forumid']);
+$nntp_index->set_user_id($vbulletin->userinfo['userid']);
+$nntp_index->set_parent_id ($threadinfo['threadid']);
+
+$nntp_index->save_message($post);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Check available groups list</title>
@@ -264,19 +254,14 @@ print_table_footer( 2 );]]></phpcode>
 			<hookname>postdata_delete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $index = new NNTPGate_Forum_Index();
-$index->set_post_id($postid);
-$index->delete_message_by_post_id();]]></phpcode>
+$index->delete_message($postid);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>thread delete post</title>
 			<hookname>threaddata_delete</hookname>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $index = new NNTPGate_Forum_Index();
-$forum_id = $this->fetch_field( 'forumid' );
-$index->set_map_id($forum_id);
-$index->get_group_id_by_map_id();
-$index->set_parent_id($threadid);
-$index->delete_message_by_parent_id();]]></phpcode>
+$index->delete_messages_by_parent_id($threadid);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>move thread</title>
@@ -285,11 +270,7 @@ $index->delete_message_by_parent_id();]]></phpcode>
 {
     require_once DIR . '/includes/class_nntpgate_forum_index.php';
     $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-    $nntp_index->set_map_id( $foruminfo['forumid']);
-    $target_map_id = $destforuminfo['forumid'];
-    $target_group_id = $nntp_index->get_group_id_by_map_id($target_map_id, true);
-    $target_parent_id = $threadinfo['threadid'];
-    $nntp_index->move_posts_by_parent_id($target_group_id, $target_parent_id);
+    $nntp_index->move_posts_by_parent_id($threadinfo['threadid'], $destforuminfo['forumid']);
 }]]></phpcode>
 		</plugin>
 	</plugins>

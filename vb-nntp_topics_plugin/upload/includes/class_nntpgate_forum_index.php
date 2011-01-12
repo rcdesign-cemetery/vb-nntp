@@ -14,13 +14,14 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
     /**
      * Формируем заголовок сообщений, на основе заголовка треда
      *
-     * @access public
-     * @param array $vbphrase
+     * @access protected 
+     * @global array $vbphrase
      * @param string $threadtitle
      * @param string $prefixid
      */
-    public function make_message_title($vbphrase, $threadtitle = '', $prefixid = '')
+    protected function _make_message_title($threadtitle = '', $prefixid = '')
     {
+        global $vbphrase;
         if( empty($prefixid) OR empty($threadtitle))
         {
             $sql = "SELECT
@@ -37,34 +38,24 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
             }
         }
 
+        $prefix = '';
         if( !empty( $prefixid ) )
         {
             $prefixid = 'prefix_' . $prefixid . '_title_plain';
             $prefix   = $vbphrase["$prefixid"] . ' ';
         }
-        $this->set_title($prefix . $threadtitle);
+        $this->_title = $prefix . $threadtitle;
     }
     
 
     /**
-     *
-     *
-     * @access public
-     * @param array $value
-     */
-    public function set_post($value)
-    {
-        $this->_post = $value;
-    }
-
-
-    /**
      * Формирует(но не сохраняет) тело сообщения для кэш-таблицы nntp_cache_messages
      *
+     * @param array $post
      * @global vB_Registry $vbulletin
      * @return string
      */
-    protected function _make_message_body()
+    protected function _make_message_body($post)
     {
         global $vbulletin, $foruminfo, $threadinfo;
         $message = '';
@@ -73,8 +64,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         {
             return $message;
         }
-        $post =  $this->_post;
-        $post['pagetext'] = $this->_post['message'];
+        $post['pagetext'] = $post['message'];
         $post['allowsmilie'] = $post['enablesmilies'];
 
         // get attachments
@@ -96,9 +86,9 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         $postbit_factory->bbcode_parser->set_parse_userinfo($userinfo);
         $postbit_obj =& $postbit_factory->fetch_postbit('post_nntp');
 
-        $message = $postbit_obj->construct_postbit($post);
+        $this->_body = $postbit_obj->construct_postbit($post);
 
-        return $message;
+        return $this->_body;
     }
 
     /**
@@ -106,12 +96,14 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
      *
      * @return bool
      */
-    public function save_message()
+    public function save_message($post)
     {
-        if (empty($this->_post['message']))
+        if (empty($post['message']))
         {
             return false;
         }
+        $this->_make_message_title($post['title'], $post['prefixid']);
+        $this->_make_message_body($post);
         parent::save_message();
     }
 
