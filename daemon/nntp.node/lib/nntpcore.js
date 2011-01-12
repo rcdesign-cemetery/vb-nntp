@@ -133,7 +133,6 @@ var msgXref = function(group, msgId) {
  * Build body for ARTICLE & BODY commands
  */
 var msgBody = function(article, session) {
-    var body = [];
 
     var menu = session.menu.split('<% POST ID %>').join(article.postid)
                             .split('<% THREAD ID %>').join(article.refid);
@@ -144,18 +143,19 @@ var msgBody = function(article, session) {
         
 /*    parsed = (new Buffer(parsed, 'utf8')).toString('base64');
 
+	var body = [];
+
     // Cut long base64 string for short peaces
     var currentPos = 0;
     while (parsed.length > currentPos) {
         body.push(parsed.slice(currentPos, currentPos + 76));
         currentPos += 76;
     }
+    return body;
 */
     // Without base64
     // Rip out \r if exists, then split by \n
-    body = parsed.replace(/\r/g,'').split('\n');
-
-    return body;
+    return parsed.replace(/\r/g,'').split('\n');
 };
 
 
@@ -193,6 +193,7 @@ var cmdHelp = function(cmd, session, callback) {
     reply.push(".");
 
     callback(null, reply);
+    reply = null;
 };
 
 
@@ -355,6 +356,7 @@ var cmdList = function(cmd, session, callback) {
 
         reply.push(".");
         callback(null, reply);
+        reply = null;
     });
 };
 
@@ -412,6 +414,7 @@ var cmdNewGroups = function(cmd, session, callback) {
 
                 reply.push(".");
                 callback(null, reply);
+                reply = null;
             });
         });    
     } else {
@@ -531,6 +534,7 @@ var cmdXover = function(cmd, session, callback) {
                     
         reply.push(".");
         callback(null, reply);
+        reply = null;
     });
 };
 
@@ -627,6 +631,7 @@ var cmdXhdr = function(cmd, session, callback) {
                     
         reply.push(".");
         callback(null, reply);
+        reply = null;
     });
 };
 
@@ -674,13 +679,6 @@ var cmdListGroup = function(cmd, session, callback) {
             return;
         }
         
-        reply.push(nntpCode._211_group_selected +
-                    session.groups[group].count + ' ' +
-                    session.groups[group].first + ' ' +
-                    session.groups[group].last + ' ' +
-                    group + 'list follows'
-        );
-
         range_min = session.groups[group].first;
         range_max = session.groups[group].last;
              
@@ -694,6 +692,13 @@ var cmdListGroup = function(cmd, session, callback) {
                 return;
             }
 
+			reply.push(nntpCode._211_group_selected +
+						session.groups[group].count + ' ' +
+						session.groups[group].first + ' ' +
+						session.groups[group].last + ' ' +
+						group + 'list follows'
+			);
+			
             session.currentgroup = group;
             
             for(i=0; i<heads.length; i++) {
@@ -702,6 +707,7 @@ var cmdListGroup = function(cmd, session, callback) {
                         
             reply.push(".");
             callback(null, reply);
+            reply = null;
         });
     });
 };
@@ -756,7 +762,7 @@ var cmdArticle = function(cmd, session, callback) {
             reply_code = nntpCode._222_body_follows;
         }
                 
-        reply.push(reply_code + article_id + 
+        reply.push(reply_code + article_id + ' ' +
             msgIdString(article.postid, article.messagetype) + ' article');
 
         // Add headers
@@ -773,6 +779,7 @@ var cmdArticle = function(cmd, session, callback) {
         } 
         reply.push('.');  
         callback(null, reply);
+        reply = null;
     });
 };
 

@@ -26,7 +26,7 @@ var set = function(key, value, time) {
 // get data from cache
 var get = function(key) {
     var data = cache[key];
-    if (typeof data != "undefined") {
+    if (typeof data !== "undefined") {
         if (isNaN(data.expire) || data.expire >= Date.now()) {
             return data.value;
         } else {
@@ -60,9 +60,7 @@ exports.blacklistAdd = function(session) {
  *  Check if session ip is in blacklist
  */
 exports.sessionSave = function(session) {
-    var key = 's_' +
-            crypto.createHash('md5').update(session.username).digest("hex") +
-            session.password;
+    var key = 's_' + session.username + '\t@\t' + session.password;
 
     var s = {
         userid :        session.userid,
@@ -79,9 +77,7 @@ exports.sessionSave = function(session) {
  *  Increase blacklist counter for session IP
  */
 exports.sessionLoad = function(session) {
-    var key = 's_' +
-            crypto.createHash('md5').update(session.username).digest("hex") +
-            session.password;
+    var key = 's_' + session.username + '\t@\t' + session.password;
 
     var s = get(key);
     
@@ -116,7 +112,8 @@ exports.groupstatSave = function(group) {
         min :   group.first,
         max :   group.last,
         count : group.count
-    }
+    };
+    
     set('grpstat_' + group.id, gstat, groupStatTimeout);    
 };
 

@@ -19,6 +19,10 @@ var config = require('./lib/config.js');
 var nntpCore = require('./lib/nntpcore.js'); 
 var logger = require('./lib/logger.js');
 
+var nntpDaemon = [];
+
+var CRLF = '\r\n';
+
 var conListener = function (stream) {
 
     stream.setNoDelay();
@@ -38,11 +42,11 @@ var conListener = function (stream) {
     // [name] -> (id, count, first, last, permissions)
     stream.session.groups = {};
     stream.session.group_ids_str = '';      // "2,5,7,8,9,15,..."
-  
-    // Standard connection events
+
+    /* Standard connection events */
     
     stream.on('connect', function () {
-        stream.write("201 server ready - no posting allowed\r\n"); 
+        stream.write("201 server ready - no posting allowed" + CRLF); 
     });
 
     // Close connection on long idle
@@ -55,34 +59,12 @@ var conListener = function (stream) {
         stream.destroy();
     });
 
-    // Free settion objects
+    // Free session objects
     stream.on('close', function () {
+		stream.session.groups =null;
         stream.session = null;
     });
 
-    var sendReply = function(err, reply, finish) {
-        finish = finish || false;   // = 1 if connect should be closed
-        var response = '';
-        
-
-        if (err) {
-            logger.write('error', err, stream.session);
-        }
-
-        if (reply) {
-            // Check if we have string or array of strings
-            if (Array.isArray(reply)) {
-                response = reply.join("\r\n") + "\r\n";
-            } else {
-                response = reply + "\r\n";
-            }
-            stream.write(response);
-            
-            logger.write('reply', reply, stream.session); 
-        }
-        
-        if (finish) { stream.end();  }
-    };
     
     // Received NNTP command from client (data string) 
     stream.on('data', function (data) {
@@ -91,7 +73,30 @@ var conListener = function (stream) {
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
         logger.write('cmd', "C --> " + msg, stream.session);
 
-        nntpCore.executeCommand(command, stream.session, sendReply);
+        nntpCore.executeCommand(command, stream.session, function(err, reply, finish) {
+            finish = finish || false;   // = 1 if connect should be closed
+            var response = '';
+            
+            if (err) {
+                logger.write('error', err, stream.session);
+            }
+
+            if (reply) {
+                // Check if we have string or array of strings
+                if (Array.isArray(reply)) {
+                    response = reply.join(CRLF) + CRLF;
+                } else {
+                    response = reply + CRLF;
+                }
+                stream.write(response);
+                
+                logger.write('reply', reply, stream.session); 
+            }
+            
+            response = null;
+            
+            if (finish) { stream.end();  }
+        });
     });
 };
 
@@ -109,6 +114,15 @@ process.on('exit', function () {
 });
 
 process.on('SIGHUP', function () {
+	var connections = 0;
+	var i;
+	
+	for(i=0; i<nntpDaemon.length; i++) {
+		connections += nntpDaemon[i].connections;
+	}
+	
+	logger.write('info', 'Current connections: ' + connections);
+
     logger.reopen();
 });
 
@@ -123,8 +137,6 @@ try {
 }
 
 logger.init();
-
-var nntpDaemon = [];
 
 var cfg = config.vars;
 

@@ -420,10 +420,14 @@ exports.checkAuth = function(session, callback) {
 
                 loadUser(session, function(err) {
                     if (err) {
-                        cache.blacklistAdd(session);
                         callback(err);
                         return;
                     }
+                    
+                    if (!session.userid) {
+                        cache.blacklistAdd(session);						
+					}
+					
                     callback(null);
                 });
             });

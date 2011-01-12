@@ -69,9 +69,10 @@ exports.test = function(config) {
                     config.Port);
     if (test_conn.connectedSync() && test_conn.pingSync()) {
         test_conn.closeSync();
+        test_conn = null;
         return true;
     }
-    
+    test_conn = null;    
     return false;
 };
 
@@ -114,7 +115,7 @@ exports.queryRead = function(sql, callback) {
             } else {
                 callback(null, rows);
             }
-
+            rows = null;
         }
     });
 };
