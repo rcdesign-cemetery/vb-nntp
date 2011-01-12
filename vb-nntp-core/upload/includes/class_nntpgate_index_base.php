@@ -255,54 +255,7 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
      * @return string
      */
     abstract protected function _get_message_type();
-
-    /**
-     *
-     * @param int $value
-     */
-    public function set_parent_id($value)
-    {
-        $this->_parent_id = (int)$value;
-    }
-
-
-    /**
-     *
-     * @param int $value
-     */
-    public function set_user_id($value)
-    {
-        $this->_user_id = (int)$value;
-    }
-
-    /**
-     *
-     * @param string $value
-     */
-    public function set_title($value)
-    {
-        $this->_title = $value;
-    }
-
-    /**
-     *
-     * @param int $value
-     */
-    public function set_post_id($value)
-    {
-        $this->_post_id = (int)$value;
-    }
-
-    /**
-     *
-     * @access public
-     * @param int $value
-     */
-    public function set_map_id($value)
-    {
-        $this->_map_id = (int)$value;
-    }
-
+    
     /**
      * Get list of post id's
      *
@@ -417,7 +370,6 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         $messages = array();
         $to_group_id = $this->_get_group_id_by_map_id($to);
         
-        // if target has no nntp group, then just delete
         if ($to_group_id)
         {
             $sql = "SELECT
@@ -439,9 +391,10 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         }
 
         // remove old messages
+        // "delete_by_parent_id" doesn't check groups. So, remove old messages before insert new ones.
         $this->delete_messages_by_post_id_list($post_id_list);
 
-        // save messages on new plase
+        // save messages on new place
         if (!empty($messages))
         {
             foreach ($messages as $message)
