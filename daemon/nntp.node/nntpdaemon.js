@@ -45,9 +45,19 @@ var conListener = function (stream) {
         stream.write("201 server ready - no posting allowed\r\n"); 
     });
 
+    // Close connection on long idle
     stream.on('timeout', function () {
-        stream.end();
         stream.destroy();
+    });
+
+    // Catch error, if client terminates connection during reply
+    stream.on('error', function () {
+        stream.destroy();
+    });
+
+    // Free settion objects
+    stream.on('close', function () {
+        stream.session = null;
     });
 
     var sendReply = function(err, reply, finish) {
