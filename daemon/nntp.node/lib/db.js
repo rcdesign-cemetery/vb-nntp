@@ -97,10 +97,7 @@ exports.queryRead = function(sql, callback) {
             }
             callback(err);
         } else {
-
-// TODO Why async fetch sucks ????
-/*
-            res.fetchAll(function (err, rows) {
+            res.fetchAll(false, function (err, rows) {
                 if (err) {
                     callback(err);
                 } else {
@@ -108,14 +105,6 @@ exports.queryRead = function(sql, callback) {
                     callback(null, rows);
                 }
             });
-*/
-            var rows = res.fetchAllSync();
-            if(!rows) {
-                callback(Error('can\'t fetch, shit happened'));
-            } else {
-                callback(null, rows);
-            }
-            rows = null;
         }
     });
 };

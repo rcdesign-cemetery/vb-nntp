@@ -14,6 +14,7 @@
 var net = require('net');
 var tls = require('tls');
 var fs = require('fs');
+var util = require('util');
 
 var config = require('./lib/config.js'); 
 var nntpCore = require('./lib/nntpcore.js'); 
@@ -122,6 +123,7 @@ process.on('SIGHUP', function () {
 	}
 	
 	logger.write('info', 'Current connections: ' + connections);
+    logger.write('info', 'Memory usage:\n' + util.inspect(process.memoryUsage()));
 
     logger.reopen();
 });

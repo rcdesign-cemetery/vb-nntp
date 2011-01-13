@@ -783,29 +783,30 @@ var cmdArticle = function(cmd, session, callback) {
     });
 };
 
+var nntpNoAuth = {
+    HELP : cmdHelp,
+    QUIT : cmdQuit,
+    DATE : cmdDate,
+    AUTHINFO : cmdAuthinfo,
+    MODE : cmdMode
+};
+
+var nntpWithAuth = {
+    LIST : cmdList,
+    NEWGROUPS : cmdNewGroups,
+    GROUP : cmdGroup,
+    LISTGROUP : cmdListGroup,
+    XOVER : cmdXover,
+    XHDR  : cmdXhdr,
+    ARTICLE : cmdArticle,
+    HEAD : cmdArticle,
+    BODY : cmdArticle    
+};
+
 /**
  * Main call to process all commands 
  */
 exports.executeCommand = function(command, session, callback) { 
-    var nntpNoAuth = {
-        HELP : cmdHelp,
-        QUIT : cmdQuit,
-        DATE : cmdDate,
-        AUTHINFO : cmdAuthinfo,
-        MODE : cmdMode
-    };
-
-    var nntpWithAuth = {
-        LIST : cmdList,
-        NEWGROUPS : cmdNewGroups,
-        GROUP : cmdGroup,
-        LISTGROUP : cmdListGroup,
-        XOVER : cmdXover,
-        XHDR  : cmdXhdr,
-        ARTICLE : cmdArticle,
-        HEAD : cmdArticle,
-        BODY : cmdArticle    
-    };
 
     var cmd = {};
 
