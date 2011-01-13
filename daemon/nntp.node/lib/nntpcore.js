@@ -141,21 +141,25 @@ var msgBody = function(article, session) {
             .replace('<% USER MENU %>', menu)         
             .replace('<% MESSAGE BODY %>', article.body);
         
-/*    parsed = (new Buffer(parsed, 'utf8')).toString('base64');
-
-	var body = [];
-
     // Cut long base64 string for short peaces
+    // -- DON'T -- switch to plain text without tests on production!
+    // Thunderbird seems to reload all plain messages in synced groups
+    // for offline. No ideas why. Base64 partly solved problem.
+    
+	var body = [];
+    parsed = (new Buffer(parsed, 'utf8')).toString('base64');
+
     var currentPos = 0;
     while (parsed.length > currentPos) {
         body.push(parsed.slice(currentPos, currentPos + 76));
         currentPos += 76;
     }
     return body;
-*/
+/*
     // Without base64
     // Rip out \r if exists, then split by \n
     return parsed.replace(/\r/g,'').split('\n');
+*/
 };
 
 
@@ -172,8 +176,8 @@ var msgHeaders = function(article, session) {
     headers.push("Message-ID: " +   msgIdString(article.postid, article.messagetype));
     headers.push("References: " +  msgReferers(article.refid, article.messagetype));
     headers.push("Content-Type: text/html; charset=utf-8");
-//    headers.push("Content-Transfer-Encoding: base64");
-    headers.push("Content-Transfer-Encoding: 8bit");
+    headers.push("Content-Transfer-Encoding: base64");
+//    headers.push("Content-Transfer-Encoding: 8bit");
     headers.push("Charset: utf-8");
     headers.push(msgXref(session.currentgroup, article.messageid));       
     
