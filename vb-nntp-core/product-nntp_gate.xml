@@ -226,6 +226,16 @@ $template_hook['navbar_quick_links_menu_pos4'] .= $templater->render();]]></phpc
 			<hookname>template_groups</hookname>
 			<phpcode><![CDATA[$only['nntp'] = $vbphrase['group_nntp_gate'];]]></phpcode>
 		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Cleanup statistic after user removing</title>
+			<hookname>userdata_delete</hookname>
+			<phpcode><![CDATA[$sql = "DELETE 
+        FROM 
+            " . TABLE_PREFIX . "nntp_stats
+        WHERE 
+            `userid` = " . $this->existing['userid'];
+$this->registry->db->query_write($sql);]]></phpcode>
+		</plugin>
 	</plugins>
 	<phrases>
 		<phrasetype name="Control Panel Global" fieldname="cpglobal">
