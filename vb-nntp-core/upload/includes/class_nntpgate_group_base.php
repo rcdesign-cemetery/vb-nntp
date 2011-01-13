@@ -24,7 +24,7 @@ class NNTPGate_Group_Base extends NNTPGate_Object
      *
      * @var string
      */
-    protected $_is_active = null; //enum('yes', 'no')
+    protected $_is_active = 'yes'; //enum('yes', 'no')
 
     /**
      *
