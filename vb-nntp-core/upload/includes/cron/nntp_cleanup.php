@@ -49,9 +49,9 @@ while( $group = $db->fetch_array( $groups ) )
   $group_id = (int)$group['groupid'];
 
   // Select min message id to clear below
-  $sql = "SELECT GREATEST((
+  $sql = "SELECT IFNULL( GREATEST((
               SELECT 
-                MIN(`messageid`)
+                `messageid`
               FROM
                 `" . TABLE_PREFIX . "nntp_index`
               WHERE
@@ -59,7 +59,7 @@ while( $group = $db->fetch_array( $groups ) )
                 `deleted` = 'no' 
               ORDER BY 
                 `messageid` DESC
-              LIMIT
+              LIMIT 1 OFFSET
               " . ($limit ) . "
           ), (
               SELECT
@@ -69,7 +69,7 @@ while( $group = $db->fetch_array( $groups ) )
               WHERE
                 `groupid`    = " . $group_id  . " AND
                 `datetime`  <= FROM_UNIXTIME(" . $min_date . ")
-          )) AS delete_below_id";
+          )), 0) AS delete_below_id";
   $min = $db->query_first($sql); 
   $delete_below_id = (int)$min['delete_below_id'];
 
