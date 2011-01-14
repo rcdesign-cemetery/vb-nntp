@@ -50,7 +50,7 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_index (
   `groupid` int(10) unsigned NOT NULL,
-  `messageid` int(10) unsigned NOT NULL auto_increment,
+  `messageid` int(10) unsigned NOT NULL,
   `parentid` int(10) unsigned NOT NULL,
   `title` char(255) NOT NULL,
   `datetime` datetime NOT NULL,
