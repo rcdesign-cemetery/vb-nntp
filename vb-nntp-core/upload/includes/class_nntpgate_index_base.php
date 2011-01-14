@@ -3,6 +3,11 @@ require_once DIR . '/includes/class_nntpgate_object.php';
 abstract class NNTPGate_Index_Base extends NNTPGate_Object
 {
     /**
+     * @const int
+     */
+    const LOCK_TIMEOUT = 1;
+
+    /**
      *
      * @var int
      */
@@ -161,27 +166,45 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                     WHERE
                         `groupid`     =  " . $this->_group_id . " AND
                         `messageid`   =  " . $this->_message_id;
+            $this->_db->query_write($sql);
         }
         else
         {
-            $sql = "INSERT INTO
-                        `" . TABLE_PREFIX . "nntp_index`
-                    SET
-                        `groupid`     =  " . $this->_group_id . ",
-                        `parentid`    =  " . $this->_parent_id . ",
-                        `userid`      =  " . $this->_user_id . ",
-                        `postid`      =  " . $this->_post_id . ",
-                        `messagetype` = '" . $this->_get_message_type() . "',
-                        `title`       = '" . $this->_db->escape_string($this->_title) . "',
-                        `datetime`    = FROM_UNIXTIME( " . $this->_date_time . " ),
-                        `deleted`     = 'no'";
-        }
-        $this->_db->query_write($sql);
+            // 2 Columns AUTO-INCREMENT emulation in InnoDB
+            $sql ="INSERT INTO `nntp_index` ( 
+                        `groupid`, 
+                        `messageid`,
+                        `parentid`,
+                        `userid`,
+                        `postid`,
+                        `messagetype`,
+                        `title`,
+                        `datetime`,
+                        `deleted`) 
+                    SELECT 
+                        " . $this->_group_id . ", 
+                        (
+                            SELECT
+                                IFNULL(MAX(`messageid`)+1,1)
+                            FROM
+                                `nntp_index`
+                            WHERE
+                                `groupid` = " . $this->_group_id . "),
+                        " . $this->_parent_id . ",
+                        " . $this->_user_id . ",
+                        " . $this->_post_id . ",
+                        '" . $this->_get_message_type() . "', 
+                        '" . $this->_db->escape_string($this->_title) . "', 
+                        FROM_UNIXTIME( " . $this->_date_time . " ),
+                        'no'";
 
-        if( !$this->_message_id )
-        {
+            $this->_db->query_read("SELECT GET_LOCK('vb-nntp_gate', " . self::LOCK_TIMEOUT . ")");
+            $this->_db->query_write($sql);
+            $this->_db->query_read("SELECT RELEASE_LOCK('vb-nntp_gate')");
+
             $this->_message_id = $this->_db->insert_id();
         }
+
         $this->_cache_message_save();
         return $this->_message_id;
     }
