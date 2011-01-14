@@ -19,6 +19,7 @@ var util = require('util');
 var config = require('./lib/config.js'); 
 var nntpCore = require('./lib/nntpcore.js'); 
 var logger = require('./lib/logger.js');
+var s = require('./lib/session.js'); 
 
 var nntpDaemon = [];
 
@@ -29,20 +30,8 @@ var conListener = function (stream) {
     stream.setNoDelay();
     stream.setTimeout(config.vars.InactiveTimeout*1000);
 
-    // User info and config
-    stream.session = {};
-    stream.session.ip = stream.remoteAddress;
-    stream.session.currentgroup = "";       // selected group name
-    stream.session.userid = 0;  
-    stream.session.username = '';
-    stream.session.password = '';
-    stream.session.css = '';
-    stream.session.menu = '';
-    stream.session.template = '';  
-    // User accessible groups
-    // [name] -> (id, count, first, last, permissions)
-    stream.session.groups = {};
-    stream.session.group_ids_str = '';      // "2,5,7,8,9,15,..."
+    // create session object & store it's id
+    stream.sid = s.create(stream);
 
     /* Standard connection events */
     
@@ -60,10 +49,9 @@ var conListener = function (stream) {
         stream.destroy();
     });
 
-    // Free session objects
+    // Destroy session on close
     stream.on('close', function () {
-		stream.session.groups =null;
-        stream.session = null;
+		s.destroy(stream.sid);
     });
 
     
@@ -72,14 +60,14 @@ var conListener = function (stream) {
         var command = data.toString().trimLeft().replace(/\s+$/, '');
 
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
-        logger.write('cmd', "C --> " + msg, stream.session);
+        logger.write('cmd', "C --> " + msg, s.get(stream.sid));
 
-        nntpCore.executeCommand(command, stream.session, function(err, reply, finish) {
+        nntpCore.executeCommand(command, s.get(stream.sid), function(err, reply, finish) {
             finish = finish || false;   // = 1 if connect should be closed
             var response = '';
             
             if (err) {
-                logger.write('error', err, stream.session);
+                logger.write('error', err, s.get(stream.sid));
             }
 
             if (reply) {
@@ -91,7 +79,7 @@ var conListener = function (stream) {
                 }
                 stream.write(response);
                 
-                logger.write('reply', reply, stream.session); 
+                logger.write('reply', reply, s.get(stream.sid)); 
             }
             
             response = null;
@@ -122,8 +110,11 @@ process.on('SIGHUP', function () {
 		connections += nntpDaemon[i].connections;
 	}
 	
-	logger.write('info', 'Current connections: ' + connections);
-    logger.write('info', 'Memory usage:\n' + util.inspect(process.memoryUsage()));
+	logger.write('info', 'Stat dumped.\n' +
+        'Current connections: ' + connections + '\n\n' +
+        'Memory usage:\n' + util.inspect(process.memoryUsage()) + '\n\n' +
+        s.dump()
+    );
 
     logger.reopen();
 });
@@ -155,7 +146,7 @@ if (cfg.DaemonPort) {
     }
     nntpDaemon.push(server);
 }
-// this not yet work with new ssl framework
+// this not yet works with new ssl framework
 // use stunnel4 now.
 if (cfg.DaemonSslPort) {
     var options = {
