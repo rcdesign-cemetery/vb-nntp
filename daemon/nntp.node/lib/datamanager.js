@@ -384,6 +384,10 @@ exports.checkAuth = function(session, callback) {
         return;
     }
 
+    // Ping db & reconnect on lost connection
+    // A bit dirty - syncronous call. But ping is cheap & quick
+    db.ping();
+
     // Fallback to DB load, then try full auth
     loadUser(session, function(err) {
         if (err) {

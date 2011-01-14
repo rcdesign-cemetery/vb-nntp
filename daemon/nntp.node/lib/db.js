@@ -111,6 +111,21 @@ exports.queryRead = function(sql, callback) {
 
 
 /**
+ * Ping DB & reconnect if connection lost.
+ * return true on success, false on fail
+ */
+exports.ping = function() {
+    if (!conn.connectedSync()) {
+        // db not initialised - connect
+        return connect();
+    } else {
+        // ping & reconnect on fail
+        return conn.pingSync() ? true : connect();
+    }
+};
+
+
+/**
  * Run async write query with connection check
  * and automatic free result.
  */
