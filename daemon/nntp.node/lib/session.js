@@ -15,6 +15,7 @@ var util = require('util');
 
 // Storage for session objects;
 var sessionStore = {};
+var sid_next = 1;
 
 exports.get = function(sid) {
     if (sessionStore[sid]) {
@@ -40,7 +41,8 @@ exports.create = function(stream) {
     s.groups = {};
     s.group_ids_str = '';      // "2,5,7,8,9,15,..."
     
-    var key = +new Date() + '_' + stream.remoteAddress+ '_' + stream.remotePort;
+    var key = '_' + sid_next;
+    sid_next += 1;
     sessionStore[key] = s;
     
     return key;
