@@ -212,30 +212,27 @@ exports.fillGroupsList = function(session, callback) {
  */
 exports.getHeaders = function(group_id, range_min, range_max, callback) {
     var sql =   "SELECT " +
-                "   `Index`.`title`       AS `title`     , " +
-                "   `Index`.`groupid`     AS `groupid`   , " +
-                "   `Index`.`messageid`   AS `messageid` , " +
-                "   `Index`.`messagetype` AS `messagetype`, " +
-                "   `Index`.`parentid`    AS `refid`     , " +
-                "   `Index`.`postid`      AS `postid`    , " +
-                "   `Group`.`group_name`  AS `groupname` , " +
-                "   `Index`.`username`     AS `username`  , " +
+                "   `title`       AS `title`     , " +
+                "   `groupid`     AS `groupid`   , " +
+                "   `messageid`   AS `messageid` , " +
+                "   `messagetype` AS `messagetype`, " +
+                "   `parentid`    AS `refid`     , " +
+                "   `postid`      AS `postid`    , " +
+                "   `username`     AS `username`  , " +
                 "   DATE_FORMAT( " +
                 "       CONVERT_TZ( " +
-                "           `Index`.`datetime`, " +
+                "           `datetime`, " +
                 "           'SYSTEM', " +
                 "           '+00:00' " +
                 "       ), " +
                 "       '%a, %d %b %Y %T +00:00' " +
                 "   ) AS `gmdate` " +
-                "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
-                "LEFT JOIN `" + TablePrefix + "nntp_groups` AS `Group` " +
-                "    ON( `Index`.`groupid` = `Group`.`id`    ) " +
+                "FROM `" + TablePrefix + "nntp_index` " +
                 "WHERE " +
-                "    `Index`.`groupid` = " + group_id +
-                "    AND `Index`.`deleted` = 'no' " +
-                "    AND `Index`.`messageid` >= " + range_min +
-                "    AND `Index`.`messageid` <= " + range_max;
+                "    `groupid` = " + group_id +
+                "    AND `deleted` = 'no' " +
+                "    AND `messageid` >= " + range_min +
+                "    AND `messageid` <= " + range_max;
 
     db.queryRead(sql, callback);
 };
