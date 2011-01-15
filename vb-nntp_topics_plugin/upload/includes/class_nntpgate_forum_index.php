@@ -22,7 +22,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
     protected function _make_message_title($threadtitle = '', $prefixid = '')
     {
         global $vbphrase;
-        if( empty($prefixid) OR empty($threadtitle))
+        if( is_null($prefixid) OR empty($threadtitle))
         {
             $sql = "SELECT
                         `prefixid`, `title`
@@ -49,7 +49,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
     
 
     /**
-     * Формирует(но не сохраняет) тело сообщения для кэш-таблицы nntp_cache_messages
+     * Формирует(но не сохраняет) тело сообщения
      *
      * @param array $post
      * @global vB_Registry $vbulletin
@@ -64,7 +64,10 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         {
             return $message;
         }
-        $post['pagetext'] = $post['message'];
+        if (empty($post['pagetext']))
+        {
+            $post['pagetext'] = $post['message'];
+        }
         $post['allowsmilie'] = $post['enablesmilies'];
 
         // get attachments
@@ -98,7 +101,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
      */
     public function save_message($post)
     {
-        if (empty($post['message']))
+        if (empty($post['message']) AND empty($post['pagetext']))
         {
             return false;
         }
@@ -106,6 +109,7 @@ class NNTPGate_Forum_Index extends NNTPGate_Index_Base
         $this->_post_id   = $post['postid'];
         $this->_map_id    = $post['forumid'];
         $this->_user_id   = $post['userid'];
+        $this->_user_name = $post['username'];
         $this->_parent_id = $post['threadid'];
 
         $this->_make_message_title($post['title'], $post['prefixid']);

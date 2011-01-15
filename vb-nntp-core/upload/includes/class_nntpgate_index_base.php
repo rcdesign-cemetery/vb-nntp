@@ -8,6 +8,11 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
     const LOCK_TIMEOUT = 1;
 
     /**
+     * @const string
+     */
+    const LOCK_NAME = 'vbnntp';
+
+    /**
      *
      * @var int
      */
@@ -42,6 +47,12 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
      * @var int
      */
     protected $_user_id = null;
+
+    /**
+     *
+     * @var string
+     */
+    protected $_user_name = '';
 
     /**
      *
@@ -159,9 +170,9 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                         `" . TABLE_PREFIX . "nntp_index`
                     SET
                         `parentid`    =  " . $this->_parent_id . ",
-                        `userid`      =  " . $this->_user_id . ",
                         `postid`      =  " . $this->_post_id . ",
                         `title`       = '" . $this->_db->escape_string($this->_title) . "',
+                        `body`        = '" . $this->_db->escape_string($this->_body) . "',
                         `datetime`    = FROM_UNIXTIME( " . $this->_date_time . " )
                     WHERE
                         `groupid`     =  " . $this->_group_id . " AND
@@ -176,9 +187,11 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                         `messageid`,
                         `parentid`,
                         `userid`,
+                        `username`,
                         `postid`,
                         `messagetype`,
                         `title`,
+                        `body`,
                         `datetime`,
                         `deleted`) 
                     SELECT 
@@ -192,49 +205,21 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
                                 `groupid` = " . $this->_group_id . "),
                         " . $this->_parent_id . ",
                         " . $this->_user_id . ",
+                        '" . $this->_db->escape_string($this->_user_name) . "', 
                         " . $this->_post_id . ",
                         '" . $this->_get_message_type() . "', 
                         '" . $this->_db->escape_string($this->_title) . "', 
+                        '" . $this->_db->escape_string($this->_body) . "',
                         FROM_UNIXTIME( " . $this->_date_time . " ),
                         'no'";
-
-            $this->_db->query_read("SELECT GET_LOCK('vb-nntp_gate', " . self::LOCK_TIMEOUT . ")");
+            $this->_db->query_read("SELECT GET_LOCK('" . self::LOCK_NAME. "', " . self::LOCK_TIMEOUT . ")");
             $this->_db->query_write($sql);
-            $this->_db->query_read("SELECT RELEASE_LOCK('vb-nntp_gate')");
+            $this->_db->query_read("SELECT RELEASE_LOCK('" . self::LOCK_NAME . "')");
 
             $this->_message_id = $this->_db->insert_id();
         }
 
-        $this->_cache_message_save();
         return $this->_message_id;
-    }
-
-    /**
-     * Save message body (it's in separate table, for better speed)
-     *
-     * @return bool
-     */
-    protected function _cache_message_save()
-    {
-
-        if( empty($this->_group_id) || empty($this->_message_id))
-        {
-            return false;
-        }
-
-        /*
-         *  Save message info to cache
-         */
-        $sql = "INSERT INTO
-                    `" . TABLE_PREFIX . "nntp_cache_messages`
-                SET
-                    `groupid`   =  " . $this->_group_id . ",
-                    `messageid` =  " . $this->_message_id . ",
-                    `body`      = '" . $this->_db->escape_string($this->_body) . "'
-                ON DUPLICATE KEY UPDATE
-                    `body`      = '" . $this->_db->escape_string($this->_body) . "'";
-        $this->_db->query_write($sql);
-        return true;
     }
 
     /**
@@ -396,16 +381,13 @@ abstract class NNTPGate_Index_Base extends NNTPGate_Object
         if ($to_group_id)
         {
             $sql = "SELECT
-                        ni.*, nc.`body`
+                        ni.*
                     FROM
-                        `" . TABLE_PREFIX . "nntp_index` AS ni,
-                        `" . TABLE_PREFIX . "nntp_cache_messages` AS nc 
+                        `" . TABLE_PREFIX . "nntp_index` AS ni
                     WHERE
                         ni.`postid` IN ('" .  implode( "', '", $post_id_list ) . "') AND
                         ni.`messagetype` = '" . $this->_get_message_type() . "' AND
-                        ni.`deleted`   = 'no' AND
-                        ni.`groupid` = nc.`groupid` AND
-                        ni.`messageid` = nc.`messageid";
+                        ni.`deleted`   = 'no'";
             $res = $this->_db->query_read($sql);
             while ($row = $this->_db->fetch_array($res))
             {
