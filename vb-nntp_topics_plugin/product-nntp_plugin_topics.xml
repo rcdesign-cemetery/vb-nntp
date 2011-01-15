@@ -85,9 +85,14 @@ $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
 $message_info['postid'] = $postinfo['postid'];
 $message_info['forumid'] = $foruminfo['forumid'];
 $message_info['userid'] = $postinfo['userid'];
+$message_info['username'] = $edit['username'];
 $message_info['threadid'] = $threadinfo['threadid'];
+$message_info['title']    = $edit['title'];
+$message_info['prefixid'] = $threadinfo['prefixid'];
+$message_info['message'] = $edit['message'];
+$message_info['dateline'] = $edit['dateline'];
 
-$nntp_index->save_message(array_merge($edit, $message_info));]]></phpcode>
+$nntp_index->save_message($message_info);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="99">
 			<title>delete forum</title>
@@ -118,13 +123,23 @@ foreach ($threads_list as $target_parent_id)
 		<plugin active="1" executionorder="99">
 			<title>add new post/thread</title>
 			<hookname>newpost_complete</hookname>
-			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
-$nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
-$message_info['forumid'] = $foruminfo['forumid'];
-$message_info['userid'] = $vbulletin->userinfo['userid'];
-$message_info['threadid'] = $threadinfo['threadid'];
-
-$nntp_index->save_message(array_merge($post, $message_info));]]></phpcode>
+			<phpcode><![CDATA[// first message for new threads, already indexed.
+// see comment in "threadfpdata_postsave" hook
+if ('thread' != $type)
+{
+    require_once DIR . '/includes/class_nntpgate_forum_index.php';
+    $nntp_index = new NNTPGate_Forum_Index($vbulletin->db);
+    $message_info['postid'] = $post['postid'];
+    $message_info['forumid'] = $foruminfo['forumid'];
+    $message_info['userid'] = $vbulletin->userinfo['userid'];
+    $message_info['threadid'] = $threadinfo['threadid'];
+    $message_info['username'] = $vbulletin->userinfo['username'];
+    $message_info['title']    = $post['title'];
+    $message_info['prefixid'] = $threadinfo['prefixid'];
+    $message_info['message'] = $post['message'];
+    $message_info['dateline'] = $post['dateline'];
+    $nntp_index->save_message($message_info);
+}]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>Check available groups list</title>
@@ -260,6 +275,25 @@ $index->delete_message($postid);]]></phpcode>
 			<phpcode><![CDATA[require_once DIR . '/includes/class_nntpgate_forum_index.php';
 $index = new NNTPGate_Forum_Index();
 $index->delete_messages_by_parent_id($threadid);]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>Save first post in thread (hack)</title>
+			<hookname>threadfpdata_postsave</hookname>
+			<phpcode><![CDATA[// some script(such as report) used low-level method of create the thread
+require_once DIR . '/includes/class_nntpgate_forum_index.php';
+
+$message_info['postid']   = $this->fetch_field('firstpostid', 'thread');
+$message_info['forumid']  = $this->info['forum']['forumid'];
+$message_info['userid']   = $this->fetch_field('userid', 'post');
+$message_info['username'] = $this->fetch_field('username', 'post');
+$message_info['threadid'] = $this->fetch_field('threadid');
+$message_info['title']    = $this->fetch_field('title', 'post');
+$message_info['prefixid'] = $this->fetch_field('prefixid', 'thread');
+$message_info['pagetext'] = $this->fetch_field('pagetext', 'post');
+$message_info['dateline'] = $this->fetch_field('dateline', 'post');
+
+$nntp_index = new NNTPGate_Forum_Index($this->dbobject);
+$nntp_index->save_message($message_info);]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>move thread</title>

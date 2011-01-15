@@ -80,15 +80,6 @@ while( $group = $db->fetch_array( $groups ) )
             `groupid`   = " . $group_id . " AND 
             `messageid` < " . $delete_below_id;
   $db->query_write($sql);
-
-  // Clean messages bodies 
-  $sql = "DELETE FROM
-            `" . TABLE_PREFIX . "nntp_cache_messages`
-          WHERE
-            `groupid`   = " . $group_id . " AND 
-            `messageid` < " . $delete_below_id;
-  $db->query_write($sql);
-
 }
 $db->free_result($groups);
 
@@ -113,7 +104,6 @@ $db->query_write($sql);
 // optimize globally, with other tables.
 $db->query_write("
   OPTIMIZE TABLE
-    `" . TABLE_PREFIX . "nntp_cache_messages`,
     `" . TABLE_PREFIX . "nntp_index`  
 ");
 */

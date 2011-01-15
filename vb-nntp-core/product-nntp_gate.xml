@@ -16,13 +16,6 @@
 	<codes>
 		<code version="1.8">
 			<installcode><![CDATA[$db->hide_errors();
-" . TABLE_PREFIX . ";
-$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_cache_messages (
-  `groupid` int(10) unsigned NOT NULL,
-  `messageid` int(10) unsigned NOT NULL,
-  `body` text NOT NULL,
-  PRIMARY KEY  (`groupid`,`messageid`)
-) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache (
   `usergroupslist` char(100) NOT NULL,
@@ -52,9 +45,11 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `groupid` int(10) unsigned NOT NULL,
   `messageid` int(10) unsigned NOT NULL,
   `parentid` int(10) unsigned NOT NULL,
-  `title` char(255) NOT NULL,
+  `title` varchar(250) NOT NULL,
+  `body` text NOT NULL,
   `datetime` datetime NOT NULL,
   `userid` int(10) unsigned NOT NULL,
+  `username` varchar(100) NOT NULL,
   `deleted` enum('no','yes') NOT NULL,
   `messagetype` enum('forum','blog') NOT NULL,
   `postid` int(10) unsigned NOT NULL,
@@ -85,8 +80,6 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
 
 $db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->hide_errors();
-
-$db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_cache_messages");
 
 $db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache");
 
