@@ -69,13 +69,13 @@ var getGroups = function(session, callback) {
     
     // Load from db
     var sql =   "SELECT " +
-                "   G.`group_name`, " +
-                "   G.`id` " +
-                "FROM `" + TablePrefix + "nntp_groups` AS G " +
+                "   `group_name`, " +
+                "   `id` " +
+                "FROM `" + TablePrefix + "nntp_groups` " +
                 "WHERE " +
-                "   G.`id` IN(" + session.group_ids_str + ") " +
+                "   `id` IN(" + session.group_ids_str + ") " +
                 "ORDER BY " +
-                "   G.`group_name`";
+                "   `group_name`";
 
     db.queryRead(sql, function(err, rows) {
         if (err) {
@@ -108,15 +108,15 @@ var getGroupsStat = function(session, ids, callback) {
     }
 
     var sql =   "SELECT" +
-                "   `Index`.`groupid`   , " +
-                "   MAX( `Index`.`messageid` ) AS 'max'  , " +
-                "   MIN( `Index`.`messageid` ) AS 'min'  , " +
-                "   COUNT( `Index`.`messageid` ) AS 'count' " +
+                "   `groupid`   , " +
+                "   MAX( `messageid` ) AS 'max'  , " +
+                "   MIN( `messageid` ) AS 'min'  , " +
+                "   COUNT( `messageid` ) AS 'count' " +
                 "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "WHERE " +
-                "   `Index`.`groupid` IN(" + ids.join(',') + ") " +
-                "   AND `Index`.`deleted` = 'no' " + 
-                "GROUP BY `Index`.`groupid` ";
+                "   `groupid` IN(" + ids.join(',') + ") " +
+                "   AND `deleted` = 'no' " + 
+                "GROUP BY `groupid` ";
 
     db.queryRead(sql, function(err, rows) {
         callback(err, rows);
@@ -219,7 +219,7 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
                 "   `Index`.`parentid`    AS `refid`     , " +
                 "   `Index`.`postid`      AS `postid`    , " +
                 "   `Group`.`group_name`  AS `groupname` , " +
-                "   `User`.`username`     AS `username`  , " +
+                "   `Index`.`username`     AS `username`  , " +
                 "   DATE_FORMAT( " +
                 "       CONVERT_TZ( " +
                 "           `Index`.`datetime`, " +
@@ -231,8 +231,6 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
                 "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "LEFT JOIN `" + TablePrefix + "nntp_groups` AS `Group` " +
                 "    ON( `Index`.`groupid` = `Group`.`id`    ) " +
-                "LEFT JOIN `user` AS `User` " +
-                "    ON( `Index`.`userid`  = `User`.`userid` ) " +
                 "WHERE " +
                 "    `Index`.`groupid` = " + group_id +
                 "    AND `Index`.`deleted` = 'no' " +
@@ -249,13 +247,13 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
 exports.getNewGroups = function(session, time, callback) {
     var i;
     var sql =   "SELECT " +
-                "   G.`group_name` AS `group` " +
-                "FROM `" + TablePrefix + "nntp_groups` AS G " +
+                "   `group_name` AS `group` " +
+                "FROM `" + TablePrefix + "nntp_groups` " +
                 "WHERE " +
-                "       G.`id` IN(" + session.group_ids_str + ") " +
-                "   AND G.`is_active`    = 'yes' " +
-                "   AND G.`date_create` >= '" + time + "' " +
-                "ORDER BY G.`group_name` ";
+                "       `id` IN(" + session.group_ids_str + ") " +
+                "   AND `is_active`    = 'yes' " +
+                "   AND `date_create` >= '" + time + "' " +
+                "ORDER BY `group_name` ";
 
     db.queryRead(sql, function(err, rows) {
         if (err) {
@@ -281,32 +279,28 @@ exports.getArticle = function(group_id, article_id, callback) {
     var sql;
    
     sql =       "SELECT " +
-                "   `Index`.`groupid`     AS `groupid`  , " +
-                "   `Index`.`messageid`   AS `messageid`, " +
-                "   `Index`.`messagetype` AS `messagetype`, " +
-                "   `CM`.`body`        AS `body`     , " +
-                "   `User`.`username`  AS `username` , " +
-                "   `Index`.`postid`   AS `postid`   , " +
-                "   `Index`.`parentid` AS `refid`    , " +
-                "   `Index`.`title`    AS `subject`  , " +
+                "   `groupid`     AS `groupid`  , " +
+                "   `messageid`   AS `messageid`, " +
+                "   `messagetype` AS `messagetype`, " +
+                "   `body`        AS `body`     , " +
+                "   `username`  AS `username` , " +
+                "   `postid`   AS `postid`   , " +
+                "   `parentid` AS `refid`    , " +
+                "   `title`    AS `subject`  , " +
                 "    DATE_FORMAT( " +
                 "       CONVERT_TZ( " +
-                "                `Index`.`datetime`, " +
+                "                `datetime`, " +
                 "                'SYSTEM', " +
                 "                '+00:00' " +
                 "              ), " +
                 "              '%a, %d %b %Y %T +00:00' " +
                 "    )  AS `gmdate` " +
-                "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
-                "JOIN `" + TablePrefix + "nntp_cache_messages` AS `CM` " +
-                "   USING( `groupid`, `messageid` ) " +
-                "LEFT JOIN `user` AS `User` " +
-                "   USING ( `userid` ) " +
+                "FROM `" + TablePrefix + "nntp_index` " +
                 "WHERE " +
-                "   `Index`.`groupid` = " + group_id +
+                "   `groupid` = " + group_id +
 
-                "   AND `Index`.`messageid`  = " + article_id +
-                "   AND `Index`.`deleted` = 'no' ";
+                "   AND `messageid`  = " + article_id +
+                "   AND `deleted` = 'no' ";
 
     db.queryRead(sql, function(err, rows) {
         if (err) {
