@@ -30,14 +30,15 @@ exports.create = function(stream) {
     var s = {};
     s.ip = stream.remoteAddress;
     s.currentgroup = "";       // selected group name
+    s.currentgroup_first = 0;
+    s.currentgroup_last = 0;
     s.userid = 0;  
     s.username = '';
     s.password = '';
     s.css = '';
     s.menu = '';
     s.template = '';
-    // User accessible groups
-    // [name] -> (id, count, first, last, permissions)
+    // map user group names to group ids 
     s.groups = {};
     s.group_ids_str = '';      // "2,5,7,8,9,15,..."
     

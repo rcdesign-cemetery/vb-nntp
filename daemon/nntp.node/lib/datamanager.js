@@ -54,68 +54,19 @@ var kickBackend = function(callback) {
     request.end();
 };
 
-/**
- * Internal. Load all available user groups (without counters) as hash.
- * Hash is used to keep groups order
- */
-var getGroups = function(session, callback) {
-    var i;
-    // Try to load from cache first
-    var groups = cache.groupsLoad(session.group_ids_str);
-    if (groups) {
-        callback(null, groups);
-        return;
-    }
-    
-    // Load from db
-    var sql =   "SELECT " +
-                "   `group_name`, " +
-                "   `id` " +
-                "FROM `" + TablePrefix + "nntp_groups` " +
-                "WHERE " +
-                "   `id` IN(" + session.group_ids_str + ") " +
-                "ORDER BY " +
-                "   `group_name`";
-
-    db.queryRead(sql, function(err, rows) {
-        if (err) {
-            callback(err);
-            return;
-        }
-            
-        groups = {};
-        for (i=0; i<rows.length; i++) {
-            groups[rows[i].group_name] = rows[i].id;
-        }
-        // remember result in cache
-        cache.groupsSave(session.group_ids_str, groups);
-
-        callback(null, groups);
-    });
-};
-
 
 /**
- * Internal. Loads groups stat from DB
- * 
- * @param {Array} id    Array of group ids to scan
+ * Get last/first groups stat from DB
+ * for all user groups
  */
-var getGroupsStat = function(session, ids, callback) {
-    // if nothing to load - return empty result
-    if (!ids.length) {
-        callback(null, []);
-        return;
-    }
-
+exports.getGroupsStat = function(session, callback) {
     var sql =   "SELECT" +
                 "   `groupid`   , " +
-                "   MAX( `messageid` ) AS 'max'  , " +
-                "   MIN( `messageid` ) AS 'min'  , " +
-                "   COUNT( `messageid` ) AS 'count' " +
+                "   MIN( `messageid` ) AS 'first', " +
+                "   MAX( `messageid` ) AS 'last' " +
                 "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "WHERE " +
-                "   `groupid` IN(" + ids.join(',') + ") " +
-                "   AND `deleted` = 'no' " + 
+                "   `groupid` IN(0," + session.group_ids_str + ") " +
                 "GROUP BY `groupid` ";
 
     db.queryRead(sql, function(err, rows) {
@@ -123,81 +74,23 @@ var getGroupsStat = function(session, ids, callback) {
     });
 };
 
-
 /**
- * Fill "groups" object in user session
+ * Get last/first/total for selected group from DB
+ * for all user groups
  */
-exports.fillGroupsList = function(session, callback) {
-    var cached_grp_details = [];
-    var uncached_ids = [];
-    var i;
+exports.getGroupInfo = function(session, group_id, callback) {
+    var sql =   "SELECT" +
+                "   MIN( `messageid` ) AS 'first', " +
+                "   MAX( `messageid` ) AS 'last', " +
+                "   COUNT( `messageid` ) AS 'total' " +
+                "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
+                "WHERE " +
+                "   `groupid` = " + group_id + " " +
+                "   AND `deleted` = 'no' ";
 
-    // Check if groups property already filled (not empty)
-    if (Object.keys(session.groups).length > 0) {
-        callback(null);
-        return;
-    }
-    
-    getGroups(session, function(err, groups) {
-        if(err) {
-            callback(err);
-            return;
-        }
-        
-        // load counters from cache, where possible
-        Object.keys(groups).forEach(function(name, index, array) {
-            var cached = cache.groupstatLoad(groups[name]);
-            if(!!cached) {
-                cached_grp_details[groups[name]] = cached;
-            } else {
-                uncached_ids.push(groups[name]);
-            }
-        });
-
-        getGroupsStat(session, uncached_ids, function(err, rows) {
-            if(err) {
-                callback(err);
-                return;
-            }
-
-            // create group objects
-            Object.keys(groups).forEach(function(name, index, array) {
-                session.groups[name] = {
-                    id :        groups[name],
-                    first :     0,
-                    last :      0,
-                    count :     0,
-                    post :      'n'
-                };
-            });
-
-            // extract groups stats by ids
-            var grp_details = [];
-            for (i=0; i<rows.length; i++) {
-                grp_details[rows[i].groupid] = rows[i];
-            }
-            
-            // join cached data
-            grp_details = grp_details.concat(cached_grp_details);
-
-            // merge groups with stastistics
-            Object.keys(session.groups).forEach(function(name, index, array) {
-                var grp_id = session.groups[name].id;
-                if (grp_details[grp_id]) {
-                    session.groups[name].first = grp_details[grp_id].min;
-                    session.groups[name].last =  grp_details[grp_id].max;
-                    session.groups[name].count = grp_details[grp_id].count;
-                }
-                
-                // Group is ready. If not from cache - store for future use.
-                if(!cached_grp_details[grp_id]) {
-                    cache.groupstatSave(session.groups[name]);
-                }
-            });
-            
-            callback(null);
-        });
-    }); 
+    db.queryRead(sql, function(err, rows) {
+        callback(err, rows);
+    });
 };
 
 
@@ -242,30 +135,23 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
  * Get new groups list
  */
 exports.getNewGroups = function(session, time, callback) {
-    var i;
-    var sql =   "SELECT " +
-                "   `group_name` AS `group` " +
-                "FROM `" + TablePrefix + "nntp_groups` " +
+    var sql =   "SELECT" +
+                "   `groupid`, " +
+                "   MAX( `messageid` ) AS 'first', " +
+                "   MIN( `messageid` ) AS 'last' " +
+                "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "WHERE " +
-                "       `id` IN(" + session.group_ids_str + ") " +
-                "   AND `is_active`    = 'yes' " +
-                "   AND `date_create` >= '" + time + "' " +
-                "ORDER BY `group_name` ";
+                "   `groupid` IN( " +
+                "       SELECT `id` " +
+                "       FROM `" + TablePrefix + "nntp_groups` " +
+                "       WHERE " +
+                "           `id` IN(" + session.group_ids_str + ") " +
+                "           AND `is_active`    = 'yes' " +
+                "           AND `date_create` >= '" + time + "' " +
+                "               ) " +
+                "GROUP BY `groupid` ";
 
-    db.queryRead(sql, function(err, rows) {
-        if (err) {
-            callback(err);
-        } else {
-            var newgroups = {};
-            for(i=0; i<rows.length; i++){
-                // make shure that user have access
-                if (session.groups.name[rows[i].group]) {
-                    newgroups[rows[i].group] = session.groups.name[rows[i].group];
-                }
-            }
-            callback(null, newgroups);
-        }
-    });
+    db.queryRead(sql, callback);
 };
 
 
@@ -314,6 +200,8 @@ exports.getArticle = function(group_id, article_id, callback) {
  * session.username & session.password must be filled
  */
 var loadUser = function(session, callback) {
+    var i;
+    
     // Calculate user password hash
     var authhash = crypto.createHash('md5').update(session.password).digest("hex");
 
@@ -339,17 +227,41 @@ var loadUser = function(session, callback) {
             return;
         } 
             
-        if (rows.length > 0) {
-            // Store user data to session & cache it
-            session.userid = rows[0].userid;
-            session.css = rows[0].css;
-            session.menu = rows[0].menu;
-            session.template = rows[0].template;
-            session.group_ids_str = rows[0].nntpgroupslist;
-
-            cache.sessionSave(session);
+        if (rows.length == 0) {
+            callback(null);
+            return;
         }
-        callback(null);
+        
+        // Store user data to session & cache it
+        session.userid = rows[0].userid;
+        session.css = rows[0].css;
+        session.menu = rows[0].menu;
+        session.template = rows[0].template;
+        session.group_ids_str = rows[0].nntpgroupslist;
+        
+        // Load map 'group name' => 'grou id'
+        // Probably, should be global
+        // Order groups by name for LIST cmd output
+        sql =   'SELECT ' +
+                '   `group_name`, ' +
+                '   `id` ' +
+                'FROM `' + TablePrefix + 'nntp_groups` ' +
+                'WHERE ' +
+                '   `id` IN(0,' + session.group_ids_str + ') ' +
+                'ORDER BY ' +
+                '   `group_name`';
+
+        db.queryRead(sql, function(err, rows) {
+            if (err) {
+                callback(err);
+                return;
+            }
+
+            for(i=0; i<rows.length; i++){
+                session.groups[rows[i].group_name] = rows[i].id;
+            }
+            callback(null);
+        });
     });
 };
 
@@ -366,12 +278,6 @@ exports.checkAuth = function(session, callback) {
     // Filter brute force attempts
     if (cache.blacklistCheck(session)) {
         callback(Error('Brute force attampt. User: ' + session.username));
-        return;
-    }
-
-    // Try to load from cache first
-    if (cache.sessionLoad(session)) {
-        callback(null);
         return;
     }
 

@@ -345,7 +345,7 @@ var cmdList = function(cmd, session, callback) {
         return;
     }
 
-    dm.fillGroupsList(session, function(err) {
+    dm.getGroupsStat(session, function(err, rows) {
         if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
@@ -354,10 +354,17 @@ var cmdList = function(cmd, session, callback) {
         reply.push(nntpCode._215_info_follows);
 
         Object.keys(session.groups).forEach(function(name, index, array) {
-            reply.push( name + ' ' + session.groups[name].last + ' ' +
-                session.groups[name].first + ' ' + session.groups[name].post );
+            var first, last;
+            if (rows[session.groups[name]]) {
+                first = rows[session.groups[name]].first || 0;
+                last = rows[session.groups[name]].last || 0;
+            } else {
+                first = 0;
+                last = 0;
+            }
+            reply.push( name + ' ' + last + ' ' + first + ' ' + 'n' );
         });
-
+        
         reply.push(".");
         callback(null, reply);
         reply = null;
@@ -397,30 +404,26 @@ var cmdNewGroups = function(cmd, session, callback) {
         var datetime = '' + date[1] + '-' + date[2] + '-' + date[3] + ' ' +
                             time[1] + ':' + time[2] + ':' + time[3];
         
-        dm.fillGroupsList(session, function(err) {
-            if (makeReport(err, session)) {
-                callback(err, nntpCode._403_fuckup);
+        dm.getNewGroups(session, datetime, function(err, rows) {
+            if (err) {
+                callback(makeReport(err, session), nntpCode._403_fuckup);
                 return;
             }
-            
-            dm.getNewGroups(session, datetime, function(err, newgroups) {
-                if (err) {
-                    callback(makeReport(err, session), nntpCode._403_fuckup);
-                    return;
+        
+            reply.push(nntpCode._231_newgroups_follows);
+
+            Object.keys(session.groups).forEach(function(name, index, array) {
+                var id = session.groups[name];
+                if (!!rows[id]) {
+                    reply.push( name + ' ' + rows[id].last + ' ' +
+                        rows[id].first + ' ' + 'n' );
                 }
-                
-                reply.push(nntpCode._231_newgroups_follows);
-
-                Object.keys(newgroups).forEach(function(name, index, array) {
-                    reply.push( name + ' ' + newgroups[name].last + ' ' +
-                        newgroups[name].first + ' ' + newgroups[name].post );
-                });
-
-                reply.push(".");
-                callback(null, reply);
-                reply = null;
             });
-        });    
+            
+            reply.push(".");
+            callback(null, reply);
+            reply = null;
+        });
     } else {
         callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error); 
@@ -441,23 +444,38 @@ var cmdNewGroups = function(cmd, session, callback) {
  *      411 No such newsgroup
  */            
 var cmdGroup = function(cmd, session, callback) {
+
+    if (!session.groups[cmd.params]) {
+        callback(null, nntpCode._411_newsgroup_notfound);
+        return;
+    }
+
+    var group_id = session.groups[cmd.params];
     
-    dm.fillGroupsList(session, function(err) {
+    dm.getGroupInfo(session, group_id, function(err,rows) {
         if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
-        if (!session.groups[cmd.params]) {
-            callback(null, nntpCode._411_newsgroup_notfound);
-            return;
+        var first, last, total;
+        
+        if (!!rows[0]) {
+            first = rows[0].first || 0;
+            last = rows[0].last || 0;
+            total = rows[0].total || 0;
+        } else {
+            first = last = total = 0;
         }
-            
+
         session.currentgroup = cmd.params;
+        session.currentgroup_first = first;
+        session.currentgroup_last = last;
+           
         callback(null, nntpCode._211_group_selected +
-                    session.groups[cmd.params].count + ' ' +
-                    session.groups[cmd.params].first + ' ' +
-                    session.groups[cmd.params].last + ' ' +
+                    total + ' ' +
+                    first + ' ' +
+                    last + ' ' +
                     session.currentgroup
         );
     });
@@ -498,13 +516,12 @@ var cmdXover = function(cmd, session, callback) {
         return;
     }
         
-    var group_id = session.groups[session.currentgroup].id;
-    
-    
+    var group_id = session.groups[session.currentgroup];
+
     //  xx-yy, xx-, xx
-    range_min = range[1];
+    range_min = +range[1];
     if (range[2]) {
-        range_max = range[3] || session.groups[session.currentgroup].last;
+        range_max = +(range[3] || session.currentgroup_last);
     } else {
         range_max = range_min;
     }
@@ -581,12 +598,12 @@ var cmdXhdr = function(cmd, session, callback) {
         return;
     }
         
-    var group_id = session.groups[session.currentgroup].id;
+    var group_id = session.groups[session.currentgroup];
     
     //  xx-yy, xx-, xx
-    range_min = range[1];
+    range_min = +range[1];
     if (range[2]) {
-        range_max = range[3] || session.groups[session.currentgroup].last;
+        range_max = +(range[3] || session.currentgroup_last);
     } else {
         range_max = range_min;
     }
@@ -659,7 +676,7 @@ var cmdXhdr = function(cmd, session, callback) {
  */          
 var cmdListGroup = function(cmd, session, callback) {
     var reply = [];
-    var range_min, range_max, i;
+    var i;
 
     // Extract group name and range (if exists)
     var group = (cmd.params.split(' ', 1)[0]);
@@ -672,34 +689,41 @@ var cmdListGroup = function(cmd, session, callback) {
         return;
     }
 
-    dm.fillGroupsList(session, function(err) {
+    if (!session.groups[group]) {
+        callback(null, nntpCode._411_newsgroup_notfound);
+        return;
+    }
+
+    var group_id = session.groups[group];
+
+    dm.getGroupInfo(session, group_id, function(err,rows) {
         if (err) {
             callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
-        if (!session.groups[group]) {
-            callback(null, nntpCode._411_newsgroup_notfound);
-            return;
-        }
+        var first, last, total;
         
-        range_min = session.groups[group].first;
-        range_max = session.groups[group].last;
-             
-        var group_id = session.groups[group].id;
+        if (!!rows[0]) {
+            first = rows[0].first || 0;
+            last = rows[0].last || 0;
+            total = rows[0].total || 0;
+        } else {
+            first = last = total = 0;
+        }
 
         // We can use more effective request, to get ids only. But who cares?
-        // Command is quire rare, so no need to optimize now.
-        dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
+        // Command is quire rare, no need to optimize now.
+        dm.getHeaders(group_id, first, last, function(err, heads) {
             if (err) {
                 callback(makeReport(err, session), nntpCode._403_fuckup);
                 return;
             }
 
 			reply.push(nntpCode._211_group_selected +
-						session.groups[group].count + ' ' +
-						session.groups[group].first + ' ' +
-						session.groups[group].last + ' ' +
+						total + ' ' +
+						first + ' ' +
+						last + ' ' +
 						group + 'list follows'
 			);
 			
@@ -742,7 +766,7 @@ var cmdArticle = function(cmd, session, callback) {
     }
 
     var article_id = cmd.params;
-    var group_id = session.groups[session.currentgroup].id;
+    var group_id = session.groups[session.currentgroup];
 
     dm.getArticle(group_id, article_id, function(err, article) {
         if (err) {
