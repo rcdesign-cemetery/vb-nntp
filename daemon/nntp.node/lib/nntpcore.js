@@ -66,8 +66,8 @@ var makeReport = function(err, sid) {
         result.username = session.username;
         result.user_id = session.userid;
         result.ip = session.ip;
-        if (!!session.currentgroup) {
-            result.currentgroup = session.currentgroup;
+        if (!!session.current) {
+            result.currentgroup = session.current;
         }
     }
 
@@ -172,7 +172,7 @@ var msgHeaders = function(article, session) {
     var headers = [];
 
     headers.push("From: " +         msgFrom(article.username));
-    headers.push("Newsgroups: " +   session.currentgroup);
+    headers.push("Newsgroups: " +   session.current);
     headers.push("Subject: " +      msgSubject(article.subject));
     headers.push("Date: " +         article.gmdate);  // ??? .replace("+00:00", "+03:00")
     headers.push("Message-ID: " +   msgIdString(article.postid, article.messagetype));
@@ -181,7 +181,7 @@ var msgHeaders = function(article, session) {
     headers.push("Content-Transfer-Encoding: base64");
 //    headers.push("Content-Transfer-Encoding: 8bit");
     headers.push("Charset: utf-8");
-    headers.push(msgXref(session.currentgroup, article.messageid));       
+    headers.push(msgXref(session.current, article.messageid));       
     
     return headers;
 };
@@ -254,31 +254,29 @@ var cmdDate = function(cmd, sid, callback) {
  */      
 var cmdAuthinfo = function(cmd, sid, callback) {
     var parced;
-    
-    var session = s.get(sid);
-    
+
     // Disable command after success. See RFC 4643
     // http://tools.ietf.org/html/rfc4643
-    if (session.userid) {
+    if (s.get(sid).userid) {
         callback(null, nntpCode._502_cmd_unavailable);
         return;
     }
     
     parced = cmd.params.match(/^user\s+(.+)/i);  // username
     if (parced) {
-        session.username = parced[1];
+        s.set(sid, { username : parced[1] });
         callback(null, nntpCode._381_auth_required);
         return;
     }
     
     parced = cmd.params.match(/^pass\s+(.+)/i);  // password
     if (parced) {
-        if (session.username === '') {
+        if (s.get(sid).username === '') {
             callback(null, nntpCode._482_auth_out_of_sequence);
             return;
         }
 
-        session.password = parced[1];
+        s.set(sid, { password : parced[1] });
         dm.checkAuth(sid, function(err, verifyed) {
             if (err) {
                 callback(makeReport(err, sid), nntpCode._403_fuckup);
@@ -349,7 +347,7 @@ var cmdList = function(cmd, sid, callback) {
         return;
     }
 
-    var valid_ids = s.get(sid).group_ids_str;
+    var valid_ids = s.get(sid).grp_ids;
     dm.getGroupsStat(valid_ids, function(err, rows) {
         if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
@@ -410,7 +408,7 @@ var cmdNewGroups = function(cmd, sid, callback) {
         var datetime = '' + date[1] + '-' + date[2] + '-' + date[3] + ' ' +
                             time[1] + ':' + time[2] + ':' + time[3];
 
-        var valid_ids = s.get(sid).group_ids_str;
+        var valid_ids = s.get(sid).grp_ids;
         dm.getNewGroups(valid_ids, datetime, function(err, rows) {
             if (err) {
                 callback(makeReport(err, sid), nntpCode._403_fuckup);
@@ -463,7 +461,7 @@ var cmdGroup = function(cmd, sid, callback) {
     
     dm.getGroupInfo(group_id, function(err,info) {
         if (err) {
-            callback(makeReport(err, session), nntpCode._403_fuckup);
+            callback(makeReport(err, sid), nntpCode._403_fuckup);
             return;
         }
 
@@ -477,15 +475,15 @@ var cmdGroup = function(cmd, sid, callback) {
             first = last = total = 0;
         }
 
-        session.currentgroup = cmd.params;
-        session.currentgroup_first = first;
-        session.currentgroup_last = last;
+        s.set(sid, { current : cmd.params,
+                    first : first,
+                    last : last });
            
         callback(null, nntpCode._211_group_selected +
                     total + ' ' +
                     first + ' ' +
                     last + ' ' +
-                    session.currentgroup
+                    cmd.params
         );
     });
 };
@@ -514,7 +512,7 @@ var cmdXover = function(cmd, sid, callback) {
 
     var session = s.get(sid);
 
-    if (session.currentgroup === '') {
+    if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
         return;
     }
@@ -527,12 +525,12 @@ var cmdXover = function(cmd, sid, callback) {
         return;
     }
         
-    var group_id = session.groups[session.currentgroup];
+    var group_id = session.groups[session.current];
 
     //  xx-yy, xx-, xx
     range_min = +range[1];
     if (range[2]) {
-        range_max = +(range[3] || session.currentgroup_last);
+        range_max = +(range[3] || session.last);
     } else {
         range_max = range_min;
     }
@@ -560,7 +558,7 @@ var cmdXover = function(cmd, sid, callback) {
                 msgIdString(heads[i].postid, heads[i].messagetype) + "\t" +
                 msgReferers(heads[i].refid, heads[i].messagetype) +
                 "\t" +  "\t" +
-                msgXref(session.currentgroup, heads[i].messageid)
+                msgXref(session.current, heads[i].messageid)
             );  // 2 empty tabs are for message size & message lines count
         }
                     
@@ -588,7 +586,7 @@ var cmdXhdr = function(cmd, sid, callback) {
 
     var session = s.get(sid);
 
-    if (session.currentgroup === '') {
+    if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
         return;
     }
@@ -611,12 +609,12 @@ var cmdXhdr = function(cmd, sid, callback) {
         return;
     }
         
-    var group_id = session.groups[session.currentgroup];
+    var group_id = session.groups[session.current];
     
     //  xx-yy, xx-, xx
     range_min = +range[1];
     if (range[2]) {
-        range_max = +(range[3] || session.currentgroup_last);
+        range_max = +(range[3] || session.last);
     } else {
         range_max = range_min;
     }
@@ -742,7 +740,7 @@ var cmdListGroup = function(cmd, sid, callback) {
 						group + 'list follows'
 			);
 			
-            session.currentgroup = group;
+            s.set(sid, { current : group });
             
             for(i=0; i<heads.length; i++) {
                 reply.push(heads[i].messageid);
@@ -771,7 +769,7 @@ var cmdArticle = function(cmd, sid, callback) {
 
     var session = s.get(sid);
  
-    if (session.currentgroup === '') {
+    if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
         return;   
     }
@@ -783,7 +781,7 @@ var cmdArticle = function(cmd, sid, callback) {
     }
 
     var article_id = cmd.params;
-    var group_id = session.groups[session.currentgroup];
+    var group_id = session.groups[session.current];
 
     dm.getArticle(group_id, article_id, function(err, article) {
         if (err) {

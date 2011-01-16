@@ -206,8 +206,6 @@ exports.getArticle = function(group_id, article_id, callback) {
  */
 var loadUser = function(sid, callback) {
     var session = s.get(sid);
-    // Calculate user password hash
-    var authhash = crypto.createHash('md5').update(session.password).digest("hex");
 
     // Both user record & grop permissions must exist
     // JOIN guarantees that. If one absent, we should kick backend to build.
@@ -222,7 +220,7 @@ var loadUser = function(sid, callback) {
             "JOIN `" + TablePrefix + "nntp_groupaccess_cache` AS `G` " +
             "   ON( `U`.`usergroupslist` = `G`.`usergroupslist` ) " +
             "WHERE `U`.`username` = '" + db.escapeStr(session.username) + "' " +
-            "   AND `U`.`authhash` = '" + db.escapeStr(authhash) + "' " +
+            "   AND `U`.`authhash` = '" + session.password + "' " +
             "   AND `U`.`usergroupslist` != '' ";
 
     db.queryRead(sql, function(err, rows) {
@@ -232,11 +230,14 @@ var loadUser = function(sid, callback) {
         }
         
         // Store user data to session & cache it
-        session.userid = rows[0].userid;
-        session.css = rows[0].css;
-        session.menu = rows[0].menu;
-        session.template = rows[0].template;
-        session.group_ids_str = rows[0].nntpgroupslist;
+        var _s = {
+            userid : rows[0].userid,
+            css : rows[0].css,
+            menu : rows[0].menu,
+            template : rows[0].template,
+            grp_ids : rows[0].nntpgroupslist,
+            groups : {}
+        };
         
         // Load map 'group name' => 'grou id'
         // Probably, should be global
@@ -246,7 +247,7 @@ var loadUser = function(sid, callback) {
                 '   `id` ' +
                 'FROM `' + TablePrefix + 'nntp_groups` ' +
                 'WHERE ' +
-                '   `id` IN(0,' + session.group_ids_str + ') ' +
+                '   `id` IN(0,' + _s.grp_ids + ') ' +
                 'ORDER BY ' +
                 '   `group_name`';
 
@@ -255,11 +256,13 @@ var loadUser = function(sid, callback) {
                 callback(err, false);
                 return;
             }
-            
+
             var i;
             for(i=0; i<rows.length; i++){
-                session.groups[rows[i].group_name] = rows[i].id;
+                _s.groups[rows[i].group_name] = rows[i].id;
             }
+            
+            s.set(sid,_s);
             callback(null, true);
         });
     });
@@ -299,12 +302,11 @@ exports.checkAuth = function(sid, callback) {
         }
 
         var session = s.get(sid);
-        var authhash = crypto.createHash('md5').update(session.password).digest("hex");
 
         sql =   "REPLACE INTO `" + TablePrefix + "nntp_userauth_cache` " +
                 "   SET " +
                 "       `username`       = '" + db.escapeStr(session.username) + "', " +
-                "       `authhash`       = '" + db.escapeStr(authhash) + "', " +
+                "       `authhash`       = '" + session.password + "', " +
                 "       `usergroupslist` = '', " +
                 "       `userid`         = 0 ";
                     

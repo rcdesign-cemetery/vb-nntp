@@ -12,41 +12,46 @@
 */
 
 var util = require('util');
+var crypto = require('crypto');
 
 // Storage for session objects;
 var sessionStore = {};
 var sid_next = 1;
 
-exports.get = function(sid) {
-    if (sessionStore[sid]) {
-        return sessionStore[sid];
-    }
-    
-    throw Error('Tryed to extract session with wrong id: ' + sid);
+var Session = function(stream) {
+    this.ip = stream.remoteAddress;
+    this.current = "";      // currently selected group name
+    this.first = 0;         // first msg id in current group
+    this.last = 0;          // last msg id in current group
+    this.userid = 0;  
+    this.username = '';
+    this._password = '';
+    this.css = '';
+    this.menu = '';
+    this.template = '';
+    this.groups = {};       // { name : id, ...}
+    this.grp_ids = '';      // "2,5,7,8,9,15,..."
+
+    // keep password as hash
+    this.__defineGetter__('password', function () { return this._password; });
+    this.__defineSetter__('password', function (value) {
+        this._password = crypto.createHash('md5').update(value).digest("hex");
+    });
+};
+
+exports.get = function(sid) { return sessionStore[sid]; };
+
+exports.set = function(sid, values) {
+    Object.keys(values).forEach(function(name, index, array) {
+        sessionStore[sid][name] = values[name];
+    });
 };
 
 exports.create = function(stream) {
     // create new session object, if not exists
-    var s = {};
-    s.ip = stream.remoteAddress;
-    s.currentgroup = "";       // selected group name
-    s.currentgroup_first = 0;
-    s.currentgroup_last = 0;
-    s.userid = 0;  
-    s.username = '';
-    s.password = '';
-    s.css = '';
-    s.menu = '';
-    s.template = '';
-    // map user group names to group ids 
-    s.groups = {};
-    s.group_ids_str = '';      // "2,5,7,8,9,15,..."
-    
     var key = sid_next;
-    sessionStore[key] = s;
-
-    sid_next += 1;
-    
+    sessionStore[key] = new Session(stream);
+    sid_next++;
     return key;
 };
 
@@ -58,11 +63,11 @@ exports.destroy = function(sid) {
 
 exports.dump = function() {
     var msg = 'Sessions storage: ' + Object.keys(sessionStore).length + ' total\n\n';
-    
+
     Object.keys(sessionStore).forEach(function(name, index, array) {
         msg += '  ' + sessionStore[name].username + ',    ' +
                 sessionStore[name].ip + '\n';
     });
-    
+
     return msg;
 };
