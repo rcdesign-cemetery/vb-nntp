@@ -327,7 +327,7 @@ exports.checkAuth = function(sid, callback) {
                     }
                     
                     if (!!loaded) {
-                        cache.blacklistAdd(session);						
+                        cache.blacklistAdd(s.get(sid).ip);						
 					}
 					
                     callback(null, true);
