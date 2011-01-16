@@ -42,9 +42,10 @@ exports.create = function(stream) {
     s.groups = {};
     s.group_ids_str = '';      // "2,5,7,8,9,15,..."
     
-    var key = '_' + sid_next;
-    sid_next += 1;
+    var key = sid_next;
     sessionStore[key] = s;
+
+    sid_next += 1;
     
     return key;
 };

@@ -16,7 +16,8 @@ var http = require('http');
 
 var config = require('./config.js');
 var cache = require('./cache.js'); 
-var db = require('./db.js'); 
+var db = require('./db.js');
+var s = require('./session.js'); 
 
 var TablePrefix = '';
 
@@ -59,14 +60,14 @@ var kickBackend = function(callback) {
  * Get last/first groups stat from DB
  * for all user groups
  */
-exports.getGroupsStat = function(session, callback) {
+exports.getGroupsStat = function(valid_ids, callback) {
     var sql =   "SELECT" +
                 "   `groupid`   , " +
                 "   MIN( `messageid` ) AS 'first', " +
                 "   MAX( `messageid` ) AS 'last' " +
                 "FROM `" + TablePrefix + "nntp_index` AS `Index` " +
                 "WHERE " +
-                "   `groupid` IN(0," + session.group_ids_str + ") " +
+                "   `groupid` IN(0," + valid_ids + ") " +
                 "GROUP BY `groupid` ";
 
     db.queryRead(sql, function(err, rows) {
@@ -78,7 +79,7 @@ exports.getGroupsStat = function(session, callback) {
  * Get last/first/total for selected group from DB
  * for all user groups
  */
-exports.getGroupInfo = function(session, group_id, callback) {
+exports.getGroupInfo = function(group_id, callback) {
     var sql =   "SELECT" +
                 "   MIN( `messageid` ) AS 'first', " +
                 "   MAX( `messageid` ) AS 'last', " +
@@ -89,7 +90,11 @@ exports.getGroupInfo = function(session, group_id, callback) {
                 "   AND `deleted` = 'no' ";
 
     db.queryRead(sql, function(err, rows) {
-        callback(err, rows);
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, rows[0]);
+        }
     });
 };
 
@@ -134,7 +139,7 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
 /**
  * Get new groups list
  */
-exports.getNewGroups = function(session, time, callback) {
+exports.getNewGroups = function(valid_ids, time, callback) {
     var sql =   "SELECT" +
                 "   `groupid`, " +
                 "   MAX( `messageid` ) AS 'first', " +
@@ -145,7 +150,7 @@ exports.getNewGroups = function(session, time, callback) {
                 "       SELECT `id` " +
                 "       FROM `" + TablePrefix + "nntp_groups` " +
                 "       WHERE " +
-                "           `id` IN(" + session.group_ids_str + ") " +
+                "           `id` IN(" + valid_ids + ") " +
                 "           AND `is_active`    = 'yes' " +
                 "           AND `date_create` >= '" + time + "' " +
                 "               ) " +
@@ -199,9 +204,8 @@ exports.getArticle = function(group_id, article_id, callback) {
  * 
  * session.username & session.password must be filled
  */
-var loadUser = function(session, callback) {
-    var i;
-    
+var loadUser = function(sid, callback) {
+    var session = s.get(sid);
     // Calculate user password hash
     var authhash = crypto.createHash('md5').update(session.password).digest("hex");
 
@@ -222,13 +226,8 @@ var loadUser = function(session, callback) {
             "   AND `U`.`usergroupslist` != '' ";
 
     db.queryRead(sql, function(err, rows) {
-        if (err) {
-            callback(err);
-            return;
-        } 
-            
-        if (rows.length == 0) {
-            callback(null);
+        if (err || !rows.length) {
+            callback(err, false);
             return;
         }
         
@@ -253,14 +252,15 @@ var loadUser = function(session, callback) {
 
         db.queryRead(sql, function(err, rows) {
             if (err) {
-                callback(err);
+                callback(err, false);
                 return;
             }
-
+            
+            var i;
             for(i=0; i<rows.length; i++){
                 session.groups[rows[i].group_name] = rows[i].id;
             }
-            callback(null);
+            callback(null, true);
         });
     });
 };
@@ -272,12 +272,12 @@ var loadUser = function(session, callback) {
  * Check user login (nick|email) & password from session
  * Fill session records on success (groups, acceess_level, etc)
  */
-exports.checkAuth = function(session, callback) {
+exports.checkAuth = function(sid, callback) {
     var sql;
     
     // Filter brute force attempts
-    if (cache.blacklistCheck(session)) {
-        callback(Error('Brute force attampt. User: ' + session.username));
+    if (cache.blacklistCheck(s.get(sid).ip)) {
+        callback(Error('Brute force attampt. User: ' + s.get(sid).username), false);
         return;
     }
 
@@ -286,18 +286,19 @@ exports.checkAuth = function(session, callback) {
     db.ping();
 
     // Fallback to DB load, then try full auth
-    loadUser(session, function(err) {
+    loadUser(sid, function(err, loaded) {
         if (err) {
-            callback(err);
+            callback(err, false);
             return;
         }
         
         // User loaded? Great!
-        if (session.userid) {
-            callback(null);
+        if (!!loaded) {
+            callback(null, true);
             return;
         }
 
+        var session = s.get(sid);
         var authhash = crypto.createHash('md5').update(session.password).digest("hex");
 
         sql =   "REPLACE INTO `" + TablePrefix + "nntp_userauth_cache` " +
@@ -309,27 +310,27 @@ exports.checkAuth = function(session, callback) {
                     
         db.queryWrite(sql, function(err) {
             if (err) {
-                callback(err);
+                callback(err, false);
                 return;
             }
             
             kickBackend(function(err) {
                 if (err) {
-                    callback(err);
+                    callback(err, false);
                     return;
                 }
 
-                loadUser(session, function(err) {
+                loadUser(sid, function(err, loaded) {
                     if (err) {
-                        callback(err);
+                        callback(err, false);
                         return;
                     }
                     
-                    if (!session.userid) {
+                    if (!!loaded) {
                         cache.blacklistAdd(session);						
 					}
 					
-                    callback(null);
+                    callback(null, true);
                 });
             });
         });

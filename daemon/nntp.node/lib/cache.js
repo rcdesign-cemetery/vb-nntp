@@ -40,8 +40,8 @@ var get = function(key) {
 /*
  *  Check if session ip is in blacklist
  */
-exports.blacklistCheck = function(session) {
-    var bl_count = get('bl_' + session.ip);
+exports.blacklistCheck = function(ip) {
+    var bl_count = get('bl_' + ip);
     if (!!bl_count && (bl_count >= blacklistTrigger)) {
         return true;
     }
@@ -51,7 +51,7 @@ exports.blacklistCheck = function(session) {
 /*
  *  Increase blacklist counter for session IP
  */
-exports.blacklistAdd = function(session) {
-    var bl_count = get('bl_' + session.ip) || 0;
-    set('bl_' + session.ip, bl_count+1, blacklistTimeout);
+exports.blacklistAdd = function(ip) {
+    var bl_count = get('bl_' + ip) || 0;
+    set('bl_' + ip, bl_count+1, blacklistTimeout);
 };

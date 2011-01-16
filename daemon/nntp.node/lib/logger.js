@@ -139,10 +139,8 @@ exports.init = function() {
  *      'error' - error
  *        
  * @param {Object} msg     String / Exception / Array of strings
- *
- * @param {Obkect} [session]   Session info (IP, username, user id)
  */
-exports.write = function(log_type, msg, session) {
+exports.write = function(log_type, msg) {
 
     // If log module initilized, then skip disabled events,
     // or if log completely disable in config.

@@ -60,14 +60,14 @@ var conListener = function (stream) {
         var command = data.toString().trimLeft().replace(/\s+$/, '');
 
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
-        logger.write('cmd', "C --> " + msg, s.get(stream.sid));
+        logger.write('cmd', "C --> " + msg);
 
-        nntpCore.executeCommand(command, s.get(stream.sid), function(err, reply, finish) {
+        nntpCore.executeCommand(command, stream.sid, function(err, reply, finish) {
             finish = finish || false;   // = 1 if connect should be closed
             var response = '';
             
             if (err) {
-                logger.write('error', err, s.get(stream.sid));
+                logger.write('error', err);
             }
 
             if (reply) {
@@ -79,7 +79,7 @@ var conListener = function (stream) {
                 }
                 stream.write(response);
                 
-                logger.write('reply', reply, s.get(stream.sid)); 
+                logger.write('reply', reply); 
             }
             
             response = null;
