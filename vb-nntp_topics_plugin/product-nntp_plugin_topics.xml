@@ -283,7 +283,7 @@ $index->delete_messages_by_parent_id($threadid);]]></phpcode>
 require_once DIR . '/includes/class_nntpgate_forum_index.php';
 
 $message_info['postid']   = $this->fetch_field('firstpostid', 'thread');
-$message_info['forumid']  = $this->info['forum']['forumid'];
+$message_info['forumid']  = $this->fetch_field('forumid', 'thread');
 $message_info['userid']   = $this->fetch_field('userid', 'post');
 $message_info['username'] = $this->fetch_field('username', 'post');
 $message_info['threadid'] = $this->fetch_field('threadid');
