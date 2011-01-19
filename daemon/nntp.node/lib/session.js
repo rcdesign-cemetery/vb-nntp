@@ -31,13 +31,12 @@ var Session = function(stream) {
     this.template = '';
     this.groups = {};       // { name : id, ...}
     this.grp_ids = '';      // "2,5,7,8,9,15,..."
-
-    // keep password as hash
-    this.__defineGetter__('password', function () { return this._password; });
-    this.__defineSetter__('password', function (value) {
-        this._password = crypto.createHash('md5').update(value).digest("hex");
-    });
 };
+
+Session.prototype.__defineGetter__('password', function () { return this._password; });
+Session.prototype.__defineSetter__('password', function (value) {
+    this._password = crypto.createHash('md5').update(value).digest("hex");
+});
 
 exports.get = function(sid) { return sessionStore[sid]; };
 

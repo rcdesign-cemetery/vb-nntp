@@ -11,7 +11,6 @@
  * @copyright RC Design, Vitaly Puzrin
 */
 
-var crypto = require('crypto');
 var http = require('http');
 
 var config = require('./config.js');
