@@ -102,7 +102,14 @@ process.on('exit', function () {
     logger.close();
 });
 
+// Reopen log on HUP signal,
 process.on('SIGHUP', function () {
+    logger.reopen();
+	logger.write('info', 'Got HUP signal. Reopened log');
+});
+
+// Dump some stat on USR1 signal
+process.on('SIGUSR1', function () {
 	var connections = 0;
 	var i;
 	
@@ -115,8 +122,6 @@ process.on('SIGHUP', function () {
         'Memory usage:\n' + util.inspect(process.memoryUsage()) + '\n\n' +
         s.dump()
     );
-
-    logger.reopen();
 });
 
 

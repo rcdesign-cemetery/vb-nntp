@@ -12,9 +12,10 @@ Directory content:
 Requirements
 ============
 
-  - Forum must use UTF-8 codepage.
+  - Forum MUST use UTF-8 codepage.
+  - Node.Js 0.3.5+ (dev branch) REQUIRED
   - innodb recommended
-  - db user must have permission to create triggers
+  - monit recommended (config files included)
 
 Known Issues
 ============
