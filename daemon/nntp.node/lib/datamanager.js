@@ -286,6 +286,9 @@ exports.checkAuth = function(sid, callback) {
 
     // Ping db & reconnect on lost connection
     // A bit dirty - syncronous call. But ping is cheap & quick
+
+// !!! temporary out. Seems to causes broken connections
+
     db.ping();
 
     // Fallback to DB load, then try full auth
