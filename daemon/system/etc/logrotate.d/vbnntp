@@ -1,0 +1,11 @@
+/var/log/vbnntp.log {
+	daily
+	missingok
+	rotate 7
+	compress
+	create 640 www-data www-data
+	sharedscripts
+	postrotate
+		/sbin/reload vbnntp
+	endscript
+}

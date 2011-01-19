@@ -1,0 +1,6 @@
+check host vbnntp with address 127.0.0.1
+    start program = "/sbin/start vbnntp"
+    stop program  = "/sbin/stop vbnntp"
+    if failed port 119 expect "201.+"
+        with timeout 10 seconds
+        then restart
