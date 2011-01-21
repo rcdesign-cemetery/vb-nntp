@@ -18,6 +18,11 @@
       <link>nntp_stats.php?do=list</link>
     </navoption>
 
+    <navoption displayorder="30">
+      <phrase>nntp_branding_free</phrase>
+      <link>nntp_brand.php</link>
+    </navoption>
+
   </navgroup>
 
 </navgroups>
