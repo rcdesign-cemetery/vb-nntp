@@ -34,13 +34,16 @@ exports.escapeStr = function(str) {
  */
 var connect = function() {
     // prior to reconnect we should close current resource
-    if (!!conn.connectedSync && conn.connectedSync()) {
-        conn.closeSync();
-    }
+//    if (!!conn.connectedSync && conn.connectedSync()) {
+//        conn.closeSync();
+//    }
 
     var cfg = require('./config.js').vars;
-    
-    conn.connectSync(cfg.Host, 
+
+    conn.initSync();
+    conn.setOptionSync(conn.MYSQL_OPT_RECONNECT, 1);
+    conn.setOptionSync(conn.MYSQL_OPT_CONNECT_TIMEOUT, 7*24*60*60);
+    conn.realConnectSync(cfg.Host, 
                     cfg.Username, 
                     cfg.Password, 
                     cfg.DataSource,
@@ -90,22 +93,17 @@ exports.queryRead = function(sql, callback) {
     }
     conn.query(sql, function(err, res) {
         if (err) {
-            // check if connection failed & try to reconnect
-            if (!conn.pingSync()) {
-                logger.write('error', Error('Db connection lost, reconnecting...'));
-                connect();
-            }
             callback(err);
-        } else {
-            res.fetchAll(false, function (err, rows) {
-                if (err) {
-                    callback(err);
-                } else {
-                    res.freeSync();
-                    callback(null, rows);
-                }
-            });
+            return;
         }
+        res.fetchAll(false, function (err, rows) {
+            if (err) {
+                callback(err);
+            } else {
+                res.freeSync();
+                callback(null, rows);
+            }
+        });
     });
 };
 
@@ -137,11 +135,6 @@ exports.queryWrite = function(sql, callback) {
         }
     }
     conn.query(sql, function(err, res) {
-        // check if connection failed & try to reconnect
-        if (!conn.pingSync()) {
-            logger.write('error', Error('Db connection lost, reconnecting...'));
-            connect();
-        }
         callback(err);
     });
 };
@@ -156,12 +149,5 @@ exports.querySync = function(sql) {
             return null;
         }
     }
-
-    var result = conn.querySync(sql);
-    
-    if (!result && !conn.pingSync()) {
-        logger.write('error', Error('Db connection lost, reconnecting...'));
-        connect();
-    }
-    return result;
+    return conn.querySync(sql);
 };
