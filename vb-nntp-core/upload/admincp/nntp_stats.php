@@ -48,10 +48,6 @@ $nntp_gate_ver = 1.0;
 
 print_cp_header( $vbphrase['statistics'] );
 
-if (32 == strlen($vbulletin->vbnntp))
-{
-    //echo '<img border="0" alt="" width="1" height="1" src="">';
-}
 // ############## SHOW STATS TABLE #######################################
 
 $vbulletin->input->clean_array_gpc( 'r', array(

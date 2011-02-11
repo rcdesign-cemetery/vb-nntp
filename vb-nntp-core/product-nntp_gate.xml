@@ -77,8 +77,8 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   KEY `access_granted` (`access_granted`) USING BTREE
 ) ENGINE=MEMORY");
 
-$db->show_errors();
-build_datastore('vbnntp', '', 0);]]></installcode>
+
+$db->show_errors();]]></installcode>
 			<uninstallcode><![CDATA[$db->hide_errors();
 
 $db->query("DROP TABLE IF EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache");
@@ -182,28 +182,6 @@ padding:5px 10px;
 	</stylevars>
 	<plugins>
 		<plugin active="1" executionorder="5">
-			<title>Disable licence menu</title>
-			<hookname>admin_index_navigation</hookname>
-			<phpcode><![CDATA[if (32 == strlen($vbulletin->vbnntp))
-{
-    foreach ($navigation as &$value)
-    {
-        if ($value[$vbphrase['nntp_gate']])
-        {
-            foreach ($value[$vbphrase['nntp_gate']]['options'] as &$option_value)
-            {
-                if ($option_value[$vbphrase['nntp_branding_free']])
-                {
-                    unset($option_value[$vbphrase['nntp_branding_free']]);
-                    break;
-                }
-            }
-            break;
-        }
-    }
-}]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="5">
 			<title>Cache templates</title>
 			<hookname>cache_templates</hookname>
 			<phpcode><![CDATA[// Always cache templates, to avoid complex dependencies with child product
@@ -219,16 +197,7 @@ $cache[] = 'nntp_navbar_link';]]></phpcode>
 if (!$vbulletin->options['bbactive'] AND (THIS_SCRIPT == 'nntpauth'))
 {
     $vbulletin->options['bbactive'] = true;
-}
-if (32 != strlen($vbulletin->vbnntp))
-{
-    $vbulletin->options['copyrighttext'] .= '<div><a href="https://github.com/rcdesign/vb-nntp">NNTP Gate</a> Copyright © 2011 <a href="http://forum.rcdesign.ru">RC Forum</a></div>';
 }]]></phpcode>
-		</plugin>
-		<plugin active="1" executionorder="1">
-			<title>Enchance list of datastore items</title>
-			<hookname>init_startup</hookname>
-			<phpcode><![CDATA[$new_datastore_fetch[] = 'vbnntp';]]></phpcode>
 		</plugin>
 		<plugin active="1" executionorder="5">
 			<title>NNTP Link in menu</title>
@@ -257,8 +226,6 @@ $this->registry->db->query_write($sql);]]></phpcode>
 			<phrase name="clean" date="1225399130" username="Wildev" version=""><![CDATA[Clean]]></phrase>
 			<phrase name="nntp_add_group" date="1216934697" username="Wildev" version=""><![CDATA[Add new group]]></phrase>
 			<phrase name="nntp_are_you_sure_you_want_to_delete_this_group" date="1217537539" username="Wildev" version=""><![CDATA[Are you sure you want to delete this NNTP Group?]]></phrase>
-			<phrase name="nntp_branding_free" date="1295605501" username="varnak" version=""><![CDATA[Remove copyright]]></phrase>
-			<phrase name="nntp_branding_removed" date="1295605703" username="varnak" version=""><![CDATA[Branding removed]]></phrase>
 			<phrase name="nntp_group_is_active" date="1217533777" username="Wildev" version=""><![CDATA[Is group enabled?]]></phrase>
 			<phrase name="nntp_group_name" date="1217340623" username="Wildev" version=""><![CDATA[Group Name]]></phrase>
 			<phrase name="nntp_groups" date="1216933876" username="Wildev" version=""><![CDATA[Groups Setup]]></phrase>
@@ -285,7 +252,6 @@ $this->registry->db->query_write($sql);]]></phpcode>
 			<phrase name="nntp_group_cleaned_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
 			<phrase name="nntp_group_deleted_defeated" date="1260785836" username="varnak" version="1.7"><![CDATA[This group can not be removed]]></phrase>
 			<phrase name="nntp_group_deleted_successfully" date="1217537461" username="Wildev" version=""><![CDATA[Selected group successfully deleted]]></phrase>
-			<phrase name="nntp_invalid_key" date="1295605768" username="varnak" version=""><![CDATA[Invalid key]]></phrase>
 			<phrase name="saved_nntp_group_settings_defeated" date="1260785779" username="varnak" version="1.7"><![CDATA[Group settings can not be changed]]></phrase>
 			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
 		</phrasetype>

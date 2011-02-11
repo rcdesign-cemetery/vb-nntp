@@ -52,10 +52,6 @@ $plugins = array();
 
 print_cp_header( $vbphrase['nntp_groups'] );
 
-if (32 == strlen($vbulletin->vbnntp))
-{
-    //echo '<img border="0" alt="" width="1" height="1" src="">';
-}
 // ############## ADD NEW GROUP FORM AND EXISTING GROUPS LIST ############
 
 if ( empty( $do ) || $do == 'list' )
