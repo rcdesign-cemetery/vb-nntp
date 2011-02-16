@@ -13,7 +13,7 @@ Requirements
 ============
 
   - Forum MUST use UTF-8 codepage.
-  - Node.Js 0.3.5+ (dev branch) REQUIRED
+  - Node.Js 0.3.3+ REQUIRED
   - innodb recommended
   - monit recommended (config files included)
 
@@ -23,8 +23,8 @@ Known Issues
  1. NNTP clients can't normally use non-latin symbols in login & passwords. If you have such:
     - use email instead of login
     - change password to one with latin chars only
- 2. Daemon works in single process and uses single SQL connection to db. That's increase latency for huge setups. NNTP can be extended by sql connections pool & multinode on demand.
- 3. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commands, used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
+ 2. Daemon works in single process and uses single SQL connection to db. That increases latency for huge setups. NNTP can be extended by sql connections pool & multinode on demand.
+ 3. This server is not 100% compatible with RFC3977 requirements. It implements only subset of commands, really used by nntp clients. If log file has records about unimplemented commands & syntax errors - feel free to report.
     - ARTICLE accept only digital id
     - STAT, NEXT, LAST, NEWNEWS - not implemented
     - LIST NEWSGROUPS - not implemented
@@ -89,11 +89,8 @@ Contacts
 Licensing & setup: [vitaly@rcdesign.ru][2]
 
   - using on non-commercial site: Free
-  - using on commercial site: 49$
-  - copyright removal at your site and messages: 99$
-  - commercial + (c) removal + setup help: 299$
-
-Free full licences for all commiters.
+  - using on commercial site: 49$ for single domain/server
+  - free full licences for all commiters.
 
   [1]: http://creativecommons.org/licenses/by-nc-nd/3.0/
   [2]: vitaly@rcdesign.ru
