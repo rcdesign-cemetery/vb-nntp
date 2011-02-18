@@ -80,7 +80,7 @@ var conListener = function (stream) {
                 
                 // Should check if stream still writable
                 // It can be closed while processing data
-                if (stream.writable)
+                if (stream.writable) {
                     try {
                         stream.write(response);
                     } catch (e) {
