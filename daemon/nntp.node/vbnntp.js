@@ -77,9 +77,16 @@ var conListener = function (stream) {
                 } else {
                     response = reply + CRLF;
                 }
-                stream.write(response);
                 
-                logger.write('reply', reply); 
+                // Should check if stream still writable
+                // It can be closed while processing data
+                if (stream.writable)
+                    try {
+                        stream.write(response);
+                    } catch (e) {
+                    }
+                    logger.write('reply', reply); 
+                }
             }
             
             response = null;

@@ -63,11 +63,13 @@ var makeReport = function(err, sid) {
     
     if (!!sid) {
         var session = s.get(sid);
-        result.username = session.username;
-        result.user_id = session.userid;
-        result.ip = session.ip;
-        if (!!session.current) {
-            result.currentgroup = session.current;
+        if (session) {
+            result.username = session.username;
+            result.user_id = session.userid;
+            result.ip = session.ip;
+            if (!!session.current) {
+                result.currentgroup = session.current;
+            }
         }
     }
 
@@ -405,8 +407,8 @@ var cmdNewGroups = function(cmd, sid, callback) {
         var date = params[1].match(/^(\d+)(\d{2})(\d{2})$/);
         var time = params[2].match(/^(\d{2})(\d{2})(\d{2})$/);
         
-        var datetime = '' + date[1] + '-' + date[2] + '-' + date[3] + ' ' +
-                            time[1] + ':' + time[2] + ':' + time[3];
+        var datetime =  date[1] + '-' + date[2] + '-' + date[3] + ' ' +
+                        time[1] + ':' + time[2] + ':' + time[3];
 
         var valid_ids = s.get(sid).grp_ids;
         dm.getNewGroups(valid_ids, datetime, function(err, rows) {
