@@ -13,7 +13,7 @@ Requirements
 ============
 
   - Forum MUST use UTF-8 codepage.
-  - Node.Js 0.3.3+ REQUIRED
+  - Node.Js 0.4.1+ REQUIRED (with npm)
   - innodb recommended
   - monit recommended (config files included)
 
@@ -42,28 +42,24 @@ Setup the pre-requistes:
 
 Download and install node.js
     
-    wget http://nodejs.org/dist/node-v0.3.3.tar.gz
-    gunzip node-v0.3.3.tar.gz
-    tar -xf node-v0.3.3.tar
-    cd node-v0.3.3
+    wget http://nodejs.org/dist/node-latest.tar.gz
+    gunzip node-latest.tar.gz
+    tar -xf node-latest.tar
+
+Enter node src folder, and run
+
     ./configure
     make
     make install
 
-Install node-mysql-libmysqlclient
+Install npm, if not exists:
 
+    curl http://npmjs.org/install.sh | sh
+
+Imstall mysql client:
+    
     apt-get install libmysqlclient-dev
-
-    git clone git://github.com/Sannis/node-mysql-libmysqlclient.git
-    cd node-mysql-libmysqlclient
-
-    node-waf configure build
-
-    mkdir -p /usr/local/lib/node/mysql/
-    cp -R build /usr/local/lib/node/mysql/build
-    cp mysql_bindings.node /usr/local/lib/node/mysql/
-    cp mysql-libmysqlclient.js /usr/local/lib/node/mysql/
-
+    npm install node-mysql-libmysqlclient
 
 Setup
 =====

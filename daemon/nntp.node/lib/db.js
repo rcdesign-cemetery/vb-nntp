@@ -11,7 +11,7 @@
  * @copyright RC Design, Vitaly Puzrin
 */
 
-var mysql = require('mysql/mysql-libmysqlclient');
+var mysql = require('mysql-libmysqlclient');
 
 var logger = require('./logger.js');
 
