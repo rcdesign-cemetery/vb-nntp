@@ -27,20 +27,15 @@ var TablePrefix = '';
  */
 var kickBackend = function(callback) {
     var cfg = config.vars;
-    
-    var http_client = http.createClient(cfg.ForumPort, cfg.ForumHost);
-    
-    // handle connection problems
-    http_client.on('error', function(err) {
-        callback(Error('Backend connection problem'));
-    });
-    
-    var request = http_client.request('GET', '/nntpauth.php',
-                                        { 'host': cfg.ForumHost }
-    );
 
-    // handle backend reply
-    request.on('response', function (response) {
+    var options = {
+        host: cfg.ForumHost,
+        port: cfg.ForumPort,
+        path: '/nntpauth.php',
+        method: 'GET'
+    };
+    
+    var request = http.request(options, function(response) {
         response.setEncoding('utf8');
         response.on('data', function (chunk) {
             if (chunk === 'Ok') {
@@ -49,6 +44,11 @@ var kickBackend = function(callback) {
                 callback(Error('Bad response from backend'));
             }
         });
+    });
+
+    // handle connection errors
+    request.on('error', function(err) {
+        callback(Error('Backend connection problem'));
     });
 
     request.end();
