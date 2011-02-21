@@ -280,6 +280,12 @@ var cmdAuthinfo = function(cmd, sid, callback) {
 
         s.set(sid, { password : parced[1] });
         dm.checkAuth(sid, function(err, verifyed) {
+            // Lost session? Terminate
+            if (!s.get(sid)) {
+                callback(null, null);
+                return;
+            }
+
             if (err) {
                 callback(makeReport(err, sid), nntpCode._403_fuckup);
                 return;
@@ -341,8 +347,6 @@ var cmdMode = function(cmd, sid, callback) {
  * <permission> is always 'n' in our case (no posting allowed)
  */
 var cmdList = function(cmd, sid, callback) {
-    var reply = [];
-
     if (cmd.params) {
         callback(makeReport('Syntax error: ' + cmd.all, sid),
             nntpCode._501_syntax_error); // fuckup LIST extentions
@@ -351,10 +355,18 @@ var cmdList = function(cmd, sid, callback) {
 
     var valid_ids = s.get(sid).grp_ids;
     dm.getGroupsStat(valid_ids, function(err, rows) {
-        if (err) {
+        // Lost session? Terminate
+        if (!s.get(sid)) {
+            callback(null, null);
+            return;
+        }
+
+       if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
             return;
         }
+
+        var reply = [];
 
         reply.push(nntpCode._215_info_follows);
 
@@ -373,7 +385,6 @@ var cmdList = function(cmd, sid, callback) {
         
         reply.push(".");
         callback(null, reply);
-        reply = null;
     });
 };
 
@@ -398,8 +409,6 @@ var cmdList = function(cmd, sid, callback) {
  *      .... (multiline)
  */
 var cmdNewGroups = function(cmd, sid, callback) {
-    var reply = [];
-    
     var params = cmd.params.match(/^(\d{6}|\d{8})\s+(\d{6})(\s+gmt)?$/i);
 
     if (params) {
@@ -412,10 +421,18 @@ var cmdNewGroups = function(cmd, sid, callback) {
 
         var valid_ids = s.get(sid).grp_ids;
         dm.getNewGroups(valid_ids, datetime, function(err, rows) {
+            // Lost session? Terminate
+            if (!s.get(sid)) {
+                callback(null, null);
+                return;
+            }
+            
             if (err) {
                 callback(makeReport(err, sid), nntpCode._403_fuckup);
                 return;
             }
+
+            var reply = [];
         
             reply.push(nntpCode._231_newgroups_follows);
 
@@ -430,7 +447,6 @@ var cmdNewGroups = function(cmd, sid, callback) {
             
             reply.push(".");
             callback(null, reply);
-            reply = null;
         });
     } else {
         callback(makeReport('Syntax error: ' + cmd.all, sid),
@@ -461,7 +477,13 @@ var cmdGroup = function(cmd, sid, callback) {
 
     var group_id = session.groups[cmd.params];
     
-    dm.getGroupInfo(group_id, function(err,info) {
+    dm.getGroupInfo(group_id, function(err, info) {
+        // Lost session? Terminate
+        if (!s.get(sid)) {
+            callback(null, null);
+            return;
+        }
+
         if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
             return;
@@ -509,7 +531,6 @@ var cmdGroup = function(cmd, sid, callback) {
  *      see rfc :)
  */          
 var cmdXover = function(cmd, sid, callback) {
-    var reply = [];
     var range_min, range_max, i;
 
     var session = s.get(sid);
@@ -538,6 +559,12 @@ var cmdXover = function(cmd, sid, callback) {
     }
     
     dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
+        // Lost session? Terminate
+        if (!s.get(sid)) {
+            callback(null, null);
+            return;
+        }
+
         if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
             return;
@@ -548,6 +575,8 @@ var cmdXover = function(cmd, sid, callback) {
                 nntpCode._423_no_article_in_group);
             return;
         }
+
+        var reply = [];
 
         reply.push(nntpCode._224_overview_info_follows);
 
@@ -566,7 +595,6 @@ var cmdXover = function(cmd, sid, callback) {
                     
         reply.push(".");
         callback(null, reply);
-        reply = null;
     });
 };
 
@@ -582,7 +610,6 @@ var cmdXover = function(cmd, sid, callback) {
  *      <head> <range>
  */          
 var cmdXhdr = function(cmd, sid, callback) {
-    var reply = [];
     var range_min, range_max;
     var sub_cmd, sub_params;
 
@@ -622,7 +649,11 @@ var cmdXhdr = function(cmd, sid, callback) {
     }
     
     dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
-        var i;
+        // Lost session? Terminate
+        if (!s.get(sid)) {
+            callback(null, null);
+            return;
+        }
         
         if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
@@ -634,6 +665,9 @@ var cmdXhdr = function(cmd, sid, callback) {
                 nntpCode._423_no_article_in_group);
             return;
         }
+
+        var reply = [];
+        var i;
 
         reply.push(nntpCode._221_xhdr_head_follows);
 
@@ -665,7 +699,6 @@ var cmdXhdr = function(cmd, sid, callback) {
                     
         reply.push(".");
         callback(null, reply);
-        reply = null;
     });
 };
 
@@ -688,9 +721,6 @@ var cmdXhdr = function(cmd, sid, callback) {
  *      see rfc :)
  */          
 var cmdListGroup = function(cmd, sid, callback) {
-    var reply = [];
-    var i;
-
     // Extract group name and range (if exists)
     var group = (cmd.params.split(' ', 1)[0]);
     var sub_params = cmd.params.slice(group.length).trimLeft();
@@ -730,11 +760,20 @@ var cmdListGroup = function(cmd, sid, callback) {
         // We can use more effective request, to get ids only. But who cares?
         // Command is quire rare, no need to optimize now.
         dm.getHeaders(group_id, first, last, function(err, heads) {
+            // Lost session? Terminate
+            if (!s.get(sid)) {
+                callback(null, null);
+                return;
+            }
+            
             if (err) {
                 callback(makeReport(err, sid), nntpCode._403_fuckup);
                 return;
             }
 
+            var reply = [];
+            var i;
+            
 			reply.push(nntpCode._211_group_selected +
 						total + ' ' +
 						first + ' ' +
@@ -750,7 +789,6 @@ var cmdListGroup = function(cmd, sid, callback) {
                         
             reply.push(".");
             callback(null, reply);
-            reply = null;
         });
     });
 };
@@ -767,8 +805,6 @@ var cmdListGroup = function(cmd, sid, callback) {
  *      empty or string, according to rfc.
  */      
 var cmdArticle = function(cmd, sid, callback) {
-    var reply = [];
-
     var session = s.get(sid);
  
     if (session.current === '') {
@@ -786,6 +822,12 @@ var cmdArticle = function(cmd, sid, callback) {
     var group_id = session.groups[session.current];
 
     dm.getArticle(group_id, article_id, function(err, article) {
+        // Lost session? Terminate
+        if (!s.get(sid)) {
+            callback(null, null);
+            return;
+        }
+
         if (err) {
             callback(makeReport(err, sid), nntpCode._403_fuckup);
             return;
@@ -807,6 +849,8 @@ var cmdArticle = function(cmd, sid, callback) {
             reply_code = nntpCode._222_body_follows;
         }
                 
+        var reply = [];
+
         reply.push(reply_code + article_id + ' ' +
             msgIdString(article.postid, article.messagetype) + ' article');
 
@@ -824,7 +868,6 @@ var cmdArticle = function(cmd, sid, callback) {
         } 
         reply.push('.');  
         callback(null, reply);
-        reply = null;
     });
 };
 

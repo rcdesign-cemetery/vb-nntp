@@ -63,12 +63,14 @@ var conListener = function (stream) {
         logger.write('cmd', "C --> " + msg);
 
         nntpCore.executeCommand(command, stream.sid, function(err, reply, finish) {
+            // Note, there can be races, when stream closed,
+            // but we still catch delayed callback.
+            // I this case err = reply = null. Just do nothing.
+
             finish = finish || false;   // = 1 if connect should be closed
             var response = '';
             
-            if (err) {
-                logger.write('error', err);
-            }
+            if (err) { logger.write('error', err); }
 
             if (reply) {
                 // Check if we have string or array of strings
@@ -88,9 +90,7 @@ var conListener = function (stream) {
                     logger.write('reply', reply); 
                 }
             }
-            
-            response = null;
-            
+                       
             if (finish) { stream.end();  }
         });
     });

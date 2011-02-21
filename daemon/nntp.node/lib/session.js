@@ -38,12 +38,18 @@ Session.prototype.__defineSetter__('password', function (value) {
     this._password = crypto.createHash('md5').update(value).digest("hex");
 });
 
-exports.get = function(sid) { return sessionStore[sid]; };
+var get = function(sid) { return sessionStore[sid]; };
+
+exports.get = get;
 
 exports.set = function(sid, values) {
+    if (!get(sid)) { return false; }
+    
     Object.keys(values).forEach(function(name, index, array) {
         sessionStore[sid][name] = values[name];
     });
+    
+    return true;
 };
 
 exports.create = function(stream) {

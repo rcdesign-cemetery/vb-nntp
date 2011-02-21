@@ -206,6 +206,12 @@ exports.getArticle = function(group_id, article_id, callback) {
 var loadUser = function(sid, callback) {
     var session = s.get(sid);
 
+    // Do nothing if session lost
+    if (!session) {
+        callback(null, null);
+        return;
+    }
+
     // Both user record & grop permissions must exist
     // JOIN guarantees that. If one absent, we should kick backend to build.
     var sql = "SELECT " +
@@ -261,8 +267,12 @@ var loadUser = function(sid, callback) {
                 _s.groups[rows[i].group_name] = rows[i].id;
             }
             
-            s.set(sid,_s);
-            callback(null, true);
+            if (s.set(sid,_s)) {
+                callback(null, true);
+            } else {
+                // data not stored, because session lost
+                callback(null, null);
+            }
         });
     });
 };
@@ -284,6 +294,12 @@ exports.checkAuth = function(sid, callback) {
     }
 
     loadUser(sid, function(err, loaded) {
+        // session lost - gently return
+        if (loaded === null) {
+            callback(null, null);
+            return;
+        }
+        
         if (err) {
             callback(err, false);
             return;
@@ -317,12 +333,18 @@ exports.checkAuth = function(sid, callback) {
                 }
 
                 loadUser(sid, function(err, loaded) {
+                    // session lost - gently return
+                    if (loaded === null) {
+                        callback(null, null);
+                        return;
+                    }
+                    
                     if (err) {
                         callback(err, false);
                         return;
                     }
                     
-                    if (!!loaded) {
+                    if (!loaded) {
                         cache.blacklistAdd(s.get(sid).ip);						
 					}
 					
