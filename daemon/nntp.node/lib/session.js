@@ -18,8 +18,8 @@ var crypto = require('crypto');
 var sessionStore = {};
 var sid_next = 1;
 
-var Session = function(stream) {
-    this.ip = stream.remoteAddress;
+var Session = function(socket) {
+    this.ip = socket.remoteAddress;
     this.current = "";      // currently selected group name
     this.first = 0;         // first msg id in current group
     this.last = 0;          // last msg id in current group
@@ -52,10 +52,10 @@ exports.set = function(sid, values) {
     return true;
 };
 
-exports.create = function(stream) {
+exports.create = function(socket) {
     // create new session object, if not exists
     var key = sid_next;
-    sessionStore[key] = new Session(stream);
+    sessionStore[key] = new Session(socket);
     sid_next++;
     return key;
 };

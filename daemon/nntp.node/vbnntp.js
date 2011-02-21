@@ -25,45 +25,45 @@ var nntpDaemon = [];
 
 var CRLF = '\r\n';
 
-var conListener = function (stream) {
+var conListener = function (socket) {
 
-    stream.setNoDelay();
-    stream.setTimeout(config.vars.InactiveTimeout*1000);
+    socket.setNoDelay();
+    socket.setTimeout(config.vars.InactiveTimeout*1000);
 
     // create session object & store it's id
-    stream.sid = s.create(stream);
+    socket.sid = s.create(socket);
 
     /* Standard connection events */
     
-    stream.on('connect', function () {
-        stream.write("201 server ready - no posting allowed" + CRLF); 
+    socket.on('connect', function () {
+        socket.write("201 server ready - no posting allowed" + CRLF); 
     });
 
     // Close connection on long idle
-    stream.on('timeout', function () {
-        stream.destroy();
+    socket.on('timeout', function () {
+        socket.destroy();
     });
 
     // Catch error, if client terminates connection during reply
-    stream.on('error', function () {
-        stream.destroy();
+    socket.on('error', function () {
+        socket.destroy();
     });
 
     // Destroy session on close
-    stream.on('close', function () {
-		s.destroy(stream.sid);
+    socket.on('close', function () {
+		s.destroy(socket.sid);
     });
 
     
     // Received NNTP command from client (data string) 
-    stream.on('data', function (data) {
+    socket.on('data', function (data) {
         var command = data.toString().trimLeft().replace(/\s+$/, '');
 
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
         logger.write('cmd', "C --> " + msg);
 
-        nntpCore.executeCommand(command, stream.sid, function(err, reply, finish) {
-            // Note, there can be races, when stream closed,
+        nntpCore.executeCommand(command, socket.sid, function(err, reply, finish) {
+            // Note, there can be races, when socket closed,
             // but we still catch delayed callback.
             // I this case err = reply = null. Just do nothing.
 
@@ -80,18 +80,18 @@ var conListener = function (stream) {
                     response = reply + CRLF;
                 }
                 
-                // Should check if stream still writable
+                // Should check if socket still writable
                 // It can be closed while processing data
-                if (stream.writable) {
+                if (socket.writable) {
                     try {
-                        stream.write(response);
+                        socket.write(response);
                     } catch (e) {
                     }
                     logger.write('reply', reply); 
                 }
             }
                        
-            if (finish) { stream.end();  }
+            if (finish) { socket.end();  }
         });
     });
 };
