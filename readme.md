@@ -29,7 +29,6 @@ Known Issues
     - STAT, NEXT, LAST, NEWNEWS - not implemented
     - LIST NEWSGROUPS - not implemented
  4. No built-in SSL yet. Use stunnel4 now.
- 5. Rare races, when connection droped during command process. Session object is dropped, but callback try to access it.
 
 Installation
 ============
@@ -59,7 +58,7 @@ Install npm, if not exists:
 Imstall mysql client:
     
     apt-get install libmysqlclient-dev
-    npm install node-mysql-libmysqlclient
+    npm install mysql-libmysqlclient
 
 Setup
 =====

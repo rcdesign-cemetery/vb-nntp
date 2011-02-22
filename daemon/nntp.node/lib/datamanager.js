@@ -289,7 +289,7 @@ exports.checkAuth = function(sid, callback) {
     
     // Filter brute force attempts
     if (cache.blacklistCheck(s.get(sid).ip)) {
-        callback(Error('Brute force attampt. User: ' + s.get(sid).username), false);
+        callback(Error('Brute force attempt. User: ' + s.get(sid).username), false);
         return;
     }
 
