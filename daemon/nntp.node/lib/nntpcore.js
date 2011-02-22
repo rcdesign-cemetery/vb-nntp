@@ -54,22 +54,19 @@ var nntpCode = {
  * 
  * @return {Object} Error with session details
  */
-var makeReport = function(err, sid) {
+var makeReport = function(err, session) {
     if (!err) {
         return null;
     }
     
     var result = (err instanceof Error) ? err : Error(err);
     
-    if (!!sid) {
-        var session = s.get(sid);
-        if (session) {
-            result.username = session.username;
-            result.user_id = session.userid;
-            result.ip = session.ip;
-            if (!!session.current) {
-                result.currentgroup = session.current;
-            }
+    if (!!session) {
+        result.username = session.username;
+        result.user_id = session.userid;
+        result.ip = session.ip;
+        if (!!session.current) {
+            result.currentgroup = session.current;
         }
     }
 
@@ -194,7 +191,7 @@ var msgHeaders = function(article, session) {
  * 
  * reply: 100 help text
  */      
-var cmdHelp = function(cmd, sid, callback) {
+var cmdHelp = function(cmd, session, callback) {
     var reply = [];
 
     reply.push(nntpCode._100_help_follows);
@@ -210,7 +207,7 @@ var cmdHelp = function(cmd, sid, callback) {
  * 
  *  reply: 205 closing connection - goodbye! 
  */         
-var cmdQuit = function(cmd, sid, callback) {
+var cmdQuit = function(cmd, session, callback) {
     callback(null, nntpCode._205_goodbye, true); 
 };
 
@@ -226,7 +223,7 @@ function pad(n) {
  * 
  *      111 yyyymmddhhmmss
  */
-var cmdDate = function(cmd, sid, callback) {
+var cmdDate = function(cmd, session, callback) {
     var now = new Date();    
 
     callback(null, nntpCode._111_date +
@@ -254,40 +251,34 @@ var cmdDate = function(cmd, sid, callback) {
  *      281 Authenticaion accepted
  *      382 Authenticaion rejected
  */      
-var cmdAuthinfo = function(cmd, sid, callback) {
+var cmdAuthinfo = function(cmd, session, callback) {
     var parced;
 
     // Disable command after success. See RFC 4643
     // http://tools.ietf.org/html/rfc4643
-    if (s.get(sid).userid) {
+    if (session.userid) {
         callback(null, nntpCode._502_cmd_unavailable);
         return;
     }
     
     parced = cmd.params.match(/^user\s+(.+)/i);  // username
     if (parced) {
-        s.set(sid, { username : parced[1] });
+        session.set({ username : parced[1] });
         callback(null, nntpCode._381_auth_required);
         return;
     }
     
     parced = cmd.params.match(/^pass\s+(.+)/i);  // password
     if (parced) {
-        if (s.get(sid).username === '') {
+        if (session.username === '') {
             callback(null, nntpCode._482_auth_out_of_sequence);
             return;
         }
 
-        s.set(sid, { password : parced[1] });
-        dm.checkAuth(sid, function(err, verifyed) {
-            // Lost session? Terminate
-            if (!s.get(sid)) {
-                callback(null, null);
-                return;
-            }
-
+        session.set({ password : parced[1] });
+        dm.checkAuth(session, function(err, verifyed) {
             if (err) {
-                callback(makeReport(err, sid), nntpCode._403_fuckup);
+                callback(makeReport(err, session), nntpCode._403_fuckup);
                 return;
             }
                 
@@ -319,11 +310,11 @@ var cmdAuthinfo = function(cmd, sid, callback) {
  *      200 - Posting allowed
  *      201 - Posting prohibited
  */          
-var cmdMode = function(cmd, sid, callback) {
+var cmdMode = function(cmd, session, callback) {
     if (cmd.params.match(/^reader$/i)) {
         callback(null, nntpCode._201_srv_ready_ro);
     } else {
-        callback(makeReport('Syntax error: ' + cmd.all, sid),
+        callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error);
     } 
 };
@@ -346,23 +337,16 @@ var cmdMode = function(cmd, sid, callback) {
  * 
  * <permission> is always 'n' in our case (no posting allowed)
  */
-var cmdList = function(cmd, sid, callback) {
+var cmdList = function(cmd, session, callback) {
     if (cmd.params) {
-        callback(makeReport('Syntax error: ' + cmd.all, sid),
+        callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error); // fuckup LIST extentions
         return;
     }
 
-    var valid_ids = s.get(sid).grp_ids;
-    dm.getGroupsStat(valid_ids, function(err, rows) {
-        // Lost session? Terminate
-        if (!s.get(sid)) {
-            callback(null, null);
-            return;
-        }
-
+    dm.getGroupsStat(session.grp_ids, function(err, rows) {
        if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
@@ -370,7 +354,7 @@ var cmdList = function(cmd, sid, callback) {
 
         reply.push(nntpCode._215_info_follows);
 
-        var groups = s.get(sid).groups;
+        var groups = session.groups;
         Object.keys(groups).forEach(function(name, index, array) {
             var first, last;
             if (rows[groups[name]]) {
@@ -408,7 +392,7 @@ var cmdList = function(cmd, sid, callback) {
  *      231 list of new newsgroups follows
  *      .... (multiline)
  */
-var cmdNewGroups = function(cmd, sid, callback) {
+var cmdNewGroups = function(cmd, session, callback) {
     var params = cmd.params.match(/^(\d{6}|\d{8})\s+(\d{6})(\s+gmt)?$/i);
 
     if (params) {
@@ -419,16 +403,9 @@ var cmdNewGroups = function(cmd, sid, callback) {
         var datetime =  date[1] + '-' + date[2] + '-' + date[3] + ' ' +
                         time[1] + ':' + time[2] + ':' + time[3];
 
-        var valid_ids = s.get(sid).grp_ids;
-        dm.getNewGroups(valid_ids, datetime, function(err, rows) {
-            // Lost session? Terminate
-            if (!s.get(sid)) {
-                callback(null, null);
-                return;
-            }
-            
+        dm.getNewGroups(session.grp_ids, datetime, function(err, rows) {
             if (err) {
-                callback(makeReport(err, sid), nntpCode._403_fuckup);
+                callback(makeReport(err, session), nntpCode._403_fuckup);
                 return;
             }
 
@@ -436,7 +413,7 @@ var cmdNewGroups = function(cmd, sid, callback) {
         
             reply.push(nntpCode._231_newgroups_follows);
 
-            var groups = s.get(sid).groups;
+            var groups = session.groups;
             Object.keys(groups).forEach(function(name, index, array) {
                 var id = groups[name];
                 if (!!rows[id]) {
@@ -449,7 +426,7 @@ var cmdNewGroups = function(cmd, sid, callback) {
             callback(null, reply);
         });
     } else {
-        callback(makeReport('Syntax error: ' + cmd.all, sid),
+        callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error); 
     }
 };
@@ -467,8 +444,7 @@ var cmdNewGroups = function(cmd, sid, callback) {
  *      211 count first-id last-id groupname
  *      411 No such newsgroup
  */            
-var cmdGroup = function(cmd, sid, callback) {
-    var session = s.get(sid);
+var cmdGroup = function(cmd, session, callback) {
 
     if (!session.groups[cmd.params]) {
         callback(null, nntpCode._411_newsgroup_notfound);
@@ -478,14 +454,8 @@ var cmdGroup = function(cmd, sid, callback) {
     var group_id = session.groups[cmd.params];
     
     dm.getGroupInfo(group_id, function(err, info) {
-        // Lost session? Terminate
-        if (!s.get(sid)) {
-            callback(null, null);
-            return;
-        }
-
         if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
@@ -499,7 +469,7 @@ var cmdGroup = function(cmd, sid, callback) {
             first = last = total = 0;
         }
 
-        s.set(sid, { current : cmd.params,
+        session.set({ current : cmd.params,
                     first : first,
                     last : last });
            
@@ -530,10 +500,8 @@ var cmdGroup = function(cmd, sid, callback) {
  * 
  *      see rfc :)
  */          
-var cmdXover = function(cmd, sid, callback) {
+var cmdXover = function(cmd, session, callback) {
     var range_min, range_max, i;
-
-    var session = s.get(sid);
 
     if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
@@ -543,7 +511,7 @@ var cmdXover = function(cmd, sid, callback) {
     var range = cmd.params.match(/^(\d+)(-)?(\d+)?$/);
         
     if(!range) {
-        callback(makeReport('Range error: ' + cmd.all, sid),
+        callback(makeReport('Range error: ' + cmd.all, session),
             nntpCode._420_article_notselected);
         return;
     }
@@ -559,19 +527,13 @@ var cmdXover = function(cmd, sid, callback) {
     }
     
     dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
-        // Lost session? Terminate
-        if (!s.get(sid)) {
-            callback(null, null);
-            return;
-        }
-
         if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
         
         if (!heads.length) {
-            callback(makeReport('No such Article: ' + cmd.all, sid),
+            callback(makeReport('No such Article: ' + cmd.all, session),
                 nntpCode._423_no_article_in_group);
             return;
         }
@@ -609,11 +571,9 @@ var cmdXover = function(cmd, sid, callback) {
  * 
  *      <head> <range>
  */          
-var cmdXhdr = function(cmd, sid, callback) {
+var cmdXhdr = function(cmd, session, callback) {
     var range_min, range_max;
     var sub_cmd, sub_params;
-
-    var session = s.get(sid);
 
     if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
@@ -625,7 +585,7 @@ var cmdXhdr = function(cmd, sid, callback) {
 
     // check if supported header requested
     if(!/^(FROM|SUBJECT|MESSAGE-ID|REFERENCES|DATE)$/.test(sub_cmd)) {
-        callback(makeReport('Syntax error: ' + cmd.all, sid),
+        callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error);
         return;
     }
@@ -633,7 +593,7 @@ var cmdXhdr = function(cmd, sid, callback) {
     var range = sub_params.match(/^(\d+)(-)?(\d+)?$/);
         
     if(!range) {
-        callback(makeReport('Range error: ' + cmd.all, sid),
+        callback(makeReport('Range error: ' + cmd.all, session),
             nntpCode._420_article_notselected);
         return;
     }
@@ -649,19 +609,13 @@ var cmdXhdr = function(cmd, sid, callback) {
     }
     
     dm.getHeaders(group_id, range_min, range_max, function(err, heads) {
-        // Lost session? Terminate
-        if (!s.get(sid)) {
-            callback(null, null);
-            return;
-        }
-        
         if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
         if (!heads.length) {
-            callback(makeReport('No such Article: ' + cmd.all, sid),
+            callback(makeReport('No such Article: ' + cmd.all, session),
                 nntpCode._423_no_article_in_group);
             return;
         }
@@ -720,19 +674,17 @@ var cmdXhdr = function(cmd, sid, callback) {
  * 
  *      see rfc :)
  */          
-var cmdListGroup = function(cmd, sid, callback) {
+var cmdListGroup = function(cmd, session, callback) {
     // Extract group name and range (if exists)
     var group = (cmd.params.split(' ', 1)[0]);
     var sub_params = cmd.params.slice(group.length).trimLeft();
 
     // We don't support [range] param, report error
     if (!!sub_params) {
-        callback(makeReport('Syntax error: ' + cmd.all, sid),
+        callback(makeReport('Syntax error: ' + cmd.all, session),
             nntpCode._501_syntax_error);
         return;
     }
-
-    var session = s.get(sid);
 
     if (!session.groups[group]) {
         callback(null, nntpCode._411_newsgroup_notfound);
@@ -743,7 +695,7 @@ var cmdListGroup = function(cmd, sid, callback) {
 
     dm.getGroupInfo(group_id, function(err, info) {
         if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
 
@@ -760,14 +712,8 @@ var cmdListGroup = function(cmd, sid, callback) {
         // We can use more effective request, to get ids only. But who cares?
         // Command is quire rare, no need to optimize now.
         dm.getHeaders(group_id, first, last, function(err, heads) {
-            // Lost session? Terminate
-            if (!s.get(sid)) {
-                callback(null, null);
-                return;
-            }
-            
             if (err) {
-                callback(makeReport(err, sid), nntpCode._403_fuckup);
+                callback(makeReport(err, session), nntpCode._403_fuckup);
                 return;
             }
 
@@ -781,7 +727,7 @@ var cmdListGroup = function(cmd, sid, callback) {
 						group + 'list follows'
 			);
 			
-            s.set(sid, { current : group });
+            session.set({ current : group });
             
             for(i=0; i<heads.length; i++) {
                 reply.push(heads[i].messageid);
@@ -804,8 +750,7 @@ var cmdListGroup = function(cmd, sid, callback) {
  *      (!) we implement ONLY digital id. It can also be
  *      empty or string, according to rfc.
  */      
-var cmdArticle = function(cmd, sid, callback) {
-    var session = s.get(sid);
+var cmdArticle = function(cmd, session, callback) {
  
     if (session.current === '') {
         callback(null, nntpCode._412_newsgroup_notselected);
@@ -813,7 +758,7 @@ var cmdArticle = function(cmd, sid, callback) {
     }
     // Expect only digit in parameter now
     if (!/^\d+$/.test(cmd.params)) {
-        callback(makeReport('Range error: ' + cmd.all, sid),
+        callback(makeReport('Range error: ' + cmd.all, session),
             nntpCode._420_article_notselected);
         return;
     }
@@ -822,14 +767,8 @@ var cmdArticle = function(cmd, sid, callback) {
     var group_id = session.groups[session.current];
 
     dm.getArticle(group_id, article_id, function(err, article) {
-        // Lost session? Terminate
-        if (!s.get(sid)) {
-            callback(null, null);
-            return;
-        }
-
         if (err) {
-            callback(makeReport(err, sid), nntpCode._403_fuckup);
+            callback(makeReport(err, session), nntpCode._403_fuckup);
             return;
         }
         if (!article) {
@@ -894,7 +833,7 @@ var nntpWithAuth = {
 /**
  * Main call to process all commands 
  */
-exports.executeCommand = function(command, sid, callback) { 
+exports.executeCommand = function(command, session, callback) { 
 
     var cmd = {};
 
@@ -904,15 +843,15 @@ exports.executeCommand = function(command, sid, callback) {
 
     if (nntpWithAuth[cmd.code] !== undefined) {
         // userid = 0 -> authorisation not passed yet
-        if (s.get(sid).userid) {
-            nntpWithAuth[cmd.code](cmd, sid, callback);
+        if (session.userid) {
+            nntpWithAuth[cmd.code](cmd, session, callback);
         } else {
             callback(null, nntpCode._480_auth_required); 
         }
     } else if (nntpNoAuth[cmd.code] !== undefined) {
-        nntpNoAuth[cmd.code](cmd, sid, callback);
+        nntpNoAuth[cmd.code](cmd, session, callback);
     } else {
-        callback(makeReport('unknown command: ' + cmd.all, sid),
+        callback(makeReport('unknown command: ' + cmd.all, session),
             nntpCode._500_cmd_unknown);
     }
 };

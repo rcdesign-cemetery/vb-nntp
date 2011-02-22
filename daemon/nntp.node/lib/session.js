@@ -10,12 +10,7 @@
  * 
  * @copyright RC Design, Vitaly Puzrin
 */
-
-var util = require('util');
 var crypto = require('crypto');
-
-// Storage for session objects;
-var sessionStore = {};
 
 // Shared part of all sessions (css, menu, template)
 // Depends on ACL (permissions)
@@ -28,9 +23,9 @@ var sessionShared = {
     grp_ids : {}
 };
 
-var sid_next = 1;
+function Session(socket) {
+    if (!(this instanceof Session)) { return new Session(socket); } // ?(arguments[0])
 
-var Session = function(socket) {
     this.ip = socket.remoteAddress;
     this.current = "";      // currently selected group name
     this.first = 0;         // first msg id in current group
@@ -39,7 +34,7 @@ var Session = function(socket) {
     this.username = '';
     this._password = '';
     this.shared_id = '';    // id of shared part (forum groups used)
-};
+}
 
 Session.prototype.__defineGetter__('password', function () {
     return this._password;
@@ -48,81 +43,36 @@ Session.prototype.__defineSetter__('password', function (value) {
     this._password = crypto.createHash('md5').update(value).digest("hex");
 });
 
-Session.prototype.__defineGetter__('css', function () {
-    return sessionShared.css[this.shared_id] || ''; });
-Session.prototype.__defineSetter__('css', function (value) {
-    if (!this.shared_id) { return false; }
-    sessionShared.css[this.shared_id] = value;
-    return true;
-});
+// Bulk setup proxy getters/setters for shared properties
+(function(){
+    var assignGetterAndSetter = function(name){
+        if (!sessionShared[name]) { sessionShared[name] = {}; }
 
-Session.prototype.__defineGetter__('menu', function () {
-    return sessionShared.menu[this.shared_id] || ''; });
-Session.prototype.__defineSetter__('menu', function (value) {
-    if (!this.shared_id) { return false; }
-    sessionShared.menu[this.shared_id] = value;
-    return true;
-});
+        Session.prototype.__defineGetter__(name, function(){
+            return sessionShared[name][this.shared_id];
+        });
 
-Session.prototype.__defineGetter__('template', function () {
-    return sessionShared.template[this.shared_id] || ''; });
-Session.prototype.__defineSetter__('template', function (value) {
-    if (!this.shared_id) { return false; }
-    sessionShared.template[this.shared_id] = value;
-    return true;
-});
+        Session.prototype.__defineSetter__(name, function(value){
+            if (!this.shared_id) { return false; }
+            sessionShared[name][this.shared_id] = value;
+            return true;
+        });
+    };
 
-Session.prototype.__defineGetter__('grp_ids', function () {
-    return sessionShared.grp_ids[this.shared_id] || ''; });
-Session.prototype.__defineSetter__('grp_ids', function (value) {
-    if (!this.shared_id) { return false; }
-    sessionShared.grp_ids[this.shared_id] = value;
-    return true;
-});
+    var name;
 
-Session.prototype.__defineGetter__('groups', function () {
-    return sessionShared.groups[this.shared_id] || {}; });
-Session.prototype.__defineSetter__('groups', function (value) {
-    if (!this.shared_id) { return false; }
-    sessionShared.groups[this.shared_id] = value;
-    return true;
-});
+    for (name in sessionShared) {
+        if (sessionShared[name]) {
+            assignGetterAndSetter(name);
+        }
+    }
+}());
 
-var get = function(sid) { return sessionStore[sid]; };
-
-exports.get = get;
-
-exports.set = function(sid, values) {
-    if (!get(sid)) { return false; }
-    
+Session.prototype.set = function(values) {
+    var self = this;
     Object.keys(values).forEach(function(name, index, array) {
-        sessionStore[sid][name] = values[name];
+        self[name] = values[name];
     });
-    
-    return true;
-};
+}
 
-exports.create = function(socket) {
-    // create new session object, if not exists
-    var key = sid_next;
-    sessionStore[key] = new Session(socket);
-    sid_next++;
-    return key;
-};
-
-exports.destroy = function(sid) {
-    sessionStore[sid].groups = null;
-    sessionStore[sid] = null;
-    delete sessionStore[sid];
-};
-
-exports.dump = function() {
-    var msg = 'Sessions storage: ' + Object.keys(sessionStore).length + ' total\n\n';
-
-    Object.keys(sessionStore).forEach(function(name, index, array) {
-        msg += '  ' + sessionStore[name].username + ',    ' +
-                sessionStore[name].ip + '\n';
-    });
-
-    return msg;
-};
+exports.Session = Session;

@@ -203,15 +203,7 @@ exports.getArticle = function(group_id, article_id, callback) {
  * 
  * session.username & session.password must be filled
  */
-var loadUser = function(sid, callback) {
-    var session = s.get(sid);
-
-    // Do nothing if session lost
-    if (!session) {
-        callback(null, null);
-        return;
-    }
-
+var loadUser = function(session, callback) {
     // Both user record & grop permissions must exist
     // JOIN guarantees that. If one absent, we should kick backend to build.
     var sql = "SELECT " +
@@ -270,12 +262,8 @@ var loadUser = function(sid, callback) {
                 _s.groups[rows[i].group_name] = rows[i].id;
             }
             
-            if (s.set(sid,_s)) {
-                callback(null, true);
-            } else {
-                // data not stored, because session lost
-                callback(null, null);
-            }
+            session.set(_s);
+            callback(null, true);
         });
     });
 };
@@ -287,16 +275,16 @@ var loadUser = function(sid, callback) {
  * Check user login (nick|email) & password from session
  * Fill session records on success (groups, acceess_level, etc)
  */
-exports.checkAuth = function(sid, callback) {
+exports.checkAuth = function(session, callback) {
     var sql;
     
     // Filter brute force attempts
-    if (cache.blacklistCheck(s.get(sid).ip)) {
-        callback(Error('Brute force attempt. User: ' + s.get(sid).username), false);
+    if (cache.blacklistCheck(session.ip)) {
+        callback(Error('Brute force attempt. User: ' + session.username), false);
         return;
     }
 
-    loadUser(sid, function(err, loaded) {
+    loadUser(session, function(err, loaded) {
         // session lost - gently return
         if (loaded === null) {
             callback(null, null);
@@ -313,8 +301,6 @@ exports.checkAuth = function(sid, callback) {
             callback(null, true);
             return;
         }
-
-        var session = s.get(sid);
 
         sql =   "REPLACE INTO `" + TablePrefix + "nntp_userauth_cache` " +
                 "   SET " +
@@ -335,20 +321,14 @@ exports.checkAuth = function(sid, callback) {
                     return;
                 }
 
-                loadUser(sid, function(err, loaded) {
-                    // session lost - gently return
-                    if (loaded === null) {
-                        callback(null, null);
-                        return;
-                    }
-                    
+                loadUser(session, function(err, loaded) {
                     if (err) {
                         callback(err, false);
                         return;
                     }
                     
                     if (!loaded) {
-                        cache.blacklistAdd(s.get(sid).ip);						
+                        cache.blacklistAdd(session.ip);						
 					}
 					
                     callback(null, true);

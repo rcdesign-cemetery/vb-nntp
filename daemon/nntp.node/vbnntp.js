@@ -30,7 +30,7 @@ var conListener = function (socket) {
     // Setup params, create session & send welcome text
     socket.setNoDelay();
     socket.setTimeout(config.vars.InactiveTimeout*1000);
-    socket.sid = s.create(socket);
+    socket.session = new s.Session(socket);
     socket.write("201 server ready - no posting allowed" + CRLF); 
 
     /* Standard connection events */
@@ -47,7 +47,7 @@ var conListener = function (socket) {
 
     // Destroy session on close
     socket.on('close', function () {
-		s.destroy(socket.sid);
+		socket.session = null;
     });
     
     // Received NNTP command from client (data string) 
@@ -57,7 +57,7 @@ var conListener = function (socket) {
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
         logger.write('cmd', "C --> " + msg);
 
-        nntpCore.executeCommand(command, socket.sid, function(err, reply, finish) {
+        nntpCore.executeCommand(command, socket.session, function(err, reply, finish) {
             // Note, there can be races, when socket closed,
             // but we still catch delayed callback.
             // I this case err = reply = null. Just do nothing.
