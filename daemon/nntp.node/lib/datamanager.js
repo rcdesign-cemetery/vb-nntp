@@ -236,6 +236,9 @@ var loadUser = function(sid, callback) {
         
         // Store user data to session & cache it
         var _s = {
+            // should be first
+            shared_id : rows[0].usergroupslist.replace(/,/, '_'),
+            
             userid : rows[0].userid,
             css : rows[0].css,
             menu : rows[0].menu,
