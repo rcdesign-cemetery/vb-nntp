@@ -26,18 +26,14 @@ var nntpDaemon = [];
 var CRLF = '\r\n';
 
 var conListener = function (socket) {
-
+    // Initialisation for each new client
+    // Setup params, create session & send welcome text
     socket.setNoDelay();
     socket.setTimeout(config.vars.InactiveTimeout*1000);
-
-    // create session object & store it's id
     socket.sid = s.create(socket);
+    socket.write("201 server ready - no posting allowed" + CRLF); 
 
     /* Standard connection events */
-    
-    socket.on('connect', function () {
-        socket.write("201 server ready - no posting allowed" + CRLF); 
-    });
 
     // Close connection on long idle
     socket.on('timeout', function () {
@@ -53,7 +49,6 @@ var conListener = function (socket) {
     socket.on('close', function () {
 		s.destroy(socket.sid);
     });
-
     
     // Received NNTP command from client (data string) 
     socket.on('data', function (data) {
@@ -91,7 +86,7 @@ var conListener = function (socket) {
                 }
             }
                        
-            if (finish) { socket.end();  }
+            if (finish && socket.writable) { socket.end();  }
         });
     });
 };
