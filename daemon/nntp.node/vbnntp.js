@@ -17,7 +17,7 @@ var fs = require('fs');
 var util = require('util');
 
 var config = require('./lib/config.js'); 
-var nntpCore = require('./lib/nntpcore.js'); 
+var parser = require('./lib/parser.js'); 
 var logger = require('./lib/logger.js');
 var s = require('./lib/session.js'); 
 
@@ -30,7 +30,7 @@ var conListener = function (socket) {
     // Setup params, create session & send welcome text
     socket.setNoDelay();
     socket.setTimeout(config.vars.InactiveTimeout*1000);
-    socket.session = new s.Session(socket);
+    socket.parser = parser.nntpParser(socket);
     socket.write("201 server ready - no posting allowed" + CRLF); 
 
     /* Standard connection events */
@@ -47,7 +47,7 @@ var conListener = function (socket) {
 
     // Destroy session on close
     socket.on('close', function () {
-		socket.session = null;
+		socket.parser = null;
     });
     
     // Received NNTP command from client (data string) 
@@ -57,7 +57,7 @@ var conListener = function (socket) {
         var msg = /^AUTHINFO PASS/i.test(command) ? 'AUTHINFO PASS *****' : command;
         logger.write('cmd', "C --> " + msg);
 
-        nntpCore.executeCommand(command, socket.session, function(err, reply, finish) {
+        socket.parser.executeCommand(command, function(err, reply, finish) {
             // Note, there can be races, when socket closed,
             // but we still catch delayed callback.
             // I this case err = reply = null. Just do nothing.
@@ -121,8 +121,7 @@ process.on('SIGUSR1', function () {
 	
 	logger.write('info', 'Stat dumped.\n' +
         'Current connections: ' + connections + '\n\n' +
-        'Memory usage:\n' + util.inspect(process.memoryUsage()) + '\n\n' +
-        s.dump()
+        'Memory usage:\n' + util.inspect(process.memoryUsage()) + '\n\n'
     );
 });
 
