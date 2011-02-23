@@ -246,7 +246,7 @@ nntpParser.prototype.cmdDate = function(cmd, callback) {
     callback(null, nntpCode._111_date +
         now.getUTCFullYear() +
         pad(now.getUTCMonth()+1) +
-        pad(now.getUTCDay()) +
+        pad(now.getUTCDate()) +
         pad(now.getUTCHours()) +
         pad(now.getUTCMinutes()) +
         pad(now.getUTCSeconds())

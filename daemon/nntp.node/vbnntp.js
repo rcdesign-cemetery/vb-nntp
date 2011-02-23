@@ -29,6 +29,7 @@ var conListener = function (socket) {
     // Initialisation for each new client
     // Setup params, create session & send welcome text
     socket.setNoDelay();
+    socket.setEncoding('utf8');
     socket.setTimeout(config.vars.InactiveTimeout*1000);
     socket.parser = parser.nntpParser(socket);
     socket.write("201 server ready - no posting allowed" + CRLF); 
