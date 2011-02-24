@@ -20,11 +20,9 @@
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_groupaccess_cache (
   `usergroupslist` char(100) NOT NULL,
   `nntpgroupslist` varchar(7000) NOT NULL,
-  `access_level` enum('full','demo','none') NOT NULL,
   `template` varchar(2000) NOT NULL,
   `css` varchar(5000) NOT NULL,
   `menu` varchar(2000) NOT NULL,
-  `demotext` varchar(5000) NOT NULL,
   PRIMARY KEY  (`usergroupslist`)
 ) ENGINE=MEMORY");
 
@@ -37,8 +35,8 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `date_create` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`),
   KEY `map_id` (`map_id`),
-  KEY `date_create` (`date_create`),
-  KEY `plugin_active` (`plugin_id`,`is_active`)
+  KEY `plugin_active` (`plugin_id`,`is_active`),
+  KEY `date_create` (`date_create`, `id`, `is_active`)
 ) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_index (
@@ -46,17 +44,18 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `messageid` int(10) unsigned NOT NULL,
   `parentid` int(10) unsigned NOT NULL,
   `title` varchar(250) NOT NULL,
-  `body` text NOT NULL,
   `datetime` datetime NOT NULL,
   `userid` int(10) unsigned NOT NULL,
   `username` varchar(100) NOT NULL,
   `deleted` enum('no','yes') NOT NULL,
   `messagetype` enum('forum','blog') NOT NULL,
   `postid` int(10) unsigned NOT NULL,
+  `body` text NOT NULL,
   PRIMARY KEY  (`groupid`,`messageid`),
   KEY `src` (`postid`,`messagetype`,`deleted`,`groupid`,`messageid`),
   KEY `parent` (`parentid`,`messagetype`,`groupid`,`postid`),
-  KEY `daemon` (`groupid`,`deleted`,`datetime`,`messageid`)
+  KEY `daemon` (`groupid`,`deleted`,`messageid`),
+  KEY `expires` (`groupid`,`datetime`,`messageid`)
 ) ");
 
 $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp_stats (
@@ -72,9 +71,8 @@ $vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "nntp
   `lastactivity` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `usergroupslist` varchar(100) NOT NULL,
   `userid` int(10) unsigned NOT NULL,
-  `access_granted` enum('yes','no') NOT NULL default 'no',
   PRIMARY KEY (`username`,`authhash`),
-  KEY `access_granted` (`access_granted`) USING BTREE
+  KEY `usergroups` (`usergroupslist`(2)) USING BTREE
 ) ENGINE=MEMORY");
 
 
