@@ -3,7 +3,7 @@ var crypto = require('crypto');
 var cache = {};
 
 var blacklistTimeout = 300;     // 5 minutes
-var blacklistTrigger = 10;      // 10 retries, prior to block
+var blacklistTrigger = 5;      // 10 retries, prior to block
 var sessionTimeout = 300;       // 5 minutes
 var groupsListTimeout = 600;        // 10 minutes freeze for groups list
 var groupStatTimeout = 120;         // 2 minutes freese for each group counters

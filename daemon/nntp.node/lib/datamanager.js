@@ -280,7 +280,8 @@ exports.checkAuth = function(session, callback) {
     
     // Filter brute force attempts
     if (cache.blacklistCheck(session.ip)) {
-        callback(Error('Brute force attempt. User: ' + session.username), false);
+        // (no error, no auth, bruteforce)
+        callback(null, false, true);
         return;
     }
 
@@ -322,16 +323,13 @@ exports.checkAuth = function(session, callback) {
                 }
 
                 loadUser(session, function(err, loaded) {
-                    if (err) {
-                        callback(err, false);
-                        return;
-                    }
-                    
-                    if (!loaded) {
+                    // no error, but user not found - increment blacklist
+                    if (!err && !loaded) {
                         cache.blacklistAdd(session.ip);						
 					}
 					
-                    callback(null, true);
+                    // return result
+                    callback(err, loaded);
                 });
             });
         });

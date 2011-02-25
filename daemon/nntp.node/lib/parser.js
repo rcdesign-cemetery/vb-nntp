@@ -295,7 +295,7 @@ nntpParser.prototype.cmdAuthinfo = function(cmd, callback) {
         }
 
         this.session.set({ password : parced[1] });
-        dm.checkAuth(this.session, function(err, verifyed) {
+        dm.checkAuth(this.session, function(err, verifyed, bruteforce) {
             if (err) {
                 callback(self.makeReport(err), nntpCode._403_fuckup);
                 return;
@@ -305,7 +305,15 @@ nntpParser.prototype.cmdAuthinfo = function(cmd, callback) {
                 callback(null, nntpCode._281_auth_accepted);
                 return;
             } else {
-                callback(null, nntpCode._481_auth_rejected);
+                if (!bruteforce) {
+                    callback(null, nntpCode._481_auth_rejected, true);
+                } else {
+                    callback('Brute force attempt! User: ' +
+                            self.session.username + ', IP: ' +
+                            self.session.ip,
+                        nntpCode._481_auth_rejected +
+                        ' (too many attempts)', true);
+                }
                 return;
             }
         });
