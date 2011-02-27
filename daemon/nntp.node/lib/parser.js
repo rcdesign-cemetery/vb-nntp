@@ -192,9 +192,10 @@ nntpParser.prototype.msgHeaders = function(article) {
     headers.push("From: " +         this.msgFrom(article.username));
     headers.push("Newsgroups: " +   this.session.current);
     headers.push("Subject: " +      this.msgSubject(article.subject));
-    headers.push("Date: " +         article.gmdate);  // ??? .replace("+00:00", "+03:00")
+    headers.push("Date: " +         article.gmdate);
     headers.push("Message-ID: " +   this.msgIdString(article.postid, article.messagetype));
     headers.push("References: " +  this.msgReferers(article.refid, article.messagetype));
+    headers.push("Expires: " +         article.expires);
     headers.push("Content-Type: text/html; charset=utf-8");
     headers.push("Content-Transfer-Encoding: base64");
 //    headers.push("Content-Transfer-Encoding: 8bit");

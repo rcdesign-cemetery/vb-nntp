@@ -100,7 +100,8 @@ var mergeVbulletinSettings = function(cfg) {
     var settings_map = { 
             nntp_from_address : 'FromAddress',
             bburl : 'ForumUrl',
-            bbactive : 'Active'
+            bbactive : 'Active',
+            nntp_message_in_list_timeout: "MsgExpires"
     };
     var i;
     

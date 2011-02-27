@@ -122,7 +122,7 @@ exports.getHeaders = function(group_id, range_min, range_max, callback) {
                 "           'SYSTEM', " +
                 "           '+00:00' " +
                 "       ), " +
-                "       '%a, %d %b %Y %T +00:00' " +
+                "       '%a, %d %b %Y %T +0000' " +
                 "   ) AS `gmdate` " +
                 "FROM `" + TablePrefix + "nntp_index` " +
                 "WHERE " +
@@ -180,8 +180,16 @@ exports.getArticle = function(group_id, article_id, callback) {
                 "                'SYSTEM', " +
                 "                '+00:00' " +
                 "              ), " +
-                "              '%a, %d %b %Y %T +00:00' " +
-                "    )  AS `gmdate` " +
+                "              '%a, %d %b %Y %T +0000' " +
+                "    )  AS `gmdate` , " +
+                "    DATE_FORMAT( " +
+                "       ADDDATE( CONVERT_TZ( " +
+                "                `datetime`, " +
+                "                'SYSTEM', " +
+                "                '+00:00' " +
+                "              ), INTERVAL " + config.vars.MsgExpires + " DAY), " +
+                "              '%a, %d %b %Y %T +0000' " +
+                "    )  AS `expires` " +
                 "FROM `" + TablePrefix + "nntp_index` " +
                 "WHERE " +
                 "   `groupid` = " + group_id +
