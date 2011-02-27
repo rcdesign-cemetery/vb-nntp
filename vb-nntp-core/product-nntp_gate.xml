@@ -93,7 +93,7 @@ $db->show_errors();]]></uninstallcode>
 		</code>
 	</codes>
 	<templates>
-		<template name="nntp_message_css" templatetype="template" date="1294715537" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
+		<template name="nntp_message_css" templatetype="template" date="1298811524" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
 <!--
 body {
 background: #FFFFFF;
@@ -155,6 +155,9 @@ font-size:12px;
 margin:20px 30px;
 padding:5px 10px;
 }
+
+.attachments li { list-style: none outside none; }
+.attachments ul { margin: 0; padding: 0; }
 
 .copyright, .copyright a { font-size: 10px; color: #808080; padding-top: 10px;}
 -->
@@ -368,4 +371,6 @@ $this->registry->db->query_write($sql);]]></phpcode>
 		<faq faqname="nntp_setup" faqparent="nntp_faq" displayorder="10" />
 		<faq faqname="nntp_thunderbird" faqparent="nntp_faq" displayorder="20" />
 	</faqentries>
+	<templateedits>
+	</templateedits>
 </product>
