@@ -1,4 +1,4 @@
-set daemon  30
+set daemon  120
     with start delay 240
 set logfile syslog facility log_daemon
 include /etc/monit/conf.d/*
