@@ -93,7 +93,7 @@ $db->show_errors();]]></uninstallcode>
 		</code>
 	</codes>
 	<templates>
-		<template name="nntp_message_css" templatetype="template" date="1298811524" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
+		<template name="nntp_message_css" templatetype="template" date="1298811346" username="Vitaly" version="1.8"><![CDATA[<style type="text/css">
 <!--
 body {
 background: #FFFFFF;
@@ -237,6 +237,7 @@ $this->registry->db->query_write($sql);]]></phpcode>
 			<phrase name="nntp_stats_head" date="1294183532" username="Vitaly" version=""><![CDATA[Statistics for last {1} days]]></phrase>
 			<phrase name="nntp_stats_last_used" date="1294183901" username="Vitaly" version=""><![CDATA[Last used]]></phrase>
 			<phrase name="nntp_stats_login_number" date="1294183743" username="Vitaly" version=""><![CDATA[Days used]]></phrase>
+			<phrase name="saved_nntp_group_settings_successfully" date="1299079046" username="varnak" version=""><![CDATA[Group settings successfully saved]]></phrase>
 		</phrasetype>
 		<phrasetype name="Scheduled Tasks" fieldname="cron">
 			<phrase name="task_nntp_cleanup_desc" date="1256211051" username="Dimit" version="" />
@@ -249,12 +250,17 @@ $this->registry->db->query_write($sql);]]></phpcode>
 		<phrasetype name="Error Messages" fieldname="error">
 			<phrase name="invalid_nntp_plugin_specified" date="1217537098" username="Wildev" version=""><![CDATA[Invalid plugin specified!]]></phrase>
 			<phrase name="nntp_cannot_remove_mapped_group" date="1218111169" username="Wildev" version=""><![CDATA[Can't remove group with mapped groups]]></phrase>
+			<phrase name="nntp_forbiden_symbols_in_group_name" date="1298973201" username="varnak" version=""><![CDATA[Allowed group name symbols are: a-z, 0-9, ., -, +, _
+]]></phrase>
 			<phrase name="nntp_group_cleaned_defeated" date="1260785885" username="varnak" version="1.7"><![CDATA[This group can not be cleared]]></phrase>
 			<phrase name="nntp_group_cleaned_successfully" date="1245760839" username="Dimit" version=""><![CDATA[The group index successfully rebuilt]]></phrase>
 			<phrase name="nntp_group_deleted_defeated" date="1260785836" username="varnak" version="1.7"><![CDATA[This group can not be removed]]></phrase>
 			<phrase name="nntp_group_deleted_successfully" date="1217537461" username="Wildev" version=""><![CDATA[Selected group successfully deleted]]></phrase>
+			<phrase name="nntp_group_name_not_unique" date="1298973235" username="varnak" version=""><![CDATA[Group name must be unique]]></phrase>
+			<phrase name="nntp_group_name_start_digit_or_dot" date="1299074747" username="varnak" version=""><![CDATA[Group name can not start with digit or "."
+]]></phrase>
+			<phrase name="nntp_try_to_override_existing_groups" date="1298973138" username="varnak" version=""><![CDATA[You try to override existing groups]]></phrase>
 			<phrase name="saved_nntp_group_settings_defeated" date="1260785779" username="varnak" version="1.7"><![CDATA[Group settings can not be changed]]></phrase>
-			<phrase name="saved_nntp_group_settings_successfully" date="1217536946" username="Wildev" version=""><![CDATA[Group settings successfully saved]]></phrase>
 		</phrasetype>
 		<phrasetype name="FAQ Text" fieldname="faqtext">
 			<phrase name="nntp_faq" date="1294705410" username="Vitaly" version="1.8"><![CDATA[NNTP-gate allows to read $vboptions[bbtitle] in very quick way. That can be done with common software for news-confereces, like Mozilla Thunderbird, Micrisoft Outlook Express, Opera. You'll be able to mass-load all messages, spending minimal traffic.]]></phrase>

@@ -1,5 +1,4 @@
-<?php
-require_once DIR . '/includes/class_nntpgate_object.php';
+<?php require_once DIR . '/includes/class_nntpgate_object.php';
 class NNTPGate_Group_Base extends NNTPGate_Object
 {
     /**
@@ -145,14 +144,20 @@ class NNTPGate_Group_Base extends NNTPGate_Object
      */
     public function save_group()
     {
+        // Check, that we don't try to override existing groups
         $existing_group = $this->get_group_id_by_map_id($this->_map_id, true);
         if ( 0 < $existing_group)
         {
-            // check, that we don't try to override existing groups
             if ($existing_group != $this->_group_id)
             {
+                print_stop_message('nntp_try_to_override_existing_groups');
                 return false;
             }
+        }
+
+        if (!$this->_is_group_name_valid())
+        {
+            return false;
         }
 
         $sql = "INSERT INTO
@@ -171,6 +176,46 @@ class NNTPGate_Group_Base extends NNTPGate_Object
 
         return true;
     }
+
+    /**
+     * Validate nntp group name
+     *
+     * return bool
+     */
+    private function _is_group_name_valid()
+    {
+        // Group name can not start with digit or '.'
+        if (preg_match('/^[0-9\.]/', $this->_group_name[0]))
+        {
+            print_stop_message('nntp_group_name_start_digit_or_dot');
+            return false;
+        }
+
+        // Allowed group name symbols are: a-z, 0-9, ., -, +, _
+        if (!preg_match('/^[a-z0-9\.\-\+\_]+$/', $this->_group_name))
+        {
+            print_stop_message('nntp_forbiden_symbols_in_group_name');
+            return false;
+        }
+
+        // Group name must be unique
+        // $this->_group_id != 0 -> edit existing group, exclude it
+        $sql = 'SELECT
+                    `id`
+                FROM
+                    `' . TABLE_PREFIX . 'nntp_groups`
+                WHERE
+                    `group_name` =  "' . $this->_group_name . '"' .
+                    ($this->_group_id ? ' AND `id` <> ' . $this->_group_id : '') . '
+                LIMIT 1';
+        $res = $this->_db->query_first($sql);
+        if( !empty( $res ))
+        {
+            print_stop_message('nntp_group_name_not_unique');
+            return false;
+        }
+        return true; 
+    } 
 
     /**
      * Delete record from nntp_groups

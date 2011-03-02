@@ -138,11 +138,25 @@ if ( $do == 'set_group_settings' )
     $nntp_group->set_plugin_id($vbulletin->GPC['plugin']);
     $nntp_group->set_is_active($vbulletin->GPC['is_active']);
     $nntp_group->set_map_id($vbulletin->GPC['map_id']);
-    define('CP_REDIRECT', $this_script . '.php?do=list');
+
+    if ($vbulletin->GPC['group_id'])
+    {
+        define('CP_REDIRECT', $this_script . '.php' . 
+            '?do=group_settings' . 
+            '&group_id=' . $vbulletin->GPC['group_id'] . 
+            '&plugin=' . $vbulletin->GPC['plugin']);
+    }
+    else
+    {
+        define('CP_REDIRECT', $this_script . '.php' . 
+            '?do=group_settings' . 
+            '&plugin=' . $vbulletin->GPC['plugin']);
+    }
+
     // save settings
     if ($nntp_group->save_group() )
     {
-        print_stop_message('saved_nntp_group_settings_successfully', $vbulletin->GPC['group_name']);
+        print_cp_message($vbphrase['saved_nntp_group_settings_successfully'], $this_script . '.php?do=list');
     }
     else
     {
