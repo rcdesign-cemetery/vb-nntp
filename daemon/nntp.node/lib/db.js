@@ -151,3 +151,13 @@ exports.querySync = function(sql) {
     }
     return conn.querySync(sql);
 };
+
+/**
+ * Force DB reconnect
+ */
+exports.reconnect = function() {
+    if (conn.connectedSync()) {
+        conn.closeSync();
+    }
+    return connect();
+};

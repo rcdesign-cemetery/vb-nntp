@@ -124,6 +124,11 @@ process.on('SIGUSR1', function () {
         'Current connections: ' + connections + '\n\n' +
         'Memory usage:\n' + util.inspect(process.memoryUsage()) + '\n\n'
     );
+    
+// Temporary. Try to enforce utf8 for sql connection
+    var db = require('./lib/db.js');
+    db.reconnect();
+    db.querySync("SET NAMES utf8");
 });
 
 
