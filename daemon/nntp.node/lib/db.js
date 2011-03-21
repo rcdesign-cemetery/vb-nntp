@@ -43,13 +43,13 @@ var connect = function() {
     conn.initSync();
     conn.setOptionSync(conn.MYSQL_OPT_RECONNECT, 1);
     conn.setOptionSync(conn.MYSQL_OPT_CONNECT_TIMEOUT, 7*24*60*60);
+    conn.setOptionSync(conn.MYSQL_INIT_COMMAND, "SET NAMES utf8");
     conn.realConnectSync(cfg.Host, 
                     cfg.Username, 
                     cfg.Password, 
                     cfg.DataSource,
                     cfg.Port);
     if (conn.connectedSync() && conn.pingSync()) {
-        conn.querySync("SET NAMES UTF8" );
         return true;
     }
     
