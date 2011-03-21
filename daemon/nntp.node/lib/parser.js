@@ -62,28 +62,46 @@ function nntpParser(socket) {
  * Make report - exception with session details
  * 
  * @param {String|Error} err    Text string or Exception
- * @param {Object} session      User session
+ * @param {Bool} toString       true -> make string, false/empty -> exception
  * 
  * @return {Object} Error with session details
  */
-nntpParser.prototype.makeReport = function(err) {
+nntpParser.prototype.makeReport = function(err, toString) {
+    var result;
+
     if (!err) {
         return null;
     }
     
-    var result = (err instanceof Error) ? err : Error(err);
-    
-    if (!!this.session) {
-        if (this.session.username) {
-			result.username = this.session.username;
-		}
-        if (this.session.userid) {
-			result.user_id = this.session.userid;
-		}
-        result.ip = this.session.ip;
-        if (!!this.session.current) {
-			result.currentgroup = this.session.current;
-		}
+    if (toString) {
+        result = (err instanceof Error) ? err.toString() : err;
+        if (!!this.session) {
+            if (this.session.username) {
+                result += ' [username = ' + this.session.username + ']';
+            }
+            if (this.session.userid) {
+                result += ' [userid = ' + this.session.userid + ']';
+            }
+            result += ' [ip = ' + this.session.ip + ']';
+            if (!!this.session.current) {
+                result += ' [current group = ' + this.session.current + ']';
+            }
+        }
+    } else {
+        result = (err instanceof Error) ? err : Error(err);
+        
+        if (!!this.session) {
+            if (this.session.username) {
+                result.username = this.session.username;
+            }
+            if (this.session.userid) {
+                result.user_id = this.session.userid;
+            }
+            result.ip = this.session.ip;
+            if (!!this.session.current) {
+                result.currentgroup = this.session.current;
+            }
+        }
     }
 
     return result;
@@ -369,7 +387,7 @@ nntpParser.prototype.cmdList = function(cmd, callback) {
 	var self = this;
 	
     if (cmd.params) {
-        callback(this.makeReport('Syntax error: ' + cmd.all),
+        callback(this.makeReport('Syntax error: ' + cmd.all, true),
             nntpCode._501_syntax_error); // fuckup LIST extentions
         return;
     }
@@ -568,7 +586,7 @@ nntpParser.prototype.cmdXover = function(cmd, callback) {
         }
         
         if (!heads.length) {
-            callback(self.makeReport('No such Article: ' + cmd.all),
+            callback(self.makeReport('No such Article: ' + cmd.all, true),
                 nntpCode._423_no_article_in_group);
             return;
         }
