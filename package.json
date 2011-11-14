@@ -20,6 +20,10 @@
   "bin"             : { "vb-nntp": "./bin/vb-nntp.js" },
   "main"            : "./lib/vb-nntp",
 
-  "dependencies"    : { "js-yaml": ">= 0.3.0", "winston": "= 0.5.6" },
+  "dependencies"    : {
+                        "db-mysql" : "= 0.7.5",
+                        "js-yaml"  : "~ 0.3.0",
+                        "winston"  : "= 0.5.6"
+                      },
   "engines"         : { "node": "~ 0.6.0" }
 }
