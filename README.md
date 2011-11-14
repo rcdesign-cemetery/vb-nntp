@@ -13,7 +13,7 @@ Requirements
 ============
 
   - Forum MUST use UTF-8 codepage.
-  - Node.Js 0.4.1+ REQUIRED (with npm)
+  - Node.Js 0.6.0+ REQUIRED (with npm)
   - innodb recommended
   - monit recommended (config files included)
 

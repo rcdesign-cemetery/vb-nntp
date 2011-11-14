@@ -1,0 +1,22 @@
+{
+  "name"            : "vb-nntp",
+  "version"         : "0.2.0",
+  "description"     : "NNTP daemon for vbulletin server",
+  "keywords"        : ["vbulletin", "nntp"],
+  "homepage"        : "https://github.com/rcdesign/vb-nntp",
+
+  "authors"         : [
+                        "Vitaly Puzrin <vitaly@rcdesign.ru>",
+                        "Evgeny Shluropat <vitaly@rcdesign.ru>",
+                        "Aleksey V Zapparov <ixti@member.fsf.org> (http://www.ixti.net/)"
+                      ],
+  "bugs"            : { "url": "https://github.com/nodeca/js-yaml/issues" },
+  "license"         : {
+                        "type" : "Creative Commons BY-NC-ND 3.0",
+                        "url"  : "http://creativecommons.org/licenses/by-nc-nd/3.0/"
+                      },
+  "repository"      : { "type": "git", "url": "git://github.com/rcdesign/vb-nntp.git" },
+
+  "dependencies"    : { "js-yaml": "~ 0.3.0" },
+  "engines"         : { "node": ">= 0.6.0 < 0.7.0" }
+}
