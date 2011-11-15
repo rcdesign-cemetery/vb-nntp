@@ -24,6 +24,11 @@ var CONFIG_FILE = require('fs').realpathSync() + '/config.yml';
 var NUM_OF_CPUS = require('os').cpus().length;
 
 
+var debug = (process.env.NODE_DEBUG && /nntp/.test(process.env.NODE_DEBUG))
+          ? function () { console.error('NNTP: %s', arguments[0]); }
+          : function () {};
+
+
 // starts master app
 function startMaster() {
   var workers = [];
@@ -35,7 +40,8 @@ function startMaster() {
     try {
       options = require(CONFIG_FILE),
       max_workers = +options.workers || NUM_OF_CPUS;
-      vbnntp.validateConfig(options);
+
+      // validations of options
 
       process.title = options.title || 'vb-nntp';
     } catch (err) {
@@ -54,7 +60,7 @@ function startMaster() {
             workers[idx].title = process.title + ' - worker [' + idx + ']';
           }
         });
-      }());
+      }(cluster.fork()));
     }
 
     return pool;
