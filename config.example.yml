@@ -1,0 +1,61 @@
+---
+
+# You must specify at least one `listen` or `listen_ssl` options
+# Host and port for plain connections. SSL recommended instead.
+listen     : 0.0.0.0:119
+
+# Host and port for secure (SSL) connections. Uncomment to activate
+#listen_ssl : 0.0.0.0:536
+
+# Certificate & key container. Must be defined if listen_ssl activated
+#pem_file   : /your/ssl/file.pem
+
+# Max. simultanious connections to daemon. 50 by default. Don't set too large.
+#max_conn   : 500
+
+# Max. workers. Equals to amount of CPUs when 0 (by default).
+#workers    : 0
+
+# Inactivity timeout (in seconds), to close idle connections.
+# 15 seconds by default. Don't set too large.
+#timeout    : 60
+
+# Process title for 'ps'. 'vb-nntp' by default
+#title      : vb-nntp
+
+
+# LOGGER CONFIGURATION #########################################################
+################################################################################
+
+logger:
+  enabled    : true
+  file       : /var/log/vb-nntp.log
+
+  # Minimal message level to be logged
+  #
+  # VERBOSE     - Log whole server reply
+  # DEBUG       - Log incoming commands and responses (first string)
+  # INFO        - start, stop, restart
+  # ERROR       - errors
+  severity   : INFO
+
+
+# DATABASE CONFIGURATION #######################################################
+################################################################################
+
+database:
+  username   : <database user>
+  password   : <database password>
+  database   : <your database name>
+
+  # (optional) Database host.
+  # Default: localhost
+  host       : localhost
+
+  # (optional) Database port.
+  # Default: 3306
+  port       : 3306
+
+  # (optional) Prefix for all tables (if used, in vbulletin)
+  # Default: null
+  prefix     : ~

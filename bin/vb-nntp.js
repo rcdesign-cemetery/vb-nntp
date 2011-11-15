@@ -30,18 +30,31 @@ function startMaster() {
 
   // flushes and refills pool of workers
   function initWorkers() {
-    var pool = [], options, amountOfWorkers;
+    var pool = [], worker, options, max_workers;
 
     try {
       options = require(CONFIG_FILE),
-      amountOfWorkers = +options.workers || NUM_OF_CPUS;
+      max_workers = +options.workers || NUM_OF_CPUS;
       vbnntp.validateConfig(options);
+
+      process.title = options.title || 'vb-nntp';
     } catch (err) {
       throw new Error("Invalid configuration:\n" + err);
     }
 
-    while (amountOfWorkers--) {
-      pool.push(cluster.fork());
+    while (max_workers--) {
+      (function (worker) {
+        pool.push(worker);
+        worker.title = process.title + ' - worker [' + pool.length + ']';
+
+        worker.on('death', function () {
+          var idx = workers.indexOf(worker);
+          if (0 <= idx) {
+            workers[idx] = cluster.fork();
+            workers[idx].title = process.title + ' - worker [' + idx + ']';
+          }
+        });
+      }());
     }
 
     return pool;
@@ -55,11 +68,11 @@ function startMaster() {
   }
 
   process.on('SIGINT', function () {
-    var old_pool;
-    
+    var old_workers;
+
     try {
-      old_pool = workers.slice(0);
-      workers = initWorkers();
+      old_workers = workers.slice(0);
+      workers = workers.concat(initWorkers());
       old_pool.forEach(function (worker) { worker.kill('SIGINT'); });
     } catch (err) {
       console.error("Failed to reload workers:\n" + err);
@@ -70,19 +83,27 @@ function startMaster() {
 
 // starts worker app
 function startWorker() {
-  var options = require(CONFIG_FILE), servers = [];
+  var options = require(CONFIG_FILE),
+      servers = [],
+      alive = 0,
+      die = function () { if (0 === alive) process.exit(0); };
 
   if (options.listen) {
+    alive++;
     servers.push(vbnntp.createServer(options).start(options.listen));
   }
 
   if (options.listen_ssl) {
+    alive++;
     servers.push(vbnntp.createSecureServer(options).start(options.listen_ssl));
   }
 
   process.on('SIGINT', function () {
     servers.forEach(function (server) {
-      server.stop();
+      server.stop(function () {
+        alive--;
+        die();
+      });
     });
   });
 }
