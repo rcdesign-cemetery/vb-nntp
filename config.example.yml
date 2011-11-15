@@ -35,8 +35,8 @@ logger:
   #
   # VERBOSE     - Log whole server reply
   # DEBUG       - Log incoming commands and responses (first string)
-  # INFO        - start, stop, restart
-  # ERROR       - errors
+  # INFO        - Start, stop, restart
+  # ERROR       - Errors
   severity   : INFO
 
 
@@ -57,5 +57,5 @@ database:
   port       : 3306
 
   # (optional) Prefix for all tables (if used, in vbulletin)
-  # Default: null
-  prefix     : ~
+  # Default: ""
+  prefix     : ""
