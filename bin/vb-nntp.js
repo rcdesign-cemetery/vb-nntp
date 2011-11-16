@@ -12,10 +12,13 @@
 //
 // Copyright (C) RC Design, Vitaly Puzrin
 
+
 'use strict';
 
+
 // include some modules and functions
-var cluster = require('cluster'),
+var fs = require('fs'),
+    cluster = require('cluster'),
     jsyaml = require('js-yaml'),
     vbnntp = require('../lib/vb-nntp');
 
@@ -25,90 +28,38 @@ var CONFIG_FILE = require('fs').realpathSync() + '/config.yml';
 
 // starts master app
 function startMaster() {
-  var workers = [];
+  var options = require(CONFIG_FILE).shift(),
+      logger = vbnntp.logger.create(options.logger);
 
-  // flushes and refills pool of workers
-  function initWorkers() {
-    var pool = [], worker, options, max_workers;
-
-    try {
-      options = require(CONFIG_FILE).shift(),
-      max_workers = +options.workers || NUM_OF_CPUS;
-
-      // validations of options
-
-      process.title = options.title || 'vb-nntp';
-    } catch (err) {
-      throw new Error("Invalid configuration:\n" + err);
-    }
-
-    while (max_workers--) {
-      (function (worker) {
-        pool.push(worker);
-        worker.title = process.title + ' - worker [' + pool.length + ']';
-
-        worker.on('death', function () {
-          var idx = workers.indexOf(worker);
-          if (0 <= idx) {
-            workers[idx] = cluster.fork();
-            workers[idx].title = process.title + ' - worker [' + idx + ']';
-          }
-        });
-      }(cluster.fork()));
-    }
-
-    return pool;
-  }
-
-  try {
-    workers = initWorkers();
-  } catch (err) {
-    console.error(err.toString());
-    process.exit(1);
-  }
-
-  process.on('SIGINT', function () {
-    var old_workers;
-
-    try {
-      old_workers = workers.slice(0);
-      workers = initWorkers();
-      old_workers.forEach(function (worker) { worker.kill('SIGINT'); });
-    } catch (err) {
-      console.error("Failed to reload workers:\n" + err);
-    }
-  });
+  var worker = cluster.fork();
+  vbnntp.logger.attachLogger(worker, logger);
 }
 
 
 // starts worker app
 function startWorker() {
-  var options = require(CONFIG_FILE).shift(),
-      servers = [],
-      alive = 0,
-      die = function () { if (0 === alive) process.exit(0); };
+  var options, logger, database, commander, servers = [], server;
 
+  options   = require(CONFIG_FILE).shift();
+  logger    = vbnntp.logger.createSlave(process);
+  database  = vbnntp.database.create(options.database);
+  commander = vbnntp.commander.create(database, logger);
+
+  // start plain server
   if (options.listen) {
-    alive++;
-    servers.push(vbnntp.createServer(options).listen(options.listen));
-    debug('SERVER Listening on', options.listen);
+    server = vbnntp.initServer(vbnntp.nntp.Server, options, logger, database, commander);
+    servers.push(server.listen(options.listen));
+    logger.info('SERVER Listening', {binding: options.listen});
   }
 
+  // start secure server
   if (options.listen_ssl) {
-    alive++;
-    servers.push(vbnntp.createSecureServer(options).listen(options.listen_ssl));
-    debug('SERVER Listening on', options.listen_ssl);
+    // prepare options
+    options.key = options.cert = fs.readFileSync(options.pem_file);
+    server = vbnntp.initServer(vbnntp.nntps.Server, options, logger, database, commander);
+    servers.push(server.listen(options.listen_ssl));
+    logger.info('SERVER Listening', {binding: options.listen_ssl});
   }
-  /*
-  process.on('SIGINT', function () {
-    servers.forEach(function (server) {
-      server.stop(function () {
-        alive--;
-        die();
-      });
-    });
-  });
-  */
 }
 
 

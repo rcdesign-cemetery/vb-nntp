@@ -10,7 +10,10 @@ listen     : 0.0.0.0:119
 # Certificate & key container. Must be defined if listen_ssl activated
 #pem_file   : /your/ssl/file.pem
 
-# Max. simultanious connections to daemon. 50 by default. Don't set too large.
+# Max. simultanious connections per listen daemon, that means that if you are
+# listening plain connections and ssl, then your daemon will accept 500 plain
+# connections and 500 ssl connections (1000 in summary) if you'll set max_conn
+# to 500. Default: 50. Don't set too large.
 #max_conn   : 500
 
 # Inactivity timeout (in seconds), to close idle connections.
@@ -30,6 +33,9 @@ logger:
 
   # Whenever colorize logs or not. Disabled by default
   #colorize   : yes
+
+  # Whenever use JSON format of log events. Disabled by default.
+  #json       : yes
 
   # Minimal message level to be logged
   #
