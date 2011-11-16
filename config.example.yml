@@ -13,9 +13,6 @@ listen     : 0.0.0.0:119
 # Max. simultanious connections to daemon. 50 by default. Don't set too large.
 #max_conn   : 500
 
-# Max. workers. Equals to amount of CPUs when 0 (by default).
-#workers    : 0
-
 # Inactivity timeout (in seconds), to close idle connections.
 # 15 seconds by default. Don't set too large.
 #timeout    : 60
