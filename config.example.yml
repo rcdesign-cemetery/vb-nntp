@@ -64,6 +64,13 @@ database:
   # Default: 3306
   port       : 3306
 
+  # (optional) Database socket.
+  socket     : /var/run/mysqld/mysqld.sock
+
+  # (optional) Database pool size.
+  # Default: 1
+  pool       : 10
+
   # (optional) Prefix for all tables (if used, in vbulletin)
   # Default: ""
   prefix     : ""
