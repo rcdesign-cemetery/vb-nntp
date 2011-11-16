@@ -17,15 +17,10 @@
 // include some modules and functions
 var cluster = require('cluster'),
     jsyaml = require('js-yaml'),
-    vbnntp = require('../lib/vb-nntp'),
-    logger = require('../lib/vb-nntp/logger');
+    vbnntp = require('../lib/vb-nntp');
 
 
 var CONFIG_FILE = require('fs').realpathSync() + '/config.yml';
-var NUM_OF_CPUS = require('os').cpus().length;
-
-
-var debug = logger.dummy.debug;
 
 
 // starts master app
@@ -116,9 +111,8 @@ function startWorker() {
   */
 }
 
-// run starter
-//cluster.isMaster ? startMaster() : startWorker();
-startWorker();
+
+cluster.isMaster ? startMaster() : startWorker();
 
 
 ////////////////////////////////////////////////////////////////////////////////
