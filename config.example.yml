@@ -28,8 +28,11 @@ listen     : 0.0.0.0:119
 ################################################################################
 
 logger:
-  enabled    : true
+  enabled    : yes
   file       : /var/log/vb-nntp.log
+
+  # Whenever colorize logs or not. Disabled by default
+  #colorize   : yes
 
   # Minimal message level to be logged
   #
