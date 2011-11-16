@@ -17,16 +17,16 @@
 // include some modules and functions
 var cluster = require('cluster'),
     jsyaml = require('js-yaml'),
-    vbnntp = require('../lib/vb-nntp');
+    vbnntp = require('../lib/vb-nntp'),
+    logger = require('../lib/vb-nntp/logger');
 
 
 var CONFIG_FILE = require('fs').realpathSync() + '/config.yml';
 var NUM_OF_CPUS = require('os').cpus().length;
 
 
-var debug = (process.env.NODE_DEBUG && /nntp/.test(process.env.NODE_DEBUG))
-          ? function () { console.error('NNTP: %s', arguments[0]); }
-          : function () {};
+var debug = logger.dummy.debug;
+
 
 // starts master app
 function startMaster() {
@@ -86,29 +86,23 @@ function startMaster() {
 }
 
 
-function parseListenString(str) {
-  return /:/.test(str) ? str.split(':') : [null, str];
-}
-
-
 // starts worker app
 function startWorker() {
   var options = require(CONFIG_FILE).shift(),
-      listen = [],
       servers = [],
       alive = 0,
       die = function () { if (0 === alive) process.exit(0); };
 
   if (options.listen) {
     alive++;
-    listen = parseListenString(options.listen);
-    servers.push(vbnntp.createServer(options).listen(listen[0], +listen[1]));
+    servers.push(vbnntp.createServer(options).listen(options.listen));
+    debug('SERVER Listening on', options.listen);
   }
 
   if (options.listen_ssl) {
     alive++;
-    listen = parseListenString(options.listen_ssl);
-    servers.push(vbnntp.createSecureServer(options).listen(listen[0], +listen[1]));
+    servers.push(vbnntp.createSecureServer(options).listen(options.listen_ssl));
+    debug('SERVER Listening on', options.listen_ssl);
   }
   /*
   process.on('SIGINT', function () {
