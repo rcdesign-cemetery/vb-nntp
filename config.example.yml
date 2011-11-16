@@ -42,6 +42,8 @@ logger:
   # VERBOSE     - Log whole server reply
   # DEBUG       - Log incoming commands and responses (first string)
   # INFO        - Start, stop, restart
+  # NOTICE      - Authentication success
+  # WARN        - Authentication error, Invalid command
   # ERROR       - Errors
   severity   : INFO
 
