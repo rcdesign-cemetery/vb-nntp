@@ -50,7 +50,7 @@ function startWorker() {
   servers   = [];
   options   = require(CONFIG_FILE).shift();
   logger    = vbnntp.logger.createSlave(process);
-  database  = vbnntp.database.create(options.database);
+  database  = vbnntp.database.create(options.database, logger);
   commander = vbnntp.commander.create(database, logger);
 
   // start plain server
