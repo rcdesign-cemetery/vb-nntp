@@ -108,7 +108,7 @@ function startMaster() {
   });
 
   process.title = ps_title;
-  logger.info('VBNNTP Master started', {pid: worker.pid});
+  logger.info('VBNNTP Master started', {pid: process.pid});
 
   while (workers.length < workers_amount) {
     addWorker();
