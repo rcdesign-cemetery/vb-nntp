@@ -97,11 +97,18 @@ function startMaster() {
     process.exit(0);
   });
 
+  process.on('SIGUSR1', function () {
+    logger.info('VBNNTP Restarting logger');
+    logger.restart();
+    logger.info('VBNNTP Logger restarted');
+  });
+
   process.on('uncaughtException', function (err) {
     logger.error('Unexpected exception: ' + (err.message || err.toString()));
   });
 
   process.title = ps_title;
+  logger.info('VBNNTP Master started', {pid: worker.pid});
 
   while (workers.length < workers_amount) {
     addWorker();
