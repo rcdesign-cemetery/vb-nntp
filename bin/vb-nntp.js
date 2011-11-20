@@ -18,6 +18,7 @@
 
 // include some modules and functions
 var fs = require('fs'),
+    events = require('events'),
     cluster = require('cluster'),
     jsyaml = require('js-yaml'),
     vbnntp = require('../lib/vb-nntp');
@@ -36,18 +37,85 @@ function parseListenString(binding) {
 // starts master app
 function startMaster() {
   var options = require(CONFIG_FILE).shift(),
-      logger = vbnntp.logger.create(options.logger);
+      ps_title = options.title || 'vbnntp',
+      workers_amount = +options.workers || require('os').cpus().length,
+      logger = vbnntp.logger.create(options.logger),
+      workers = [];
 
-  var worker = cluster.fork();
-  vbnntp.logger.attachLogger(worker, logger);
+  function addWorker() {
+    var worker = cluster.fork();
+
+    vbnntp.logger.attachLogger(worker, logger);
+    workers.push(worker);
+
+    logger.info('VBNNTP New worker added', {idx: workers.length, pid: worker.pid});
+    worker.send({title: ps_title + '[worker:' + workers.length + ']'});
+
+    worker.on('death', function (worker) {
+      var idx;
+
+      logger.warn('VBNNTP Worker ' + worker.pid + ' died. Restart...');
+
+      idx = workers.indexOf(worker);
+      if (0 <= idx) {
+        delete workers[idx];
+      }
+
+      addWorker();
+    });
+  }
+
+  process.on('SIGHUP', function () {
+    var old_workers = workers, worker = null;
+
+    logger.info('VBNNTP Restarting workers');
+
+    // start new workers
+    workers = [];
+    while (workers.length < workers_amount) {
+      addWorker();
+    }
+
+    // request old workers to stop listen new connections
+    while (old_workers.length) {
+      worker = old_workers.shift();
+
+      logger.debug('VBNNTP Stoppping worker', {pid: worker.pid});
+
+      worker.removeAllListeners('death');
+      worker.send({stop: true});
+
+      // unref
+      worker = null;
+    }
+  });
+
+  process.on('SIGINT', function () {
+    workers.forEach(function (worker) {
+      worker.send({stop: true});
+    });
+    process.exit(0);
+  });
+
+  process.on('uncaughtException', function (err) {
+    logger.error('Unexpected exception: ' + (err.message || err.toString()));
+  });
+
+  process.title = ps_title;
+
+  while (workers.length < workers_amount) {
+    addWorker();
+  }
 }
 
 
 // starts worker app
 function startWorker() {
-  var options, logger, database, commander, servers;
+  var status, clients, servers, options, logger, database, commander;
 
-  servers   = [];
+  status    = new events.EventEmitter();
+  clients   = {plain: 0, secure: 0};
+  servers   = {plain: null, secure: null};
   options   = require(CONFIG_FILE).shift();
   logger    = vbnntp.logger.createSlave(process);
   database  = vbnntp.database.create(options.database, logger);
@@ -56,9 +124,18 @@ function startWorker() {
   // start plain server
   if (options.listen) {
     (function (bind) {
-      var server = vbnntp.initServer(vbnntp.nntp.Server, options, logger, database, commander);
-      servers.push(server.listen(bind.port, bind.host));
-      logger.info('SERVER Listening on', bind);
+      servers.plain = vbnntp.initServer(vbnntp.nntp.Server, options, logger, database, commander);
+      // start listening
+      servers.plain.listen(bind.port, bind.host);
+      logger.info('VBNNTP Listening on', bind);
+      // monitore open connections
+      servers.plain.on('connection', function (socket) {
+        clients.plain++;
+        socket.on('close', function () {
+          clients.plain--;
+          status.emit('free');
+        });
+      });
     }(parseListenString(options.listen)));
   }
 
@@ -67,11 +144,55 @@ function startWorker() {
     (function (bind) {
       // prepare options
       options.key = options.cert = fs.readFileSync(options.pem_file);
-      var server = vbnntp.initServer(vbnntp.nntps.Server, options, logger, database, commander);
-      servers.push(server.listen(bind.port, bind.host));
-      logger.info('SERVER Listening on', bind);
+      servers.secure = vbnntp.initServer(vbnntp.nntps.Server, options, logger, database, commander);
+      // start listening
+      servers.secure.listen(bind.port, bind.host);
+      logger.info('VBNNTP Listening on', bind);
+      // monitore open connections
+      servers.secure.on('connection', function (socket) {
+        clients.secure++;
+        socket.on('close', function () {
+          clients.secure--;
+          status.emit('free');
+        });
+      });
     }(parseListenString(options.listen_ssl)));
   }
+
+  process.on('message', function (cmd) {
+    if (cmd.title) {
+      process.title = cmd.title;
+    }
+  });
+
+  process.on('message', function (cmd) {
+    if (cmd.stop) {
+      process.title = process.title + ' (stopping)';
+
+      if (servers.plain) {
+        servers.plain.removeAllListeners('connection');
+      }
+
+      if (servers.secure) {
+        servers.secure.removeAllListeners('connection');
+      }
+
+      if (0 === clients.plain && 0 === clients.secure) {
+        process.exit(1);
+      }
+
+      status.on('free', function () {
+        if (0 === clients.plain && 0 === clients.secure) {
+          process.exit(0);
+        }
+      });
+    }
+  });
+
+  process.on('uncaughtException', function (err) {
+    logger.error('Unexpected exception: ' + (err.message || err.toString()));
+    process.exit(1);
+  });
 }
 
 

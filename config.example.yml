@@ -24,6 +24,10 @@ listen     : 0.0.0.0:119
 #title      : vb-nntp
 
 
+# Amount of workers. By default equals to amount of CPU cores.
+#workers    : 1
+
+
 # LOGGER CONFIGURATION #########################################################
 ################################################################################
 
