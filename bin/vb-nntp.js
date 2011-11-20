@@ -48,25 +48,26 @@ function startMaster() {
     vbnntp.logger.attachLogger(worker, logger);
     workers.push(worker);
 
-    logger.info('VBNNTP New worker added', {idx: workers.length, pid: worker.pid});
+    logger.info('VBNNTP Worker added', {idx: workers.length, pid: worker.pid});
     worker.send({title: ps_title + ' [worker:' + workers.length + ']'});
-
-    worker.on('death', function (worker) {
-      var idx;
-
-      logger.warn('VBNNTP Worker ' + worker.pid + ' died. Restart...');
-
-      idx = workers.indexOf(worker);
-      if (0 <= idx) {
-        delete workers[idx];
-      }
-
-      addWorker();
-    });
   }
 
+  cluster.on('death', function (worker) {
+    var idx = workers.indexOf(worker);;
+
+    if (0 <= idx) {
+      logger.warn('VBNNTP Worker ' + worker.pid + ' died. Restarting...');
+      delete workers[idx];
+      addWorker();
+      return;
+    }
+
+    // not in the workers list - old worker that stopped
+    logger.info('VBNNTP Worker ' + worker.pid + ' stopped.');
+  });
+
   process.on('SIGHUP', function () {
-    var old_workers = workers, worker = null;
+    var old_workers = workers;
 
     logger.info('VBNNTP Restarting workers');
 
@@ -78,22 +79,17 @@ function startMaster() {
 
     // request old workers to stop listen new connections
     while (old_workers.length) {
-      worker = old_workers.shift();
-
-      logger.debug('VBNNTP Stoppping worker', {pid: worker.pid});
-
-      worker.removeAllListeners('death');
-      worker.send({stop: true});
-
-      // unref
-      worker = null;
+      old_workers.shift().send({stop: true});
     }
   });
 
-  process.on('SIGINT', function () {
-    workers.forEach(function (worker) {
-      worker.send({stop: true});
-    });
+  process.once('SIGINT', function () {
+    cluster.removeAllListeners('death');
+
+    while (workers.length) {
+      workers.shift().kill('SIGINT');
+    }
+
     process.exit(0);
   });
 
@@ -101,6 +97,23 @@ function startMaster() {
     logger.info('VBNNTP Restarting logger');
     logger.restart();
     logger.info('VBNNTP Logger restarted');
+  });
+
+  process.once('SIGTERM', function () {
+    var alive = workers.length;
+
+    cluster.removeAllListeners('death');
+    cluster.on('death', function () {
+      alive--;
+
+      if (0 === alive) {
+        process.exit(0);
+      }
+    });
+
+    while (0 < workers.length) {
+      workers.shift().send({stop: true});
+    }
   });
 
   process.on('uncaughtException', function (err) {
@@ -174,6 +187,7 @@ function startWorker() {
 
   process.on('message', function (cmd) {
     if (cmd.stop) {
+      logger.debug('VBNNTP Stoppping worker', {pid: process.pid});
       process.title = process.title + ' (stopping)';
 
       if (servers.plain) {
