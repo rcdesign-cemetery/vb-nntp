@@ -49,7 +49,7 @@ function startMaster() {
     workers.push(worker);
 
     logger.info('VBNNTP New worker added', {idx: workers.length, pid: worker.pid});
-    worker.send({title: ps_title + '[worker:' + workers.length + ']'});
+    worker.send({title: ps_title + ' [worker:' + workers.length + ']'});
 
     worker.on('death', function (worker) {
       var idx;
