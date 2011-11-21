@@ -84,10 +84,18 @@ function startMaster() {
   });
 
   process.once('SIGINT', function () {
+    var worker;
     cluster.removeAllListeners('death');
 
     while (workers.length) {
-      workers.shift().kill('SIGINT');
+      worker = workers.shift();
+
+      // sometimes workers dies faster than master
+      if (worker) {
+        worker.kill('SIGINT');
+      }
+
+      worker = null;
     }
 
     process.exit(0);
