@@ -58,7 +58,8 @@ function startMaster() {
     if (0 <= idx) {
       logger.warn('VBNNTP Worker ' + worker.pid + ' died. Restarting...');
       delete workers[idx];
-      addWorker();
+      // do not storm with worer recreation
+      setTimeout(addWorker, 1000);
       return;
     }
 
