@@ -167,7 +167,7 @@ function startWorker() {
     (function (bind) {
       servers.plain = vbnntp.initServer(vbnntp.nntp.Server, options, logger, database, commander);
       // start listening
-      servers.plain.listen(bind.port, bind.host);
+      servers.plain.listen(bind.port, bind.address);
       logger.info('VBNNTP Listening on', bind);
       // monitore open connections
       servers.plain.on('connection', function (socket) {
@@ -187,7 +187,7 @@ function startWorker() {
       options.key = options.cert = fs.readFileSync(options.pem_file);
       servers.secure = vbnntp.initServer(vbnntp.nntps.Server, options, logger, database, commander);
       // start listening
-      servers.secure.listen(bind.port, bind.host);
+      servers.secure.listen(bind.port, bind.address);
       logger.info('VBNNTP Listening on', bind);
       // monitore open connections
       servers.secure.on('connection', function (socket) {
