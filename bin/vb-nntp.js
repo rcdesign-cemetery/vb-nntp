@@ -21,20 +21,17 @@ var fs = require('fs'),
     events = require('events'),
     cluster = require('cluster'),
     jsyaml = require('js-yaml'),
-    vbnntp = require('../lib/vb-nntp');
+    vbnntp = require('../lib/vb-nntp'),
+    common = require('../lib/vb-nntp/common');
 
 
 var CONFIG_FILE = require('fs').realpathSync() + '/config.yml';
 
 
-function parseListenString(binding) {
-  binding = binding.split(':');
-  return (1 === binding.length) ? {port: +binding[0]}
-                                : {host: binding[0], port: +binding[1]};
-}
+// MASTER
+////////////////////////////////////////////////////////////////////////////////
 
 
-// starts master app
 function startMaster() {
   var options = require(CONFIG_FILE).shift(),
       ps_title = options.title || 'vbnntp',
@@ -42,19 +39,24 @@ function startMaster() {
       logger = vbnntp.logger.create(options.logger),
       workers = [];
 
+  // forks, configures and pushes new worker into the `workers` stack
   function addWorker() {
     var worker = cluster.fork();
 
-    vbnntp.logger.attachLogger(worker, logger);
+    vbnntp.logger.listenSlaveLogger(worker, logger);
     workers.push(worker);
 
     logger.info('VBNNTP Worker added', {idx: workers.length, pid: worker.pid});
     worker.send({title: ps_title + ' [worker:' + workers.length + ']'});
   }
 
+  // --[ master events ]--------------------------------------------------------
+
+  // when one of the workers dies, master get notifications with `death` event
   cluster.on('death', function (worker) {
     var idx = workers.indexOf(worker);;
 
+    // when existing (in the `workers` stack) worker dies - restart
     if (0 <= idx) {
       logger.warn('VBNNTP Worker ' + worker.pid + ' died. Restarting...');
       delete workers[idx];
@@ -63,10 +65,11 @@ function startMaster() {
       return;
     }
 
-    // not in the workers list - old worker that stopped
+    // not in the workers list (old worker) - let it go...
     logger.info('VBNNTP Worker ' + worker.pid + ' stopped.');
   });
 
+  // soft-restart all workers
   process.on('SIGHUP', function () {
     var old_workers = workers;
 
@@ -84,6 +87,7 @@ function startMaster() {
     }
   });
 
+  // kill all workers and master
   process.once('SIGINT', function () {
     var worker;
     cluster.removeAllListeners('death');
@@ -102,12 +106,14 @@ function startMaster() {
     process.exit(0);
   });
 
+  // restart logger
   process.on('SIGUSR1', function () {
     logger.info('VBNNTP Restarting logger');
     logger.restart();
     logger.info('VBNNTP Logger restarted');
   });
 
+  // softly stop all workers and then kill em all with master
   process.once('SIGTERM', function () {
     var alive = workers.length;
 
@@ -125,9 +131,12 @@ function startMaster() {
     }
   });
 
+  // something went wrong - report error
   process.on('uncaughtException', function (err) {
-    logger.error('Unexpected exception: ' + (err.message || err.toString()));
+    logger.error('Unexpected exception: ' + common.dumpError(err));
   });
+
+  // --[ start initial workers ]------------------------------------------------
 
   process.title = ps_title;
   logger.info('VBNNTP Master started', {pid: process.pid});
@@ -138,7 +147,10 @@ function startMaster() {
 }
 
 
-// starts worker app
+// WORKER
+////////////////////////////////////////////////////////////////////////////////
+
+
 function startWorker() {
   var status, clients, servers, options, logger, database, commander;
 
@@ -146,7 +158,7 @@ function startWorker() {
   clients   = {plain: 0, secure: 0};
   servers   = {plain: null, secure: null};
   options   = require(CONFIG_FILE).shift();
-  logger    = vbnntp.logger.createSlave(process, options.logger.severity);
+  logger    = vbnntp.logger.createSlaveLogger(process, options.logger.severity);
   database  = vbnntp.database.create(options.database, logger);
   commander = vbnntp.commander.create(database, logger);
 
@@ -165,7 +177,7 @@ function startWorker() {
           status.emit('free');
         });
       });
-    }(parseListenString(options.listen)));
+    }(common.parseListenString(options.listen)));
   }
 
   // start secure server
@@ -185,17 +197,16 @@ function startWorker() {
           status.emit('free');
         });
       });
-    }(parseListenString(options.listen_ssl)));
+    }(common.parseListenString(options.listen_ssl)));
   }
 
+  // --[ worker events ]--------------------------------------------------------
+
+  // got message from master
   process.on('message', function (cmd) {
     if (cmd.title) {
       process.title = cmd.title;
-    }
-  });
-
-  process.on('message', function (cmd) {
-    if (cmd.stop) {
+    } else if (cmd.stop) {
       logger.debug('VBNNTP Stoppping worker', {pid: process.pid});
       process.title = process.title + ' (stopping)';
 
@@ -219,11 +230,16 @@ function startWorker() {
     }
   });
 
+  // got unhandled exception. report and terminate worker (it will be restrted
+  // by master process.
   process.on('uncaughtException', function (err) {
-    logger.error('Unexpected exception: ' + (err.message || err.toString()));
+    logger.error('Unexpected exception: ' + common.dumpError(err));
     process.exit(1);
   });
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 cluster.isMaster ? startMaster() : startWorker();
