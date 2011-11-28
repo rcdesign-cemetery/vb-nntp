@@ -159,8 +159,8 @@ function startWorker() {
   servers   = {plain: null, secure: null};
   options   = require(CONFIG_FILE).shift();
   logger    = vbnntp.logger.createSlaveLogger(process, options.logger.severity);
-  database  = vbnntp.database.create(options.database, logger);
-  commander = vbnntp.commander.create(database, logger);
+  database  = function () { return vbnntp.database.create(options.database, logger) };
+  commander = vbnntp.commander.create(logger);
 
   // start plain server
   if (options.listen) {
