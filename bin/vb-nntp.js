@@ -162,6 +162,13 @@ function startWorker() {
   database  = function () { return vbnntp.database.create(options.database, logger) };
   commander = vbnntp.commander.create(logger);
 
+  // grab vbconfig
+  (function () {
+    var db = vbnntp.database.create(options.database, logger);
+    options.vbconfig = db.getVbulletinConfig();
+    db._conn.closeSync();
+  }());
+
   // start plain server
   if (options.listen) {
     (function (bind) {
