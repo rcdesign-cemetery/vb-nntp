@@ -165,7 +165,7 @@ function startWorker() {
   // grab vbconfig
   (function (db) {
     options.vbconfig = db.vbconfig;
-    db._conn.closeSync();
+    db.destroy();
   }(database()));
 
   // start plain server
