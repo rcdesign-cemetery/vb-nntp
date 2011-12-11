@@ -240,7 +240,6 @@ function startWorker() {
   // by master process.
   process.on('uncaughtException', function (err) {
     logger.error('Unexpected exception: ' + common.dumpError(err));
-    process.exit(1);
   });
 }
 
