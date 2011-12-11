@@ -6,8 +6,8 @@
 	create 640 www-data www-data
 	sharedscripts
 	postrotate
-        PID=$(status vbnntp 2>/dev/null | awk '/[0-9]$/ { print $NF }')
-        # reload logs
+		PID=$(status vbnntp 2>/dev/null | awk '/[0-9]$/ { print $NF }')
+		# reload logs
 		/bin/kill -s USR1 $PID
 	endscript
 }
